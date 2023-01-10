@@ -9,7 +9,7 @@ import styles from "../ClientInfoWebpart.module.scss";
 import { PeoplePicker, PrincipalType } from "@pnp/spfx-controls-react/lib/PeoplePicker";
 import { sp } from "@pnp/sp";
 import { ICamlQuery } from "@pnp/sp/lists";
-import { addMonths } from "office-ui-fabric-react/lib/utilities/dateMath/DateMath";
+import { addDays, addMonths } from "office-ui-fabric-react/lib/utilities/dateMath/DateMath";
 import { GlobalValues } from "../../Dataprovider/GlobalValue";
 import "@pnp/sp/files";
 import "@pnp/sp/folders";
@@ -67,12 +67,20 @@ const PortalChoiceOptions1: IChoiceGroupOption[] = [
     { key: 'Create New', text: 'Create New' },
 ];
 
-const today: Date = new Date(Date.now());
-const minDate: Date = addMonths(today, 0);
-const maxDate: Date = addMonths(today, 12);
-let portalExpDate: Date = addMonths(today, 18); // ADDED for site expiration different than file expiration
-const maxDate1: Date = addMonths(today, 36);
+let today: Date = new Date(Date.now());
+let minDate: Date = addMonths(today, 0);
+let maxDate: Date = addMonths(today, 12);
+let maxDate1: Date = addMonths(today, 36);
 
+const AudFeMax : Date = addDays(today, 180);
+const AdvFeMax : Date = addDays(today, 180);
+
+const AudWfMax : Date = addMonths(today, 12);
+const AdvWfMax : Date = addMonths(today, 12);
+const TaxWfMax : Date = addMonths(today, 12);
+
+
+let portalExpDate: Date = addMonths(today, 18); // ADDED for site expiration different than file expiration
 const contentStyles = mergeStyleSets({
     body: {
         flex: "4 4 auto",
@@ -549,7 +557,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 });
                 let EngagementNumberEndZero = item.name.slice(-2);
                 if (EngagementNumberEndZero == "00") {
-                    updatedworkyear = true;
+                    updatedworkyear = true; 
                 }
                 else {
                     updatedworkyear = false;
@@ -558,7 +566,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 Engagementdata.filter(async (e) => {
 
                     if (e.Title == item.name) {
-                        ExDate = (6) + '-' + (1) + '-' + (parseInt(e.WorkYear) + 2);
+                     //   ExDate = (6) + '-' + (1) + '-' + (parseInt(e.WorkYear) + 2);
+                  //   ExDate = (6) + '-' + (1) + '-' + (parseInt(e.WorkYear) + 2);
+                     ExDate = (6) + '-' + (1) + '-' + ((today.getFullYear()) + 2);
                         let dt = new Date(ExDate);
                         const ExDate1: Date = dt;
 
@@ -572,6 +582,22 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                             PortalsCreated: e.Portals_x0020_Created,
                             PortalId: e.PortalId
                         });
+
+                        if(this.state.PortalTypeSelected == "Workflow")
+                        {
+                            await this.setState({
+                                DateExtend: AdvWfMax,
+                                portalExpiration: AdvWfMax,
+                            });
+                        }
+                        else
+                        {
+                            await this.setState({
+                                DateExtend: AdvFeMax,
+                                portalExpiration: AdvFeMax,
+                            });
+                        }
+
                     }
                 });
             });
@@ -1333,7 +1359,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             }
 
             if (this.state.PortalTypeSelected == "K1") {
-                ExDate = (6) + '-' + (1) + '-' + (parseInt(item.key) + 2);
+               // ExDate = (6) + '-' + (1) + '-' + (parseInt(item.key) + 2);
+                ExDate = (6) + '-' + (1) + '-' + ((today.getFullYear()) + 2);
+
                 let dt = new Date(ExDate);
                 const ExDate1: Date = dt;
                 this.setState({
@@ -1840,6 +1868,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                         </div>
                                         <div className={styles.pnppicker}>
                                             <PeoplePicker
+                                                
                                                 context={this.props.spContext}
                                                 titleText={this.state.peoplePickerTitle}
                                                 groupName={""}
@@ -2049,8 +2078,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     onSelectDate={this._onSelectDate}
                                                     formatDate={this._onFormatDate}
                                                     minDate={minDate}
-                                                    value={maxDate1} // was this.state.portalExpiration New date set to default to 36 months
-                                                    maxDate={maxDate1}
+                                                    value={AdvWfMax} // was this.state.portalExpiration New date set to default to 36 months
+                                                    maxDate={AdvWfMax}
                                                 />
                                                 {(this.state.validate && this.state.portalExpiration == null) ?
                                                     <div className={styles.reqval}>Portal Expiration is mandatory.</div> : ''}
