@@ -1,6 +1,6 @@
 import * as React from "react";
 import {
-    Stack, TooltipHost, ITag, Icon, IBasePicker, IBasePickerSuggestionsProps, IInputProps, TagPicker, Text, IChoiceGroupOption, IDropdownOption, Label, mergeStyleSets, DefaultButton, PrimaryButton, ChoiceGroup, Checkbox, TextField, Dropdown, Dialog, DialogFooter, Link, DatePicker, TooltipHostBase
+    Checkbox, ChoiceGroup, DatePicker, DefaultButton, Dialog, DialogFooter, DirectionalHint, Dropdown, IBasePicker, IBasePickerSuggestionsProps, IChoiceGroupOption, Icon, IDropdownOption, IInputProps, ITag, Label, Link, mergeStyleSets, PrimaryButton, Stack, TagPicker, Text, TextField, TooltipHost, TooltipHostBase
 } from 'office-ui-fabric-react';
 import { ClientInfoClass } from "../../Dataprovider/ClientInfoClass";
 import * as OfficeUI from 'office-ui-fabric-react';
@@ -70,6 +70,7 @@ const PortalChoiceOptions1: IChoiceGroupOption[] = [
 const today: Date = new Date(Date.now());
 const minDate: Date = addMonths(today, 0);
 const maxDate: Date = addMonths(today, 12);
+let portalExpDate: Date = addMonths(today, 18); // ADDED for site expiration different than file expiration
 const maxDate1: Date = addMonths(today, 36);
 
 const contentStyles = mergeStyleSets({
@@ -173,6 +174,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         titleText: "",
         emailNotification: false,
         portalExpiration: null,
+        fileExpiration: null,
         DateExtend: new Date(),
 
         K1Date: new Date(),
@@ -286,6 +288,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             titleText: "",
             emailNotification: false,
             portalExpiration: null,
+            fileExpiration: null,
             DateExtend: new Date(),
 
             Message: "",
@@ -756,10 +759,11 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 PortalRollOver = true;
                 RolloverUrl = GlobalValues.SiteURL + "/" + this.state.TeamURL + "-" + this.state.PortalTypeURL + "-" + this.state.RolloverURL;
             }
+            console.log('file expiration value is',this.state.fileExpiration);
             return new Promise<number>((resolve, reject) => {
                 this.getListItemEntityTypeName(SPUrl, listname)
                     .then((listEntityName) => {
-                        const PortalData: any = {
+                        let PortalData: any = {
                             '__metadata': {
                                 'type': listEntityName
                             },
@@ -780,11 +784,13 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                             'ServiceType': this.state.ServiceTypeSelected,
                             'Supplemental': this.state.SupplementalSelected,
                             'TemplateType': this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Create New' ? this.state.ServiceTypeSelected : this.state.AdvisoryTemplateSelected,
-                            'isNotificationEmail': this.state.emailNotification,
-                            'PortalExpiration': (this.state.DateExtend ? this.state.DateExtend : this.state.portalExpiration),
+                            'isNotificationEmail': this.state.emailNotification,       
+                            'FileExpiration': this.state.fileExpiration,
+                            'PortalExpiration': this.state.portalExpiration,//(this.state.DateExtend ? this.state.DateExtend : this.state.portalExpiration),
                             'PortalId': PortalId,
                             'WorkpaperPath': this.state.WorkpaperPath
                         };
+                        console.log('portalData',PortalData);
                         this.getValues(SPUrl)
                             .then((requestDigest) => {
                                 if (this.state.TeamSelected == "Assurance" && this.state.PortalTypeSelected == "Workflow" && this.state.AsuranceSplitData.disabled == false) {
@@ -1057,6 +1063,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     private _getPeoplePickerItems(items: any[]) {
+        console.log('do i ever get here?');
         this.spsetup();
         let getSelectedUsers = [];
         let getusersEmails = [];
@@ -1141,9 +1148,10 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         });
     }
 
-    private _onSelectDate2 = (date: Date | null | undefined): void => {
+    private _onSelectDate2 = (date: Date | null | undefined): void => {        
         this.setState({
-            DateExtend: date
+           // DateExtend: date
+           portalExpiration: portalExpDate,           
         });
     }
 
@@ -1153,6 +1161,14 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         });
     }
 
+    private _onSelectDateFileExp = (date: Date | null | undefined): void => {
+        portalExpDate = addMonths(date, 6); // set the portal expiration for 6 months after the file expiration
+        this.setState({
+           // DateExtend: date
+           portalExpiration: portalExpDate,
+           fileExpiration: date // this is the date the user picked
+        });
+    }
 
     private _onFormatDate = (date: Date): string => {
         return (date.getMonth() + 1) + '/' + date.getDate() + '/' + date.getFullYear();
@@ -1320,7 +1336,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 ExDate = (6) + '-' + (1) + '-' + (parseInt(item.key) + 2);
                 let dt = new Date(ExDate);
                 const ExDate1: Date = dt;
-
                 this.setState({
                     K1Date: ExDate1,
                 });
@@ -1405,10 +1420,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                         <div className={contentStyles.body}>
                             <ProgressBar isVisible={this.state.showSpinner} Message="Please Wait"></ProgressBar>
                             {this.state.currentScreen == "screen1" ?
-
-
                                 <div className={styles.screenOne}>
-
                                     <Stack horizontal gap={20}>
                                         <ChoiceGroup
                                             className={styles.innerChoice}
@@ -1421,7 +1433,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                             selectedKey={this.state.PortalTypeSelected}
                                         />
                                     </Stack>
-
                                     <div className={styles.innerChoiceDesc}>
                                         <div className={styles.choiceDes}>
                                             <text>This is a designated worksite area for engagement workflow functionality.</text>
@@ -1465,13 +1476,10 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                 <div className={styles.reqval}>Team is mandatory.</div> : ''}
                                         </div>}
                                     <div className={styles.engnumbername}>
-
-
                                         <Label>Engagement Number<span className={styles.reqval}> *</span></Label>
                                         <TooltipHost
                                             content="Enter Engagement Number"
                                         >
-
                                             <TagPicker
                                                 defaultSelectedItems={EngagementNameTags}
                                                 removeButtonAriaLabel="Remove"
@@ -1488,7 +1496,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                         {(this.state.validate && this.state.EngagementNumberSelected == "") ?
                                             <div className={styles.reqval}>Invalid Engagement Number. Please enter a correct Engagement Number and try again.
                                             </div> : ''}
-
                                         <div className={styles.engagementnames}>
                                             <Label>Engagement Name</Label>
                                             <TooltipHost
@@ -1497,7 +1504,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                             </TooltipHost>
                                         </div>
                                     </div>
-
                                     <div className={styles.engnumbername}>
                                         <div className={styles.engagementnames}>
                                             <Label>Year</Label>
@@ -1511,11 +1517,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
                                                 : <TextField disabled className={styles.engagementPrint} defaultValue={this.state.Year} />
                                             }
-
                                         </div>
                                         <div className={styles.engagementnames}>
-
-
                                             <PeoplePicker
                                                 context={this.props.spContext}
                                                 titleText="Site Owner"
@@ -1526,12 +1529,12 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                 principalTypes={[PrincipalType.User]}
                                                 ensureUser={true}
                                                 personSelectionLimit={1}
-                                                placeholder="Enter name or email"
-                                                defaultSelectedUsers={this.state.addusers}
+                                                placeholder="Enter name or email"                                                 
+                                                defaultSelectedUsers={this.state.addusers}                                                
                                             />
                                             {(this.state.validate && this.state.addusers.length == 0) ?
-                                                <div className={styles.reqval}>Site Owner is mandatory.</div> : ''}
-
+                                              <div className={styles.reqval}>Site Owner is mandatory.</div> : ''
+                                            }
                                         </div>
                                     </div>
                                     {this.state.showMessageBar && <OfficeUI.MessageBar
@@ -1552,10 +1555,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                         isMultiline={false}
                                         onDismiss={() => this.closeMessageBar()}
                                         dismissButtonAriaLabel="Close">
-
                                         {this.state.Message}
                                     </OfficeUI.MessageBar>}
-
                                     <div className={styles.freshRollover}>
                                         <div className={styles.engnumbername}>
                                             <div className={styles.engagementnames}>
@@ -1706,11 +1707,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                         onChange={this._onChangeIndustryType}
                                                         required={true}
                                                         selectedKey={this.state.IndustryTypeSelectedKey}
-
                                                     />
                                                     {(this.state.validate && this.state.IndustryTypeSelected == "") ?
                                                         <div className={styles.reqval}>Industry Type is required </div> : ''}
-
                                                     <Dropdown
                                                         placeholder="Supplemental"
                                                         label="Supplemental"
@@ -1718,15 +1717,11 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                         onChange={this._onChangeSupplemental}
                                                         required={true}
                                                         selectedKey={this.state.SupplementalSelectedKey}
-
                                                     />
                                                     {(this.state.validate && this.state.SupplementalSelected == "") ?
                                                         <div className={styles.reqval}>Supplemental is required </div> : ''}
-
                                                 </div>
                                             </div> : ""}
-
-
                                         {this.state.TeamSelected == 'Advisory' && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Create New' ?
                                             <div className={styles.advisoryType}>
                                                 <Dropdown
@@ -1736,12 +1731,10 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     onChange={this._onChangeAdvisoryTemplate}
                                                     required={true}
                                                     selectedKey={this.state.AdvisoryTemplateSelectedKey}
-
                                                 />
                                                 {(this.state.validate && this.state.AdvisoryTemplateSelected == "") ?
                                                     <div className={styles.reqval}>Template Type is required </div> : ''}
                                             </div> : ""}
-
                                     </div>
                                     {this.state.TeamSelected == 'Assurance' ? <div className={styles.workpaper}>
                                         <Label className={styles.wlabeltxt}>Enter the workpaper path of the binder in CCH Engagement where the documents should be automatically exported. If you leave this field blank, the documents will not be automatically uploaded to CCH Engagement.</Label>
@@ -1753,14 +1746,10 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                     {/* {this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Create New' ?	
                                         <AssuranceEngSplit OnSplitChange={this.SetAssuranceSplitData} AsuranceSplitData={this.state.AsuranceSplitData} spContext={this.props.spContext}></AssuranceEngSplit>	
                                         : ""} */}
-
                                     <div>
                                         <div className={styles.formcontrol}>
-
                                             {this.state.PortalChoiceSelected == 'Create New' ?
-
                                                 <div>
-
                                                     {this.state.TeamSelected == 'Advisory' && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Create New' ?
                                                         <div>
                                                             <Label>Please select which users should have access to this portal:</Label>
@@ -1769,7 +1758,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                                     <Checkbox label={element.email} checked={element.checked} onChange={(ev, value) => {
                                                                         this.onChangeEmailCLList(value, element.email);
                                                                     }} />
-
                                                                 )
                                                                 }
                                                             </div>
@@ -1795,7 +1783,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                                         }
                                                                     </div>
                                                                 }
-
                                                                 {
                                                                     <div className={styles.usergroups}>
                                                                         CL-TAX-WF-{this.state.EngagementNumberSelected}
@@ -1808,9 +1795,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                                         }
                                                                     </div>
                                                                 }
-
                                                             </div> :
-
                                                             this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'Workflow' && this.state.AssuranceSplitRollover.length == 0 ?
                                                                 <div className={styles.userLists}>
                                                                     <div className={styles.usergroups}>
@@ -1833,7 +1818,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                                         }
                                                                     </div>
                                                                 </div> : ""}
-
                                                     </div>
                                                     {/* Do NOT DELETE THIS CODE */}
                                                     {/* Do NOT DELETE THIS CODE */}
@@ -1854,7 +1838,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
                                                 </div> : ""}
                                         </div>
-
                                         <div className={styles.pnppicker}>
                                             <PeoplePicker
                                                 context={this.props.spContext}
@@ -1867,27 +1850,23 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                 showHiddenInUI={false}
                                                 principalTypes={[PrincipalType.User]}
                                                 resolveDelay={1000}
-                                                ensureUser={false}
+                                                ensureUser={true}
                                                 personSelectionLimit={100}
                                                 placeholder="Enter name or email"
                                                 defaultSelectedUsers={this.state.addusers1}
+                                                errorMessage="Only users already in Active Directory may be added."
                                             />
-
                                             <span className={styles.optional}>optional</span>
                                         </div>
                                     </div>
-
                                     {this.state.showMessageBar && <OfficeUI.MessageBar
                                         messageBarType={this.state.MessageBarType}
                                         isMultiline={false}
                                         onDismiss={() => this.closeMessageBar()}
                                         dismissButtonAriaLabel="Close">
-
                                         {this.state.Message}
                                     </OfficeUI.MessageBar>}
-
                                 </div> : ""}
-
                             {this.state.currentScreen == 'screen4' ?
                                 <div className={styles.screenFour}>
                                     <div className={styles.freshRollover}>
@@ -1953,8 +1932,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     </div>
                                                 </div>
                                                 : ""}
-
-
                                             {this.state.TeamSelected == 'Advisory' && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Create New' ?
                                                 <div>
                                                     <div className={styles.engagementnames}>
@@ -1973,10 +1950,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                 : ""}
                                         </div>
                                     </div>
-
                                     <div className={styles.formcontrols}>
                                         <Label>The following users will automatically have access:</Label>
-
                                         <div className={styles.usersemail}>{this.state.emailaddress}</div>
                                         {this.state.PortalChoiceSelected == 'Create New' ?
                                             <div>
@@ -1984,24 +1959,19 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     <div className={styles.usergroupscopy}>
                                                         {
                                                             this.state.CLUserSelected.split(";").map(element =>
-
                                                                 <div className={styles.usersemails}>{element}</div>
-
                                                             )
                                                         }
                                                     </div> :
                                                     <div className={styles.userList}>
                                                         {
                                                             this.state.FinalAccessUserList.split(";").map(element =>
-
                                                                 <div className={styles.usersemail}>{element}</div>
-
                                                             )
                                                         }
                                                     </div>}
                                             </div>
                                             : ""}
-
                                         {this.state.PortalChoiceSelected == 'Rollover' ?
                                             <div>
                                                 {this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'Workflow' ?
@@ -2010,9 +1980,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                             <span>CRET-TAX-WF-{this.state.RolloverURL}</span>
                                                             {
                                                                 this.state.CRUserSelected.split(";").map(element =>
-
                                                                     <div className={styles.usersemails}>{element}</div>
-
                                                                 )
                                                             }
                                                         </div>
@@ -2020,23 +1988,18 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                             <span>CL-TAX-WF-{this.state.RolloverURL}</span>
                                                             {
                                                                 this.state.CLUserSelected.split(";").map(element =>
-
                                                                     <div className={styles.usersemails}>{element}</div>
-
                                                                 )
                                                             }
                                                         </div>
                                                     </div> :
-
                                                     this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'Workflow' && this.state.AssuranceSplitRollover.length == 0 ?
                                                         <div className={styles.userLists}>
                                                             <div className={styles.usergroupscopy}>
                                                                 <span>CRET-AUD-WF-{this.state.RolloverURL}</span>
                                                                 {
                                                                     this.state.CRUserSelected.split(";").map(element =>
-
                                                                         <div className={styles.usersemails}>{element}</div>
-
                                                                     )
                                                                 }
                                                             </div>
@@ -2044,33 +2007,26 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                                 <span>CL-AUD-WF-{this.state.RolloverURL}</span>
                                                                 {
                                                                     this.state.CLUserSelected.split(";").map(element =>
-
                                                                         <div className={styles.usersemails}>{element}</div>
-
                                                                     )
                                                                 }
                                                             </div>
                                                         </div> : ""}
                                                 {this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Rollover' ?
-
                                                     <div>
                                                         {/* Do NOT DELETE THIS CODE */}
                                                         {/* Do NOT DELETE THIS CODE */}
                                                         {/* Do NOT DELETE THIS CODE */}
                                                         {/* <AssuranceEngSplitRolloverDisplayUsers spContext={this.props.spContext} Data={this.state.AssuranceSplitRollover} Control={this.SetAssuranceSplitDataRollOver}></AssuranceEngSplitRolloverDisplayUsers> */}
                                                         <div className={styles.usergroupscopy}>
-
                                                             {this.state.CLUserSelected.length != 0 ? <Label>The following users will automatically have access:</Label> : ""}
                                                             {
                                                                 this.state.CLUserSelected.split(";").map(element =>
-
                                                                     <div className={styles.usersemails}>{element}</div>
-
                                                                 )
                                                             }
                                                         </div>
                                                     </div>
-
                                                     : ""}
                                             </div>
                                             : ""}
@@ -2082,11 +2038,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                             this.setState({ emailNotification: value });
                                         }} />
                                     </div>
-
                                     <div className={styles.formcontrol}>
-
-                                        {this.state.TeamSelected == 'Advisory' && this.state.PortalTypeSelected == 'Workflow' ?
-
+                                        {this.state.TeamSelected == 'Advisory' && // && this.state.PortalTypeSelected == 'Workflow' ?
                                             <div className={styles.labelprint}>
                                                 <DatePicker
                                                     label="Portal Expiration"
@@ -2096,15 +2049,38 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     onSelectDate={this._onSelectDate}
                                                     formatDate={this._onFormatDate}
                                                     minDate={minDate}
-                                                    value={this.state.portalExpiration}
+                                                    value={maxDate1} // was this.state.portalExpiration New date set to default to 36 months
                                                     maxDate={maxDate1}
                                                 />
-
                                                 {(this.state.validate && this.state.portalExpiration == null) ?
                                                     <div className={styles.reqval}>Portal Expiration is mandatory.</div> : ''}
                                             </div>
-
-                                            : <div className={styles.labelprint}>
+                                        }
+                                        {this.state.TeamSelected != 'Advisory' && this.state.PortalTypeSelected == 'Workflow' &&
+                                            // Assurance and Tax Workflow portals
+                                            <div className={styles.labelprint}>
+                                                <TooltipHost                                                     
+                                                    content="Files will be deleted from the portal on this date. The portal will available for rollover for an additional 6 months."
+                                                    directionalHint={DirectionalHint.rightCenter}                                                    
+                                                >
+                                                <DatePicker
+                                                    label="Portal Expiration"
+                                                    placeholder="MM/DD/YYYY"
+                                                    isRequired={true}
+                                                    ariaLabel="Select a Portal Expiration Date"
+                                                    onSelectDate={this._onSelectDateFileExp}
+                                                    formatDate={this._onFormatDate}
+                                                    minDate={minDate}
+                                                    maxDate={maxDate} // 12 months                                                    
+                                                    value={maxDate} // now 12 months.  was this.state.DateExtend                                                    
+                                                /></TooltipHost>
+                                                {(this.state.validate && this.state.DateExtend == null) ?
+                                                    <div className={styles.reqval}>Portal Expiration is mandatory.</div> : ''}
+                                            </div>
+                                        }
+                                        {this.state.TeamSelected != 'Advisory' && this.state.PortalTypeSelected != 'Workflow' &&
+                                            // Assurance File Exchange Portals
+                                            <div className={styles.labelprint}>
                                                 <DatePicker
                                                     label="Portal Expiration"
                                                     placeholder="MM/DD/YYYY"
@@ -2113,28 +2089,24 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     onSelectDate={this._onSelectDate2}
                                                     formatDate={this._onFormatDate}
                                                     minDate={minDate}
-                                                    maxDate={this.state.TeamSelected == 'Assurance' ? maxDate : maxDate1}
-                                                    value={this.state.DateExtend}
-
+                                                    maxDate={maxDate} // 12 months                                                    
+                                                    value={maxDate} // now 12 months.  was this.state.DateExtend                                                    
                                                 />
                                                 {(this.state.validate && this.state.DateExtend == null) ?
                                                     <div className={styles.reqval}>Portal Expiration is mandatory.</div> : ''}
-                                            </div>}
+                                            </div>
+                                        }
                                     </div>
                                     {this.state.success && this.state.IsPortalEntryCreated == "Y" ?
                                         <div>
                                             <Label className={styles.successMsg}>Thank you. Your portal is in the process of being created. You will receive an email notification shortly when your portal is active. Please close this window.</Label>
                                         </div> : ""
                                     }
-
-
                                     {!this.state.success && this.state.IsPortalEntryCreated == "N" ?
                                         <div>
                                             <Label className={styles.errormsg}>Something went wrong. Please refresh page and try to submit request again</Label>
                                         </div> : ""
                                     }
-
-
                                 </div> : ""}
 
                             {this.state.currentScreen == 'screen5' ?
@@ -2169,14 +2141,12 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                 <Text className={styles.engagementPrint}>.</Text>
                                             </div>
                                         </div>
-
                                     </div>
                                     <div className={styles.formcontrols}>
                                         <Label>Upload Investors</Label>
                                         <input type="file" onChange={this.OnFileSelect} id='newfile' name='newfile'
                                         ></input>
                                         <label className={styles.browsebutton} htmlFor={"newfile"}><span>Choose File</span></label>
-
                                         {this.state.K1FileName != "" ? <p className={styles.addedFile}><b>{this.state.K1FileName}</b> is selected to upload </p> : null}
                                         {(this.state.validate && this.state.K1FileName == "") ?
                                             <div className={styles.reqval}>Upload Investors is mandatory.</div> : ''}
@@ -2194,7 +2164,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                             this.setState({ emailNotification: value });
                                         }} />
                                     </div>
-
                                     <div className={styles.formcontrol}>
                                         <div className={styles.labelprint}>
                                             <DatePicker
@@ -2215,13 +2184,11 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                             <Label className={styles.successMsg}>Thank you. Your portal is in the process of being created. You will receive an email notification shortly when your portal is active. Please close this window.</Label>
                                         </div> : ""
                                     }
-
                                     {!this.state.success && this.state.IsPortalEntryCreated == "N" ?
                                         <div>
                                             <Label className={styles.errormsg}>Something went wrong. Please refresh page and try to submit request again</Label>
                                         </div> : ""
                                     }
-
                                 </div> : ""}
                         </div>
                         {(this.state.IsDuplicate) ?
@@ -2234,7 +2201,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                     <DefaultButton className={styles.backButton} disabled={this.state.disableBtn} text="Back" onClick={(event) => {
                                         this.previousDialog(event);
                                     }} /> : ""}
-
                                 <PrimaryButton
                                     className={styles.NextButton}
                                     disabled={this.state.disableBtn}
@@ -2245,7 +2211,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                 />
                             </div>
                         </DialogFooter>
-
                     </div>
                 </Dialog>
             </div >

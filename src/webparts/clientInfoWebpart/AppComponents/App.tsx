@@ -110,7 +110,7 @@ class App extends React.Component<IApp> {
 
       IsItemExists = await sp.web.lists.getByTitle("PBIReportUpdate").items.getAll().then(async (data) => {
         if((data.filter(x=> x.Title == ClientNumber && x.IsDatarefreshed == true).length == 0)){
-          await sp.web.lists.getByTitle("PBIReportUpdate").items.add(objToSave).then(async (data) => {
+          await sp.web.lists.getByTitle("PBIReportUpdate").items.add(objToSave).then(async (item) => {
             GlobalValues.errorTitle = "Success";
             GlobalValues.errorMsg = "Your request to refresh Dashboard data has been submitted successfully!!";
             this.ShowHideErrorDialog(true);

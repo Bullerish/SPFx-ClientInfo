@@ -885,7 +885,10 @@
             [class*="ms-TextField-fieldGroup"] {
               width: 260px;
             }
-          }
+          }          
+        }
+        [class^="ms-TooltipHost"] {
+          display: inline-block;
         }
       }
 
