@@ -565,10 +565,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
                 Engagementdata.filter(async (e) => {
 
-                    if (e.Title == item.name) {
-                     //   ExDate = (6) + '-' + (1) + '-' + (parseInt(e.WorkYear) + 2);
-                  //   ExDate = (6) + '-' + (1) + '-' + (parseInt(e.WorkYear) + 2);
-                     ExDate = (6) + '-' + (1) + '-' + ((today.getFullYear()) + 2);
+                    if (e.Title == item.name) {    
+                     ExDate = (6) + '-' + (1) + '-' + (parseInt(e.WorkYear) + 2);
+                     //ExDate = (6) + '-' + (1) + '-' + ((today.getFullYear()) + 2);
                         let dt = new Date(ExDate);
                         const ExDate1: Date = dt;
 
@@ -1315,7 +1314,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         return option;
     }
 
-    public onChangeYear = (event, item) => {
+    public onChangeYear = (event, item) => {        
         if (item) {
             this.setState({ Year: item.key });
 
@@ -1504,6 +1503,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                 <div className={styles.reqval}>Team is mandatory.</div> : ''}
                                         </div>}
                                     <div className={styles.engnumbername}>
+                                        <div className={`${styles.engagementnames} ${styles.column1}`}>
                                         <Label>Engagement Number<span className={styles.reqval}> *</span></Label>
                                         <TooltipHost
                                             content="Enter Engagement Number"
@@ -1524,7 +1524,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                         {(this.state.validate && this.state.EngagementNumberSelected == "") ?
                                             <div className={styles.reqval}>Invalid Engagement Number. Please enter a correct Engagement Number and try again.
                                             </div> : ''}
-                                        <div className={styles.engagementnames}>
+                                        </div>
+                                        <div className={`${styles.engagementnames} ${styles.column2}`}>
                                             <Label>Engagement Name</Label>
                                             <TooltipHost
                                                 content="Enter Engagement Name">
@@ -1533,24 +1534,26 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                         </div>
                                     </div>
                                     <div className={styles.engnumbername}>
-                                        <div className={styles.engagementnames}>
-                                            <Label>Year</Label>
+                                        <div className={`${styles.engagementnames} ${styles.column1}`}>
+                                            <Label>Year <span className={styles.reqval}> *</span></Label>
                                             {updatedworkyear == true ?
-                                                <OfficeUI.Dropdown
+                                                <Dropdown
                                                     placeholder="Select an option"
                                                     onChange={this.onChangeYear}
                                                     options={this.GetYearOption()}
-                                                    selectedKey={this.state.Year}
-                                                />
-
+                                                    selectedKey={this.state.Year}                                                    
+                                                />                                                
                                                 : <TextField disabled className={styles.engagementPrint} defaultValue={this.state.Year} />
                                             }
+                                            {(this.state.validate && (this.state.Year == "" || this.state.Year == null)) ?
+                                                <div className={styles.reqval}>Year is mandatory.</div> : ''
+                                            }
                                         </div>
-                                        <div className={styles.engagementnames}>
+                                        <div className={`${styles.engagementnames} ${styles.column2}`}>
                                             <PeoplePicker
                                                 context={this.props.spContext}
                                                 titleText="Site Owner"
-                                                showtooltip={true}
+                                                showtooltip={false}
                                                 isRequired={true}
                                                 selectedItems={(items) => this._getPeoplePickerItems(items)}
                                                 showHiddenInUI={false}
@@ -1867,12 +1870,11 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                 </div> : ""}
                                         </div>
                                         <div className={styles.pnppicker}>
-                                            <PeoplePicker
-                                                
+                                            <PeoplePicker                                                
                                                 context={this.props.spContext}
                                                 titleText={this.state.peoplePickerTitle}
                                                 groupName={""}
-                                                showtooltip={true}
+                                                showtooltip={false}
                                                 isRequired={false}
                                                 disabled={false}
                                                 selectedItems={(items) => this._getUserItems(items)}
@@ -2281,10 +2283,10 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
     private submitDialog = async (e) => {
 
-        if (this.state.currentScreen == "screen1") {
-
+        if (this.state.currentScreen == "screen1") {            
             if (this.state.EngagementNumberSelected == "" || this.state.addusers.length == 0
-                || this.state.PortalTypeSelected == "" || (this.state.TeamSelected == "" && this.state.PortalTypeSelected == 'K1')
+                || this.state.Year == null || this.state.PortalTypeSelected == "" 
+                || (this.state.TeamSelected == "" && this.state.PortalTypeSelected == 'K1')
             ) {
                 this.setState({
                     validate: true
