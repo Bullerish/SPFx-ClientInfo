@@ -167,6 +167,9 @@
           clear: both;
         }
 
+        .column1,.column2 {
+          width: 48%;
+        }
         // Radio Button for Portal Type and Team
         .innerChoice {
           width: 100%;
@@ -210,10 +213,9 @@
         }
 
         .engnumbername {
-          column-count: 2;
-          width       : 100%;
-          column-gap  : 20px;
-          margin      : 25px 0;
+          display: flex;  
+          justify-content: space-between;    
+          padding-top:20px;    
 
           Label {
             font-weight: 600;
@@ -885,7 +887,10 @@
             [class*="ms-TextField-fieldGroup"] {
               width: 260px;
             }
-          }
+          }          
+        }
+        [class^="ms-TooltipHost"] {
+          display: inline-block;
         }
       }
 
