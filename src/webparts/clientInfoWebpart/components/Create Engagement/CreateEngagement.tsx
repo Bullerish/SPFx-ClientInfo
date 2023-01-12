@@ -1087,8 +1087,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         this.setState({ showMessageBar: false });
     }
 
-    private _getPeoplePickerItems(items: any[]) {
-        console.log('do i ever get here?');
+    private _getPeoplePickerItems(items: any[]) {        
         this.spsetup();
         let getSelectedUsers = [];
         let getusersEmails = [];
