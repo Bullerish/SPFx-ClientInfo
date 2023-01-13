@@ -69,18 +69,10 @@ const PortalChoiceOptions1: IChoiceGroupOption[] = [
 
 let today: Date = new Date(Date.now());
 let minDate: Date = addMonths(today, 0);
-let maxDate: Date = addMonths(today, 12);
-let maxDate1: Date = addMonths(today, 36);
-
-const AudFeMax : Date = addDays(today, 180);
-const AdvFeMax : Date = addDays(today, 180);
-
-const AudWfMax : Date = addMonths(today, 12);
-const AdvWfMax : Date = addMonths(today, 12);
-const TaxWfMax : Date = addMonths(today, 12);
-
-
+let maxDate: Date = addMonths(today, 12); // for Tax and Assurance
+let advMax: Date = addMonths(today, 36); // for Advisory
 let portalExpDate: Date = addMonths(today, 18); // ADDED for site expiration different than file expiration
+
 const contentStyles = mergeStyleSets({
     body: {
         flex: "4 4 auto",
@@ -114,7 +106,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         EngagementName: [],
         EngagementNameSelected: "",
         EngagementNameSelected1: [],
-
         Rollover: false,
         isRollover: false,
         RolloverURL: "",
@@ -123,17 +114,12 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         UpdatedEngagementNumberSelected: "",
         EngagementNumberSelected1: [],
         EngID: "",
-
         PortalTypeURL: "",
         TeamURL: "",
-
-
         PortalType: "",
         PortalTypeSelected: "",
-
         Team: "",
         TeamSelected: "",
-
         Year: "",
         SiteOwner: "",
 
@@ -141,29 +127,22 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         addusersID: [],
         addusers: [],
         addusers1: [],
-
         emailaddress: [],
-
         PortalChoiceSelected: "",
+        
         //Screen 3 Var
-
         AdvisoryTemplate: [],
         AdvisoryTemplateSelected: "",
         AdvisoryTemplateSelectedKey: "",
         ServiceType: [],
         ServiceTypeSelected: "",
         ServiceTypeSelectedKey: "",
-
         IndustryType: [],
         IndustryTypeSelected: "",
         IndustryTypeSelectedKey: "",
-
         Supplemental: [],
         SupplementalSelected: "",
         SupplementalSelectedKey: "",
-
-
-
         subportaladdusersID: [],
         subportaladdusers: [],
         subportalemailaddress: [],
@@ -171,12 +150,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         CRUserSelected: "",
         CLUserList: [],
         CLUserSelected: "",
-
         CLPeoplePicker: [],
-
         AccessUserList: [],
         FinalAccessUserList: "",
-
         dialogbuttonname: "Next",
         cancelbuttonname: "Cancel",
         titleText: "",
@@ -184,14 +160,11 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         portalExpiration: null,
         fileExpiration: null,
         DateExtend: new Date(),
-
         K1Date: new Date(),
-
         Message: "",
         showMessageBar: false,
         MessageBarType: OfficeUI.MessageBarType.error,
         disableBtn: false,
-
         K1FileName: "",
         success: false,
         PortalsCreated: "",
@@ -199,7 +172,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         PortalId: "",
         Checkeng: false,
         AsuranceSplitData: {
-
             disabled: true,
             maxval: 0,
             setSliderValue: 0,
@@ -216,7 +188,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         peoplePickerTitle: "Add users for access to this subportal only:",
         showSpinner: false,
         IsPortalEntryCreated: ""
-
     };
 
     /**
@@ -566,8 +537,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 Engagementdata.filter(async (e) => {
 
                     if (e.Title == item.name) {    
-                     ExDate = (6) + '-' + (1) + '-' + (parseInt(e.WorkYear) + 2);
-                     //ExDate = (6) + '-' + (1) + '-' + ((today.getFullYear()) + 2);
+                        ExDate = (6) + '-' + (1) + '-' + (parseInt(e.WorkYear) + 2);                     
                         let dt = new Date(ExDate);
                         const ExDate1: Date = dt;
 
@@ -581,22 +551,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                             PortalsCreated: e.Portals_x0020_Created,
                             PortalId: e.PortalId
                         });
-
-                        if(this.state.PortalTypeSelected == "Workflow")
-                        {
-                            await this.setState({
-                                DateExtend: AdvWfMax,
-                                portalExpiration: AdvWfMax,
-                            });
-                        }
-                        else
-                        {
-                            await this.setState({
-                                DateExtend: AdvFeMax,
-                                portalExpiration: AdvFeMax,
-                            });
-                        }
-
                     }
                 });
             });
@@ -783,8 +737,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             if (this.state.PortalChoiceSelected == 'Rollover') {
                 PortalRollOver = true;
                 RolloverUrl = GlobalValues.SiteURL + "/" + this.state.TeamURL + "-" + this.state.PortalTypeURL + "-" + this.state.RolloverURL;
-            }
-            console.log('file expiration value is',this.state.fileExpiration);
+            }            
             return new Promise<number>((resolve, reject) => {
                 this.getListItemEntityTypeName(SPUrl, listname)
                     .then((listEntityName) => {
@@ -1101,6 +1054,19 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 this.setState({ addusersID: user.Id });
             });
         });
+    }
+
+    private _validateSiteOwner(items: any[]) {
+        // show error message if this is a guest user    
+        this.spsetup();
+        console.log('user email',items[0].secondaryText);        
+        let userEmail = items[0].secondaryText.toLowerCase();
+        if ((userEmail.indexOf('cohnreznick.com') == -1) && (userEmail.indexOf('cohnreznickdev') == -1)) {
+            // this is a guest user            
+        }
+        else {
+            this._getPeoplePickerItems(items);
+        }
     }
 
     private async _getUserItems(items: any[]) {
@@ -1554,16 +1520,16 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                 titleText="Site Owner"
                                                 showtooltip={false}
                                                 isRequired={true}
-                                                selectedItems={(items) => this._getPeoplePickerItems(items)}
+                                                selectedItems={(items) => this._validateSiteOwner(items)}
                                                 showHiddenInUI={false}
                                                 principalTypes={[PrincipalType.User]}
                                                 ensureUser={true}
                                                 personSelectionLimit={1}
                                                 placeholder="Enter name or email"                                                 
-                                                defaultSelectedUsers={this.state.addusers}                                                
+                                                defaultSelectedUsers={this.state.addusers}                                                                                             
                                             />
                                             {(this.state.validate && this.state.addusers.length == 0) ?
-                                              <div className={styles.reqval}>Site Owner is mandatory.</div> : ''
+                                              <div className={styles.reqval}>Site Owner is mandatory and must be a CohnReznick employee.</div> : ''
                                             }
                                         </div>
                                     </div>
@@ -2079,8 +2045,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     onSelectDate={this._onSelectDate}
                                                     formatDate={this._onFormatDate}
                                                     minDate={minDate}
-                                                    value={AdvWfMax} // was this.state.portalExpiration New date set to default to 36 months
-                                                    maxDate={AdvWfMax}
+                                                    value={advMax} // was this.state.portalExpiration New date set to default to 36 months
+                                                    maxDate={advMax}
                                                 />
                                                 {(this.state.validate && this.state.portalExpiration == null) ?
                                                     <div className={styles.reqval}>Portal Expiration is mandatory.</div> : ''}
@@ -2088,25 +2054,25 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                         }
                                         {this.state.TeamSelected != 'Advisory' && this.state.PortalTypeSelected == 'Workflow' &&
                                             // Assurance and Tax Workflow portals
-                                            <div className={styles.labelprint}>
-                                                <TooltipHost                                                     
-                                                    content="Files will be deleted from the portal on this date. The portal will available for rollover for an additional 6 months."
-                                                    directionalHint={DirectionalHint.rightCenter}                                                    
-                                                >
+                                            <div className={`{styles.labelprint} ${styles.fileExpDatePicker}`}>                                                
                                                 <DatePicker
-                                                    label="Portal Expiration"
+                                                    label="File Expiration"
                                                     placeholder="MM/DD/YYYY"
                                                     isRequired={true}
-                                                    ariaLabel="Select a Portal Expiration Date"
+                                                    ariaLabel="Select a File Expiration Date"
                                                     onSelectDate={this._onSelectDateFileExp}
                                                     formatDate={this._onFormatDate}
                                                     minDate={minDate}
                                                     maxDate={maxDate} // 12 months                                                    
                                                     value={maxDate} // now 12 months.  was this.state.DateExtend                                                    
-                                                /></TooltipHost>
+                                                />
+                                                <div className={styles.fileExpText}>
+                                                Files will be deleted from the portal on this date. The portal will available for rollover for an additional 6 months.
+                                                </div>
                                                 {(this.state.validate && this.state.DateExtend == null) ?
-                                                    <div className={styles.reqval}>Portal Expiration is mandatory.</div> : ''}
+                                                    <div className={styles.reqval}>File Expiration is mandatory.</div> : ''}                                                
                                             </div>
+                                            
                                         }
                                         {this.state.TeamSelected != 'Advisory' && this.state.PortalTypeSelected != 'Workflow' &&
                                             // Assurance File Exchange Portals

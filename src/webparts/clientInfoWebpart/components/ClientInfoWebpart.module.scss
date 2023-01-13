@@ -714,7 +714,7 @@
             margin-bottom: 15px;
 
             .engagementnames {
-              display: inline;
+              display: block;
 
               [class*="ms-Label"] {
                 font-size  : 12px;
@@ -887,10 +887,15 @@
             [class*="ms-TextField-fieldGroup"] {
               width: 260px;
             }
-          }          
-        }
-        [class^="ms-TooltipHost"] {
-          display: inline-block;
+          } 
+          .fileExpDatePicker {
+            display: flex;
+            align-items: end;
+          }
+          .fileExpText {
+            padding:0px 10px;
+            width: 50%;
+          }         
         }
       }
 
