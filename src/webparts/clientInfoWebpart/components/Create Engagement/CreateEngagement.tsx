@@ -1056,13 +1056,11 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         });
     }
 
-    private _validateSiteOwner(items: any[]) {
-        // show error message if this is a guest user    
-        this.spsetup();
-        console.log('user email',items[0].secondaryText);        
+    private _validateSiteOwner(items: any[]) {        
+        // show error message if this is a guest user                     
         let userEmail = items[0].secondaryText.toLowerCase();
         if ((userEmail.indexOf('cohnreznick.com') == -1) && (userEmail.indexOf('cohnreznickdev') == -1)) {
-            // this is a guest user            
+            // this is a guest user, do not validate
         }
         else {
             this._getPeoplePickerItems(items);
@@ -1323,9 +1321,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             }
 
             if (this.state.PortalTypeSelected == "K1") {
-               // ExDate = (6) + '-' + (1) + '-' + (parseInt(item.key) + 2);
-                ExDate = (6) + '-' + (1) + '-' + ((today.getFullYear()) + 2);
-
+                ExDate = (6) + '-' + (1) + '-' + (parseInt(item.key) + 2);
                 let dt = new Date(ExDate);
                 const ExDate1: Date = dt;
                 this.setState({
@@ -1517,7 +1513,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                         <div className={`${styles.engagementnames} ${styles.column2}`}>
                                             <PeoplePicker
                                                 context={this.props.spContext}
-                                                titleText="Site Owner"
+                                                titleText="Site Owner"                                                
                                                 showtooltip={false}
                                                 isRequired={true}
                                                 selectedItems={(items) => this._validateSiteOwner(items)}
@@ -1837,15 +1833,13 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                         <div className={styles.pnppicker}>
                                             <PeoplePicker                                                
                                                 context={this.props.spContext}
-                                                titleText={this.state.peoplePickerTitle}
-                                                groupName={""}
+                                                titleText={this.state.peoplePickerTitle}                                                
                                                 showtooltip={false}
                                                 isRequired={false}
-                                                disabled={false}
+                                                disabled={false}                                                
                                                 selectedItems={(items) => this._getUserItems(items)}
                                                 showHiddenInUI={false}
-                                                principalTypes={[PrincipalType.User]}
-                                                resolveDelay={1000}
+                                                principalTypes={[PrincipalType.User]}                                                
                                                 ensureUser={true}
                                                 personSelectionLimit={100}
                                                 placeholder="Enter name or email"
