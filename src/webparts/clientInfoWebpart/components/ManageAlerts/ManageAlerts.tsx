@@ -1,8 +1,9 @@
 import * as React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Modal, IDragOptions } from "office-ui-fabric-react/lib/Modal";
 import { DefaultButton } from "office-ui-fabric-react/lib/Button";
 import { GlobalValues } from "../../Dataprovider/GlobalValue";
+import { sp } from "@pnp/sp";
 
 
 
@@ -10,20 +11,17 @@ import { GlobalValues } from "../../Dataprovider/GlobalValue";
 
 // parent container Manage Alerts component
 const ManageAlerts = ({spContext, isAlertModalOpen, onAlertModalHide}) => {
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(isAlertModalOpen);
+  // const [isClientContextState, setIsClientContextState] = useState(spContext);
 
+  console.log(`test global clinet url: ${GlobalValues.ClientList}`);
 
-  // open the modal window
-  function showModal(): void {
-    setIsModalOpen(true);
-  }
-
-  // close the modal window
-  function closeModal(): void {
-    setIsModalOpen(false);
-  }
-
-
+  useEffect(() => {
+    async function getSubwebs() {
+      const subWebs = await sp.web.getSubwebsFilteredForCurrentUser()();
+      console.table(subWebs);
+    }
+    getSubwebs();
+  }, []);
 
   return (
     <div>
@@ -48,7 +46,7 @@ const ManageAlerts = ({spContext, isAlertModalOpen, onAlertModalHide}) => {
             ultrices, turpis sed malesuada gravida, eros ipsum venenatis elit,
             et volutpat eros dui et ante. Quisque ultricies mi nec leo ultricies
             mollis. Vivamus egestas volutpat lacinia. Quisque pharetra eleifend
-            efficitur.{" "}
+            efficitur.
           </p>
           <p>
             Nam id mi justo. Nam vehicula vulputate augue, ac pretium enim

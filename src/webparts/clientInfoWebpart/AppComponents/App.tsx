@@ -33,8 +33,6 @@ class App extends React.Component<IApp> {
     });
   }
 
-
-
   public onAlertModalHide = () => {
     this.showHideAlertsModal(false);
   }
@@ -85,7 +83,7 @@ class App extends React.Component<IApp> {
                 {IsPermissionPage == false ?
                   <div className={styles.flexinncontainer}>
                     <div>
-                      <DefaultButton onClick={() => this.setState({ isAlertModalOpen: true })}>Manage Alerts</DefaultButton>
+                      <Link href={"#"} onClick={() => this.setState({ isAlertModalOpen: true })}>Manage Alerts</Link>
                     </div>
                     {GlobalValues.isCRADUser ?
                       <div>
@@ -130,7 +128,7 @@ class App extends React.Component<IApp> {
       };
 
       IsItemExists = await sp.web.lists.getByTitle("PBIReportUpdate").items.getAll().then(async (data) => {
-        if((data.filter(x=> x.Title == ClientNumber && x.IsDatarefreshed == true).length == 0)){
+        if((data.filter(x=> x.Title == ClientNumber && x.IsDatarefreshed == true).length == 0)) {
           await sp.web.lists.getByTitle("PBIReportUpdate").items.add(objToSave).then(async (item) => {
             GlobalValues.errorTitle = "Success";
             GlobalValues.errorMsg = "Your request to refresh Dashboard data has been submitted successfully!!";
@@ -150,4 +148,5 @@ class App extends React.Component<IApp> {
     }
   }
 }
+
 export default App;
