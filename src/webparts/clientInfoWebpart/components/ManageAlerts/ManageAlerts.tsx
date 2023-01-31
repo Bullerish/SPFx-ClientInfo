@@ -5,23 +5,53 @@ import { DefaultButton } from "office-ui-fabric-react/lib/Button";
 import { GlobalValues } from "../../Dataprovider/GlobalValue";
 import { sp } from "@pnp/sp";
 
-
-
-
-
 // parent container Manage Alerts component
-const ManageAlerts = ({spContext, isAlertModalOpen, onAlertModalHide}) => {
-  // const [isClientContextState, setIsClientContextState] = useState(spContext);
+const ManageAlerts = ({ spContext, isAlertModalOpen, onAlertModalHide }) => {
+  const [subWebInfo, setSubWebInfo] = useState<any[]>([]);
 
-  console.log(`test global clinet url: ${GlobalValues.ClientList}`);
+  const hostUrl = window.location.host;
+  console.log("hosturl: ", hostUrl);
 
   useEffect(() => {
+    // get sub-portal information
     async function getSubwebs() {
-      const subWebs = await sp.web.getSubwebsFilteredForCurrentUser()();
-      console.table(subWebs);
+      const subWebs = await sp.web
+        .getSubwebsFilteredForCurrentUser()
+        .select("Title", "ServerRelativeUrl", "Id")
+        .orderBy("Created", false)();
+      // console.table(subWebs);
+      setSubWebInfo(subWebs);
     }
+
     getSubwebs();
   }, []);
+
+  // will run only if subWebInfo is changed
+  useEffect(() => {
+    if (subWebInfo.length > 0) {
+      // get current alerts set for user
+      // TODO: grab ServerRelativeUrl from getSubwebs(), build below fetch with hostUrl var and ServerRelativeUrl to check if current user has an alert set on sub-portal (additional work to be done to check which list in sub-portal)
+      fetch(
+        `https://${hostUrl}${subWebInfo[0].ServerRelativeUrl}/_api/web/alerts`,
+        {
+          headers: {
+            Accept: "application/json;odata=verbose",
+          },
+        }
+      )
+        .then((data) => {
+          return data.json();
+        })
+        .then((alert) => {
+          console.log(alert);
+        });
+    }
+  }, [subWebInfo]);
+
+  // using to test state updates
+  useEffect(() => {
+    console.log(subWebInfo);
+  }, [subWebInfo]);
 
   return (
     <div>
