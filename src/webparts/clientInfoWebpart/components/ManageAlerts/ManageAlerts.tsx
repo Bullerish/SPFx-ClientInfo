@@ -14,7 +14,8 @@ import {
   DetailsListLayoutMode,
   Selection,
   IColumn,
-  CheckboxVisibility
+  CheckboxVisibility,
+  SelectionMode,
 } from "office-ui-fabric-react/lib/DetailsList";
 import { MarqueeSelection } from "office-ui-fabric-react/lib/MarqueeSelection";
 import {
@@ -63,13 +64,16 @@ const ManageAlerts = ({ spContext, isAlertModalOpen, onAlertModalHide }) => {
   const [currentUserId, setCurrentUserId] = useState<IUserInfo>();
   const [items, setItems] = useState<ISubWeb[]>([]);
   const [selectionDetails, setSelectionDetails] = useState<any>();
+  const [alertSelectedSubPortals, setAlertSelectedSubPortals] = useState<
+    string[]
+  >([]);
   const [alertTypeItem, setAlertTypeItem] = useState<IDropdownOption>();
   const [alertFrequencyItem, setAlertFrequencyItem] =
     useState<IDropdownOption>();
 
   const hostUrl: string = window.location.host;
   const alertsArrayInfo: object[] = [];
-  const subWebsWithKey: object[] = [];
+  const subWebsWithKey: ISubWeb[] = [];
 
   // TODO: Assess and complete the implementation of DetailsList
   let selection: Selection;
@@ -104,15 +108,6 @@ const ManageAlerts = ({ spContext, isAlertModalOpen, onAlertModalHide }) => {
     },
   ];
 
-  // TODO: Create function to use to set a selection
-  // const setSelectionAlertItems = (alertItems: object[]) => {
-  //   // const subPortalType: string = '';
-
-  //   // console.log('alert items: ', alertItems);
-  //   console.log('subweb info items: ', subWebInfo);
-
-  // };
-
   // useEffect to get Subwebs
   useEffect(() => {
     console.log("In getSubwebs useEffect");
@@ -125,12 +120,13 @@ const ManageAlerts = ({ spContext, isAlertModalOpen, onAlertModalHide }) => {
       // console.table(subWebs);
 
       subWebs.forEach((subWebItem) => {
-        subWebItem.key = subWebItem.Id;
+        let subWebItemWithKey = { ...subWebItem, key: subWebItem.Id };
+        subWebsWithKey.push(subWebItemWithKey);
       });
 
-
-      // setSubWebInfo(subWebs);
-      // setItems(subWebs);
+      console.log(subWebsWithKey);
+      setSubWebInfo(subWebsWithKey);
+      setItems(subWebsWithKey);
     }
 
     async function getCurrentUserId() {
@@ -142,16 +138,16 @@ const ManageAlerts = ({ spContext, isAlertModalOpen, onAlertModalHide }) => {
     getSubwebs();
   }, []);
 
-  // will run only if subWebInfo is changed
+  // ^ will run only if subWebInfo is changed/Contains API call to Alerts endpoint
   useEffect(() => {
-    let subPortalTypeName: string = '';
-    let subPortalTypeFunc: string = '';
-    let subPortalType: string = '';
+    let subPortalTypeName: string = "";
+    let subPortalTypeFunc: string = "";
+    let subPortalType: string = "";
+    let alertsToSet: string[] = [];
 
     if (subWebInfo.length > 0 && currentUserId.Id) {
       console.log("In Alerts useEffect");
       // get current alerts set for user
-      // TODO: grab ServerRelativeUrl from getSubwebs(), build below fetch with hostUrl var and ServerRelativeUrl to check if current user has an alert set on sub-portal (additional work to be done to check which list in sub-portal)
       subWebInfo.forEach((item) => {
         fetch(
           `https://${hostUrl}${item.ServerRelativeUrl}/_api/web/alerts?$filter=UserId eq ${currentUserId.Id}`,
@@ -167,20 +163,31 @@ const ManageAlerts = ({ spContext, isAlertModalOpen, onAlertModalHide }) => {
           .then((alert) => {
             if (alert.d.results.length > 0) {
               // grab 3-letter acronym (name) and 2 letter function (func) and combine to form I.e. AUD-WF
-              subPortalTypeName = item.ServerRelativeUrl.split('/')[3].split('-')[0];
-              subPortalTypeFunc = item.ServerRelativeUrl.split('/')[3].split('-')[1];
-              subPortalType = subPortalTypeName + '-' + subPortalTypeFunc;
+              subPortalTypeName =
+                item.ServerRelativeUrl.split("/")[3].split("-")[0];
+              subPortalTypeFunc =
+                item.ServerRelativeUrl.split("/")[3].split("-")[1];
+              subPortalType = subPortalTypeName + "-" + subPortalTypeFunc;
 
-              console.log('subportal type: ', subPortalType);
+              console.log("subportal type: ", subPortalType);
 
-              if ((subPortalType === 'AUD-WF' || subPortalType === 'TAX-WF') && alert.d.results.length === 3) {
-                console.log('in set items in alerts call');
-
-                  selection.setKeySelected(item.Id, true, false);
-
+              if (
+                (subPortalType === "AUD-WF" || subPortalType === "TAX-WF") &&
+                alert.d.results.length === 3
+              ) {
+                console.log("in set items in alerts call");
+                console.log(item.Id);
+                alertsToSet.push(item.Id);
+              } else if (
+                (subPortalType === "AUD-FE" || subPortalType === "ADV-FE") &&
+                alert.d.results.length === 1
+              ) {
+                console.log(item.Id);
+                alertsToSet.push(item.Id);
               }
 
               alertsArrayInfo.push(alert);
+              setAlertSelectedSubPortals(alertsToSet);
             }
           })
           .catch((error) => {
@@ -194,16 +201,32 @@ const ManageAlerts = ({ spContext, isAlertModalOpen, onAlertModalHide }) => {
   }, [subWebInfo, currentUserId]);
 
   // using to test state updates
-  // useEffect(() => {
-  //   // console.log(subWebInfo);
-  //   // console.log(currentAlertsInfo);
-  //   // console.log("currentUserId: ", currentUserId);
-  // }, [subWebInfo, currentAlertsInfo, currentUserId]);
+  useEffect(() => {
+    console.log('isAlertModalOpen Value: ', isAlertModalOpen);
+    if (isAlertModalOpen) {
+      console.log('in If condition for isAlertModalOpen');
 
-  // useEffect(() => {
-  //   console.log("Alert Type Item: ", alertTypeItem);
-  //   console.log("Alert Frequency Item: ", alertFrequencyItem);
-  // }, [alertTypeItem, alertFrequencyItem]);
+      setTimeout(() => {
+        alertSelectedSubPortals.forEach((alertItem) => {
+          console.log(alertItem);
+          selection.setKeySelected(alertItem, true, false);
+        });
+      }, 1000);
+    }
+
+  }, [isAlertModalOpen]);
+
+
+  // TODO: create function to set subportals from alerts to selected for user
+  // const setSelectedSubPortals = () => {
+  //   if (isAlertModalOpen) {
+  //     console.log('in If condition for isAlertModalOpen');
+  //     alertSelectedSubPortals.forEach((alertItem) => {
+  //       console.log(alertItem);
+  //       selection.setKeySelected(alertItem, true, false);
+  //     });
+  //   }
+  // };
 
   // onChange function fired when user changes selection on Alert Type dropdown
   const onAlertTypeChange = (
@@ -234,7 +257,7 @@ const ManageAlerts = ({ spContext, isAlertModalOpen, onAlertModalHide }) => {
 
   selection = new Selection({
     onSelectionChanged: () => setSelectionDetails(getSelectionDetails()),
-    getKey: (item: any) => item.Id
+    getKey: (item: any) => item.key,
   });
 
   return (
@@ -261,6 +284,9 @@ const ManageAlerts = ({ spContext, isAlertModalOpen, onAlertModalHide }) => {
               columns={columns}
               checkboxVisibility={CheckboxVisibility.always}
               setKey="set"
+              onShouldVirtualize={() => false}
+              // onDidUpdate={() => setSelectedSubPortals()}
+              selectionMode={SelectionMode.multiple}
               // styles={{ root: { height: "500px" } }}
               layoutMode={DetailsListLayoutMode.justified}
               constrainMode={1}
@@ -306,7 +332,17 @@ const ManageAlerts = ({ spContext, isAlertModalOpen, onAlertModalHide }) => {
           />
         </div>
         <DialogFooter>
-          <PrimaryButton onClick={() => onAlertModalHide(true)} text="Save" />
+          {/* TODO: change save button to call function that checks for alerts list at client level, if no list then create it and then add the alert item */}
+          <PrimaryButton
+            onClick={() =>
+              selection.setKeySelected(
+                "d06aa1a8-4523-4ecd-9660-965dedf7732f",
+                true,
+                false
+              )
+            }
+            text="Save Alerts"
+          />
           <DefaultButton onClick={() => onAlertModalHide(true)} text="Cancel" />
         </DialogFooter>
       </Dialog>
