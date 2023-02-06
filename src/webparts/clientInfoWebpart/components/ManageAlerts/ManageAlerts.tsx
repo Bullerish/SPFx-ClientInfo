@@ -63,7 +63,7 @@ const ManageAlerts = ({ spContext, isAlertModalOpen, onAlertModalHide }) => {
   const [currentAlertsInfo, setCurrentAlertsInfo] = useState<object[]>([]);
   const [currentUserId, setCurrentUserId] = useState<IUserInfo>();
   const [items, setItems] = useState<ISubWeb[]>([]);
-  const [selectionDetails, setSelectionDetails] = useState<any>();
+  const [selectionDetails, setSelectionDetails] = useState<any>([]);
   const [alertSelectedSubPortals, setAlertSelectedSubPortals] = useState<
     string[]
   >([]);
@@ -182,7 +182,7 @@ const ManageAlerts = ({ spContext, isAlertModalOpen, onAlertModalHide }) => {
                 (subPortalType === "AUD-FE" || subPortalType === "ADV-FE") &&
                 alert.d.results.length === 1
               ) {
-                console.log(item.Id);
+                // console.log(item.Id);
                 alertsToSet.push(item.Id);
               }
 
@@ -216,17 +216,15 @@ const ManageAlerts = ({ spContext, isAlertModalOpen, onAlertModalHide }) => {
 
   }, [isAlertModalOpen]);
 
+  useEffect(() => {
+    console.log('in selectionDetails useEffect');
+    console.log(selectionDetails);
+  }, [selectionDetails]);
 
-  // TODO: create function to set subportals from alerts to selected for user
-  // const setSelectedSubPortals = () => {
-  //   if (isAlertModalOpen) {
-  //     console.log('in If condition for isAlertModalOpen');
-  //     alertSelectedSubPortals.forEach((alertItem) => {
-  //       console.log(alertItem);
-  //       selection.setKeySelected(alertItem, true, false);
-  //     });
-  //   }
-  // };
+  // TODO: create function to handle onClick event handler that will check for a list (UserAlertsList), if it doesn't exist it'll be created
+  const saveAlertsToList = (): void => {
+    console.log(selectionDetails);
+  };
 
   // onChange function fired when user changes selection on Alert Type dropdown
   const onAlertTypeChange = (
@@ -251,12 +249,13 @@ const ManageAlerts = ({ spContext, isAlertModalOpen, onAlertModalHide }) => {
   // TODO: Need to get selection details and formulate to write to list
   const getSelectionDetails = () => {
     const selectionItems = selection.getSelection();
-
-    console.log(selectionItems);
+    // console.log(selectionItems);
+    setSelectionDetails(selectionItems);
   };
 
+  // init new selection to get each selected sub-portal
   selection = new Selection({
-    onSelectionChanged: () => setSelectionDetails(getSelectionDetails()),
+    onSelectionChanged: () => setSelectionDetails(selection.getSelection()),  // getSelectionDetails()
     getKey: (item: any) => item.key,
   });
 
@@ -334,13 +333,7 @@ const ManageAlerts = ({ spContext, isAlertModalOpen, onAlertModalHide }) => {
         <DialogFooter>
           {/* TODO: change save button to call function that checks for alerts list at client level, if no list then create it and then add the alert item */}
           <PrimaryButton
-            onClick={() =>
-              selection.setKeySelected(
-                "d06aa1a8-4523-4ecd-9660-965dedf7732f",
-                true,
-                false
-              )
-            }
+            onClick={saveAlertsToList}
             text="Save Alerts"
           />
           <DefaultButton onClick={() => onAlertModalHide(true)} text="Cancel" />
