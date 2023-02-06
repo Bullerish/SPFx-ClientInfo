@@ -142,13 +142,22 @@ const ManageAlerts = ({
           subWebItem.ServerRelativeUrl.split("/")[3].split("-")[1];
         subPortalType = subPortalTypeName + "-" + subPortalTypeFunc;
 
-        if (subPortalType === 'AUD-WF' || subPortalType === 'ADV-FE' || subPortalType === 'TAX-WF' || subPortalType === 'AUD-FE') {
-          let subWebItemWithKey = { ...subWebItem, key: subWebItem.Id, subPortalType: subPortalType };
+        if (
+          subPortalType === "AUD-WF" ||
+          subPortalType === "ADV-FE" ||
+          subPortalType === "TAX-WF" ||
+          subPortalType === "AUD-FE"
+        ) {
+          let subWebItemWithKey = {
+            ...subWebItem,
+            key: subWebItem.Id,
+            subPortalType: subPortalType,
+          };
           subWebsWithKey.push(subWebItemWithKey);
         }
       });
 
-      console.log(subWebsWithKey);
+      // console.log(subWebsWithKey);
       setSubWebInfo(subWebsWithKey);
       setItems(subWebsWithKey);
     }
@@ -162,7 +171,7 @@ const ManageAlerts = ({
     getSubwebs();
   }, []);
 
-  // * will run only if subWebInfo is changed/Contains API call to Alerts endpoint
+  // * will run only if subWebInfo is changed/Contains API call to Alerts endpoint (fetches existing alerts)
   useEffect(() => {
     let subPortalTypeName: string = "";
     let subPortalTypeFunc: string = "";
@@ -231,13 +240,14 @@ const ManageAlerts = ({
 
       setTimeout(() => {
         alertSelectedSubPortals.forEach((alertItem) => {
-          console.log(alertItem);
+          // console.log(alertItem);
           selection.setKeySelected(alertItem, true, false);
         });
-      }, 1000);
+      }, 500);
     }
   }, [isAlertModalOpen]);
 
+  // only used for tracking/logging state values
   useEffect(() => {
     console.log("in selectionDetails useEffect");
     console.log(selectionDetails);
@@ -258,10 +268,26 @@ const ManageAlerts = ({
       const serverRelativeUrlField: IFieldAddResult =
         await clientPortalWeb.lists
           .getByTitle(userAlertsList)
-          .fields.addText("ServerRelativeUrl", 255);
+          .fields.addMultilineText(
+            "ServerRelativeUrl",
+            6,
+            true,
+            false,
+            false,
+            true
+          );
       const userId: IFieldAddResult = await clientPortalWeb.lists
         .getByTitle(userAlertsList)
         .fields.addText("UserId", 255);
+      const absoluteURL: IFieldAddResult = await clientPortalWeb.lists
+        .getByTitle(userAlertsList)
+        .fields.addText("AbsoluteUrl", 255);
+      const alertType: IFieldAddResult = await clientPortalWeb.lists
+        .getByTitle(userAlertsList)
+        .fields.addText("AlertType", 255);
+      const alertFrequency: IFieldAddResult = await clientPortalWeb.lists
+        .getByTitle(userAlertsList)
+        .fields.addText("AlertFrequency", 255);
     } else {
       console.log("list already existed!!!");
     }
@@ -272,8 +298,7 @@ const ManageAlerts = ({
     event: React.FormEvent<HTMLDivElement>,
     item: IDropdownOption
   ): void => {
-    // console.log(`Selection change: ${item.text} ${item.selected ? 'selected' : 'unselected'}`);
-    // console.log('Alert Type Item: ', item);
+    console.log("Alert Type Item: ", item);
     setAlertTypeItem(item);
   };
 
@@ -282,8 +307,7 @@ const ManageAlerts = ({
     event: React.FormEvent<HTMLDivElement>,
     item: IDropdownOption
   ): void => {
-    // console.log(`Selection change: ${item.text} ${item.selected ? 'selected' : 'unselected'}`);
-    // console.log('Alert Type Item: ', item);
+    console.log("Alert Type Item: ", item);
     setAlertFrequencyItem(item);
   };
 
