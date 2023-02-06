@@ -26,6 +26,10 @@ import {
 import { GlobalValues } from "../../Dataprovider/GlobalValue";
 import { mergeStyles } from "office-ui-fabric-react/lib/Styling";
 import { sp } from "@pnp/sp";
+import { IFieldAddResult } from "@pnp/sp/fields/types";
+import { Web } from "@pnp/sp/webs";
+import "@pnp/sp/lists";
+import "@pnp/sp/fields";
 
 const detailsListContainerStyles = mergeStyles({
   height: 700,
@@ -58,7 +62,11 @@ export interface IDetailsListBasicExampleState {
 }
 
 // parent container Manage Alerts component
-const ManageAlerts = ({ spContext, isAlertModalOpen, onAlertModalHide }) => {
+const ManageAlerts = ({
+  spContext,
+  isAlertModalOpen,
+  onAlertModalHide,
+}): JSX.Element => {
   const [subWebInfo, setSubWebInfo] = useState<ISubWeb[]>([]);
   const [currentAlertsInfo, setCurrentAlertsInfo] = useState<object[]>([]);
   const [currentUserId, setCurrentUserId] = useState<IUserInfo>();
@@ -72,12 +80,16 @@ const ManageAlerts = ({ spContext, isAlertModalOpen, onAlertModalHide }) => {
     useState<IDropdownOption>();
 
   const hostUrl: string = window.location.host;
+  const absoluteUrl: string = spContext.pageContext._web.absoluteUrl;
+  const clientPortalWeb = Web(absoluteUrl);
+
+  const userAlertsList = "UserAlertsList";
   const alertsArrayInfo: object[] = [];
   const subWebsWithKey: ISubWeb[] = [];
 
   // TODO: Assess and complete the implementation of DetailsList
   let selection: Selection;
-  let allItems = [];
+  let itemDetailsToBeSaved = [];
   let columns: IColumn[];
 
   // column settings for data being displayed in DetailsList
@@ -108,20 +120,32 @@ const ManageAlerts = ({ spContext, isAlertModalOpen, onAlertModalHide }) => {
     },
   ];
 
-  // useEffect to get Subwebs
+  // * useEffect to get Subwebs
   useEffect(() => {
+    let subPortalTypeName: string = "";
+    let subPortalTypeFunc: string = "";
+    let subPortalType: string = "";
     console.log("In getSubwebs useEffect");
     // get sub-portal information
     async function getSubwebs() {
-      const subWebs = await sp.web
+      const subWebs = await clientPortalWeb
         .getSubwebsFilteredForCurrentUser()
         .select("Title", "ServerRelativeUrl", "Id")
         .orderBy("Created", false)();
       // console.table(subWebs);
 
       subWebs.forEach((subWebItem) => {
-        let subWebItemWithKey = { ...subWebItem, key: subWebItem.Id };
-        subWebsWithKey.push(subWebItemWithKey);
+        // split on serverRelativeUrl to create SubPortalType
+        subPortalTypeName =
+          subWebItem.ServerRelativeUrl.split("/")[3].split("-")[0];
+        subPortalTypeFunc =
+          subWebItem.ServerRelativeUrl.split("/")[3].split("-")[1];
+        subPortalType = subPortalTypeName + "-" + subPortalTypeFunc;
+
+        if (subPortalType === 'AUD-WF' || subPortalType === 'ADV-FE' || subPortalType === 'TAX-WF' || subPortalType === 'AUD-FE') {
+          let subWebItemWithKey = { ...subWebItem, key: subWebItem.Id, subPortalType: subPortalType };
+          subWebsWithKey.push(subWebItemWithKey);
+        }
       });
 
       console.log(subWebsWithKey);
@@ -138,7 +162,7 @@ const ManageAlerts = ({ spContext, isAlertModalOpen, onAlertModalHide }) => {
     getSubwebs();
   }, []);
 
-  // ^ will run only if subWebInfo is changed/Contains API call to Alerts endpoint
+  // * will run only if subWebInfo is changed/Contains API call to Alerts endpoint
   useEffect(() => {
     let subPortalTypeName: string = "";
     let subPortalTypeFunc: string = "";
@@ -175,8 +199,8 @@ const ManageAlerts = ({ spContext, isAlertModalOpen, onAlertModalHide }) => {
                 (subPortalType === "AUD-WF" || subPortalType === "TAX-WF") &&
                 alert.d.results.length === 3
               ) {
-                console.log("in set items in alerts call");
-                console.log(item.Id);
+                // console.log("in set items in alerts call");
+                // console.log(item.Id);
                 alertsToSet.push(item.Id);
               } else if (
                 (subPortalType === "AUD-FE" || subPortalType === "ADV-FE") &&
@@ -200,11 +224,10 @@ const ManageAlerts = ({ spContext, isAlertModalOpen, onAlertModalHide }) => {
     }
   }, [subWebInfo, currentUserId]);
 
-  // using to test state updates
+  // * for setting the pre-existing alerts on the DetailsList UI for user
   useEffect(() => {
-    console.log('isAlertModalOpen Value: ', isAlertModalOpen);
     if (isAlertModalOpen) {
-      console.log('in If condition for isAlertModalOpen');
+      console.log("in If condition for isAlertModalOpen");
 
       setTimeout(() => {
         alertSelectedSubPortals.forEach((alertItem) => {
@@ -213,17 +236,35 @@ const ManageAlerts = ({ spContext, isAlertModalOpen, onAlertModalHide }) => {
         });
       }, 1000);
     }
-
   }, [isAlertModalOpen]);
 
   useEffect(() => {
-    console.log('in selectionDetails useEffect');
+    console.log("in selectionDetails useEffect");
     console.log(selectionDetails);
   }, [selectionDetails]);
 
   // TODO: create function to handle onClick event handler that will check for a list (UserAlertsList), if it doesn't exist it'll be created
-  const saveAlertsToList = (): void => {
+  const saveAlertsToList = async () => {
     console.log(selectionDetails);
+
+    const alertsListEnsureResult = await clientPortalWeb.lists.ensure(
+      userAlertsList
+    );
+
+    if (alertsListEnsureResult.created) {
+      console.log("list was created somewhere!!!!!");
+
+      // since list was newly created, need to add all the relevant columns/fields
+      const serverRelativeUrlField: IFieldAddResult =
+        await clientPortalWeb.lists
+          .getByTitle(userAlertsList)
+          .fields.addText("ServerRelativeUrl", 255);
+      const userId: IFieldAddResult = await clientPortalWeb.lists
+        .getByTitle(userAlertsList)
+        .fields.addText("UserId", 255);
+    } else {
+      console.log("list already existed!!!");
+    }
   };
 
   // onChange function fired when user changes selection on Alert Type dropdown
@@ -246,16 +287,15 @@ const ManageAlerts = ({ spContext, isAlertModalOpen, onAlertModalHide }) => {
     setAlertFrequencyItem(item);
   };
 
-  // TODO: Need to get selection details and formulate to write to list
-  const getSelectionDetails = () => {
-    const selectionItems = selection.getSelection();
-    // console.log(selectionItems);
-    setSelectionDetails(selectionItems);
-  };
+  // const getSelectionDetails = () => {
+  //   const selectionItems = selection.getSelection();
+  //   // console.log(selectionItems);
+  //   setSelectionDetails(selectionItems);
+  // };
 
   // init new selection to get each selected sub-portal
   selection = new Selection({
-    onSelectionChanged: () => setSelectionDetails(selection.getSelection()),  // getSelectionDetails()
+    onSelectionChanged: () => setSelectionDetails(selection.getSelection()), // getSelectionDetails()
     getKey: (item: any) => item.key,
   });
 
@@ -332,10 +372,7 @@ const ManageAlerts = ({ spContext, isAlertModalOpen, onAlertModalHide }) => {
         </div>
         <DialogFooter>
           {/* TODO: change save button to call function that checks for alerts list at client level, if no list then create it and then add the alert item */}
-          <PrimaryButton
-            onClick={saveAlertsToList}
-            text="Save Alerts"
-          />
+          <PrimaryButton onClick={saveAlertsToList} text="Save Alerts" />
           <DefaultButton onClick={() => onAlertModalHide(true)} text="Cancel" />
         </DialogFooter>
       </Dialog>
