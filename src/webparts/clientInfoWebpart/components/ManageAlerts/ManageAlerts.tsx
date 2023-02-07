@@ -94,7 +94,7 @@ const ManageAlerts = ({
   let itemDetailsToBeSaved = [];
   let columns: IColumn[];
 
-  // column settings for data being displayed in DetailsList
+  // TODO: Update columns to reflect matter number and sub-portal type
   columns = [
     {
       key: "column1",
@@ -106,16 +106,16 @@ const ManageAlerts = ({
     },
     {
       key: "column2",
-      name: "Id",
-      fieldName: "Id",
+      name: "Matter Number",
+      fieldName: "matterNumber",
       minWidth: 100,
       maxWidth: 200,
       isResizable: true,
     },
     {
       key: "column3",
-      name: "Relative Path",
-      fieldName: "ServerRelativeUrl",
+      name: "Portal Type",
+      fieldName: "typeOfSubPortal",
       minWidth: 100,
       maxWidth: 210,
       isResizable: true,
@@ -127,13 +127,21 @@ const ManageAlerts = ({
     let subPortalTypeName: string = "";
     let subPortalTypeFunc: string = "";
     let subPortalType: string = "";
+    let determinesPortalType: boolean;
+    let typeOfSubPortal: string = '';
+
+    let matterNumber: string = '';
+    let matterPieceOne: string = '';
+    let matterPieceTwo: string = '';
+    let matterPieceThree: string = '';
+
     console.log("In getSubwebs useEffect");
     // get sub-portal information
     async function getSubwebs() {
       const subWebs = await clientPortalWeb
         .getSubwebsFilteredForCurrentUser()
         .select("Title", "ServerRelativeUrl", "Id")
-        .orderBy("Created", false)();
+        .orderBy("Title", true)();
       // console.table(subWebs);
 
       subWebs.forEach((subWebItem) => {
@@ -143,17 +151,31 @@ const ManageAlerts = ({
         subPortalTypeFunc =
           subWebItem.ServerRelativeUrl.split("/")[3].split("-")[1];
         subPortalType = subPortalTypeName + "-" + subPortalTypeFunc;
+        // check if string contains WF, if true then Workflow, if false then File Exchange
+        determinesPortalType = subPortalType.indexOf('WF') !== -1;
+
+        matterPieceOne = subWebItem.ServerRelativeUrl.split('/')[3].split('-')[2];
+        matterPieceTwo = subWebItem.ServerRelativeUrl.split('/')[3].split('-')[3];
+        matterPieceThree = subWebItem.ServerRelativeUrl.split('/')[3].split('-')[4];
+        matterNumber = matterPieceOne + '-' + matterPieceTwo + '-' + matterPieceThree;
 
         if (
           subPortalType === "AUD-WF" ||
-          subPortalType === "ADV-FE" ||
           subPortalType === "TAX-WF" ||
           subPortalType === "AUD-FE"
         ) {
+          if (determinesPortalType === true) {
+            typeOfSubPortal = 'Workflow';
+          } else {
+            typeOfSubPortal = 'File Exchange';
+          }
+
           let subWebItemWithKey = {
             ...subWebItem,
             key: subWebItem.Id,
             subPortalType: subPortalType,
+            typeOfSubPortal: typeOfSubPortal,
+            matterNumber: matterNumber
           };
           subWebsWithKey.push(subWebItemWithKey);
         }
@@ -269,7 +291,7 @@ const ManageAlerts = ({
     // formulate object to input as payload below
     listItem = {
       Title: currentUserId.UserPrincipalName,
-      UserId: currentUserId.Id.toString(),
+      UserPrincipalName: currentUserId.UserPrincipalName,
       AbsoluteUrl: absoluteUrl,
       AlertType: alertTypeItem.key,
       AlertFrequency: alertFrequencyItem.key,
