@@ -30,6 +30,7 @@ import { IFieldAddResult } from "@pnp/sp/fields/types";
 import { Web } from "@pnp/sp/webs";
 import "@pnp/sp/lists";
 import "@pnp/sp/fields";
+import "@pnp/sp/items";
 
 const detailsListContainerStyles = mergeStyles({
   height: 700,
@@ -251,10 +252,34 @@ const ManageAlerts = ({
   useEffect(() => {
     console.log("in selectionDetails useEffect");
     console.log(selectionDetails);
+    console.log('userIdInfo: ', currentUserId);
   }, [selectionDetails]);
 
-  // TODO: create function to handle onClick event handler that will check for a list (UserAlertsList), if it doesn't exist it'll be created
-  const saveAlertsToList = async () => {
+  // TODO: Formulate list item info/object and add list item to list
+  const addUserAlertsListItem = async () => {
+    let listItem: object = {};
+    console.log('in AddUserAlertslistItem Func');
+
+    selectionDetails.forEach(el => {
+      // console.log(el);
+      itemDetailsToBeSaved.push(el.ServerRelativeUrl);
+    });
+
+    listItem = {
+      Title: currentUserId.UserPrincipalName,
+      UserId: currentUserId.Id,
+      AbsoluteUrl: absoluteUrl,
+      AlertType: alertTypeItem.key,
+      AlertFrequency: alertFrequencyItem.key,
+      ServerRelativeUrl: itemDetailsToBeSaved.toString().replace(/,/g, ';')
+    };
+
+    console.log('item details to be saved: ', listItem);
+
+  };
+
+  // * checks for UserAlertsList, if it doesn't exist it gets created then columns will be added
+  const ensureAlertsListExists = async () => {
     console.log(selectionDetails);
 
     const alertsListEnsureResult = await clientPortalWeb.lists.ensure(
@@ -288,8 +313,11 @@ const ManageAlerts = ({
       const alertFrequency: IFieldAddResult = await clientPortalWeb.lists
         .getByTitle(userAlertsList)
         .fields.addText("AlertFrequency", 255);
+
+        addUserAlertsListItem();
     } else {
       console.log("list already existed!!!");
+      addUserAlertsListItem();
     }
   };
 
@@ -396,7 +424,7 @@ const ManageAlerts = ({
         </div>
         <DialogFooter>
           {/* TODO: change save button to call function that checks for alerts list at client level, if no list then create it and then add the alert item */}
-          <PrimaryButton onClick={saveAlertsToList} text="Save Alerts" />
+          <PrimaryButton onClick={ensureAlertsListExists} text="Save Alerts" />
           <DefaultButton onClick={() => onAlertModalHide(true)} text="Cancel" />
         </DialogFooter>
       </Dialog>
