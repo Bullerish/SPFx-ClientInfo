@@ -23,7 +23,7 @@ import {
   DropdownMenuItemType,
   IDropdownOption,
 } from "office-ui-fabric-react/lib/Dropdown";
-import { GlobalValues } from "../../Dataprovider/GlobalValue";
+// import { GlobalValues } from "../../Dataprovider/GlobalValue";
 import { mergeStyles } from "office-ui-fabric-react/lib/Styling";
 import { sp } from "@pnp/sp";
 import { IFieldAddResult } from "@pnp/sp/fields/types";
@@ -31,6 +31,7 @@ import { Web } from "@pnp/sp/webs";
 import "@pnp/sp/lists";
 import "@pnp/sp/fields";
 import "@pnp/sp/items";
+import { IItemAddResult } from "@pnp/sp/items";
 
 const detailsListContainerStyles = mergeStyles({
   height: 700,
@@ -76,9 +77,9 @@ const ManageAlerts = ({
   const [alertSelectedSubPortals, setAlertSelectedSubPortals] = useState<
     string[]
   >([]);
-  const [alertTypeItem, setAlertTypeItem] = useState<IDropdownOption>();
+  const [alertTypeItem, setAlertTypeItem] = useState<IDropdownOption>({key: 'allChanges', text: 'All Changes'});
   const [alertFrequencyItem, setAlertFrequencyItem] =
-    useState<IDropdownOption>();
+    useState<IDropdownOption>({key: 'immediately', text: 'Send notification immediately'});
 
   const hostUrl: string = window.location.host;
   const absoluteUrl: string = spContext.pageContext._web.absoluteUrl;
@@ -265,9 +266,10 @@ const ManageAlerts = ({
       itemDetailsToBeSaved.push(el.ServerRelativeUrl);
     });
 
+    // formulate object to input as payload below
     listItem = {
       Title: currentUserId.UserPrincipalName,
-      UserId: currentUserId.Id,
+      UserId: currentUserId.Id.toString(),
       AbsoluteUrl: absoluteUrl,
       AlertType: alertTypeItem.key,
       AlertFrequency: alertFrequencyItem.key,
@@ -275,6 +277,10 @@ const ManageAlerts = ({
     };
 
     console.log('item details to be saved: ', listItem);
+
+    const itemAddResult: IItemAddResult = await clientPortalWeb.lists.getByTitle(userAlertsList).items.add(listItem);
+
+    console.log('itemAddResult: ', itemAddResult);
 
   };
 
