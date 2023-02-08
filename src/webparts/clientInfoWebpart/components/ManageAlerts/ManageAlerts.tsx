@@ -34,6 +34,11 @@ import "@pnp/sp/fields";
 import "@pnp/sp/items";
 import { IItemAddResult } from "@pnp/sp/items";
 
+const addDetailsListContainerStyles = mergeStyles({
+  height: 300,
+  overflowY: "scroll",
+});
+
 const detailsListContainerStyles = mergeStyles({
   height: 700,
   overflowY: "scroll",
@@ -97,6 +102,7 @@ const ManageAlerts = ({
 
   // TODO: Assess and complete the implementation of DetailsList
   let selection: Selection;
+  let selectionForAlertsToAdd: Selection;
   let itemDetailsToBeSaved = [];
   let columns: IColumn[] = [
     {
@@ -306,7 +312,7 @@ const ManageAlerts = ({
   useEffect(() => {
     console.log("in selectionDetails useEffect");
     console.log(selectionDetails);
-    console.log('userIdInfo: ', currentUserId);
+    console.log('currentAlertsInfo: ', currentAlertsInfo);
   }, [selectionDetails]);
 
   // TODO: Formulate list item info/object and add list item to list
@@ -393,12 +399,12 @@ const ManageAlerts = ({
     }
   };
 
-  // TODO: filter items based on sub-portal name
+  // * function that runs when the user enters text into the Filter text box
   const onChangeFilterText = (ev: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, text: string): void => {
     setItems(text ? subWebInfo.filter(i => i.Title.toLowerCase().indexOf(text) > -1) : subWebInfo);
   };
 
-  // onChange function fired when user changes selection on Alert Type dropdown
+  // * onChange function fired when user changes selection on Alert Type dropdown
   const onAlertTypeChange = (
     event: React.FormEvent<HTMLDivElement>,
     item: IDropdownOption
@@ -407,7 +413,7 @@ const ManageAlerts = ({
     setAlertTypeItem(item);
   };
 
-  // onChange function fired when user changes selection on Alert Frequency
+  // * onChange function fired when user changes selection on Alert Frequency
   const onAlertFrequencyChange = (
     event: React.FormEvent<HTMLDivElement>,
     item: IDropdownOption
@@ -416,15 +422,22 @@ const ManageAlerts = ({
     setAlertFrequencyItem(item);
   };
 
-  // const getSelectionDetails = () => {
-  //   const selectionItems = selection.getSelection();
-  //   // console.log(selectionItems);
-  //   setSelectionDetails(selectionItems);
-  // };
+  // TODO: function to capture items selected by user and adds them to top DetailsList Component and removes them from bottom DetailsList component
+  const getSelectionDetails = () => {
+    const selectionItems = selection.getSelection();
+    console.log(selectionItems);
+    setSelectionDetails(selectionItems);
+  };
 
-  // init new selection to get each selected sub-portal
+   // this selection controls what sub-portal items get added to the "Alerts to be Added" DetailsList at top of page
+   selectionForAlertsToAdd = new Selection({
+    onSelectionChanged: () => getSelectionDetails(),
+    getKey: (item: any) => item.key,
+  });
+
+  // this selection controls what sub-portal items get added to the "Alerts to be Added" DetailsList at top of page
   selection = new Selection({
-    onSelectionChanged: () => setSelectionDetails(selection.getSelection()), // getSelectionDetails()
+    onSelectionChanged: () => getSelectionDetails(),
     getKey: (item: any) => item.key,
   });
 
@@ -445,6 +458,27 @@ const ManageAlerts = ({
         }}
         // styles={{ root: { maxHeight: 700 } }}
       >
+        <div className={addDetailsListContainerStyles}>
+          <MarqueeSelection selection={selection}>
+            <DetailsList
+              items={selectionDetails}
+              columns={columns}
+              checkboxVisibility={CheckboxVisibility.always}
+              setKey="set"
+              onShouldVirtualize={() => false}
+              selectionMode={SelectionMode.single}
+              // styles={{ root: { height: "500px" } }}
+              layoutMode={DetailsListLayoutMode.justified}
+              constrainMode={1}
+              selection={selectionForAlertsToAdd}
+              selectionPreservedOnEmptyClick={true}
+              ariaLabelForSelectionColumn="Toggle selection"
+              ariaLabelForSelectAllCheckbox="Toggle selection for all items"
+              checkButtonAriaLabel="Row checkbox"
+              // onItemInvoked={onItemInvoked}
+            />
+          </MarqueeSelection>
+        </div>
         <TextField label="Filter by Sub-Portal Name:" onChange={onChangeFilterText} className={filterControlStyles} />
         <div className={detailsListContainerStyles}>
           <MarqueeSelection selection={selection}>
@@ -454,7 +488,6 @@ const ManageAlerts = ({
               checkboxVisibility={CheckboxVisibility.always}
               setKey="set"
               onShouldVirtualize={() => false}
-              // onDidUpdate={() => setSelectedSubPortals()}
               selectionMode={SelectionMode.multiple}
               // styles={{ root: { height: "500px" } }}
               layoutMode={DetailsListLayoutMode.justified}
