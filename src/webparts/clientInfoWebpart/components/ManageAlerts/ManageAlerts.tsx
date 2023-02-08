@@ -23,11 +23,12 @@ import {
   DropdownMenuItemType,
   IDropdownOption,
 } from "office-ui-fabric-react/lib/Dropdown";
+import { TextField } from 'office-ui-fabric-react/lib/TextField';
 // import { GlobalValues } from "../../Dataprovider/GlobalValue";
 import { mergeStyles } from "office-ui-fabric-react/lib/Styling";
 import { sp } from "@pnp/sp";
 import { IFieldAddResult } from "@pnp/sp/fields/types";
-import { Web } from "@pnp/sp/webs";
+// import { Web } from "@pnp/sp/webs";
 import "@pnp/sp/lists";
 import "@pnp/sp/fields";
 import "@pnp/sp/items";
@@ -42,6 +43,11 @@ const alertSettingsContainerStyles = mergeStyles({
   display: "flex",
   justifyContent: "space-around",
   padding: "15px 0 15px 0",
+});
+
+const filterControlStyles = mergeStyles({
+  margin: '0 30px 20px 0',
+  maxWidth: '300px'
 });
 
 // for subwebs call
@@ -83,7 +89,7 @@ const ManageAlerts = ({
 
   const hostUrl: string = window.location.host;
   const absoluteUrl: string = spContext.pageContext._web.absoluteUrl;
-  const clientPortalWeb = Web(absoluteUrl);
+  // const clientPortalWeb = Web(absoluteUrl);
 
   const userAlertsList = "UserAlertsList";
   const alertsArrayInfo: object[] = [];
@@ -92,10 +98,7 @@ const ManageAlerts = ({
   // TODO: Assess and complete the implementation of DetailsList
   let selection: Selection;
   let itemDetailsToBeSaved = [];
-  let columns: IColumn[];
-
-  // TODO: Update columns to reflect matter number and sub-portal type
-  columns = [
+  let columns: IColumn[] = [
     {
       key: "column1",
       name: "Sub-Portal Name",
@@ -120,7 +123,35 @@ const ManageAlerts = ({
       maxWidth: 210,
       isResizable: true,
     },
-  ];
+  ];;
+
+  // // TODO: Update columns to reflect matter number and sub-portal type
+  // columns: IColumn[] = [
+  //   {
+  //     key: "column1",
+  //     name: "Sub-Portal Name",
+  //     fieldName: "Title",
+  //     minWidth: 100,
+  //     maxWidth: 200,
+  //     isResizable: true,
+  //   },
+  //   {
+  //     key: "column2",
+  //     name: "Matter Number",
+  //     fieldName: "matterNumber",
+  //     minWidth: 100,
+  //     maxWidth: 200,
+  //     isResizable: true,
+  //   },
+  //   {
+  //     key: "column3",
+  //     name: "Portal Type",
+  //     fieldName: "typeOfSubPortal",
+  //     minWidth: 100,
+  //     maxWidth: 210,
+  //     isResizable: true,
+  //   },
+  // ];
 
   // * useEffect to get Subwebs
   useEffect(() => {
@@ -138,7 +169,7 @@ const ManageAlerts = ({
     console.log("In getSubwebs useEffect");
     // get sub-portal information
     async function getSubwebs() {
-      const subWebs = await clientPortalWeb
+      const subWebs = await sp.web
         .getSubwebsFilteredForCurrentUser()
         .select("Title", "ServerRelativeUrl", "Id")
         .orderBy("Title", true)();
@@ -295,12 +326,14 @@ const ManageAlerts = ({
       AbsoluteUrl: absoluteUrl,
       AlertType: alertTypeItem.key,
       AlertFrequency: alertFrequencyItem.key,
-      ServerRelativeUrl: itemDetailsToBeSaved.toString().replace(/,/g, ';')
+      AlertsToAdd: itemDetailsToBeSaved.toString().replace(/,/g, ';'),
+      // TODO: factor logic for items to be deleted and input data here similar to AlertsToAdd
+      AlertsToDelete: ''
     };
 
     console.log('item details to be saved: ', listItem);
 
-    const itemAddResult: IItemAddResult = await clientPortalWeb.lists.getByTitle(userAlertsList).items.add(listItem);
+    const itemAddResult: IItemAddResult = await sp.web.lists.getByTitle(userAlertsList).items.add(listItem);
 
     console.log('itemAddResult: ', itemAddResult);
 
@@ -310,7 +343,7 @@ const ManageAlerts = ({
   const ensureAlertsListExists = async () => {
     console.log(selectionDetails);
 
-    const alertsListEnsureResult = await clientPortalWeb.lists.ensure(
+    const alertsListEnsureResult = await sp.web.lists.ensure(
       userAlertsList
     );
 
@@ -318,27 +351,38 @@ const ManageAlerts = ({
       console.log("list was created somewhere!!!!!");
 
       // since list was newly created, need to add all the relevant columns/fields
-      const serverRelativeUrlField: IFieldAddResult =
-        await clientPortalWeb.lists
+      const alertsToAddField: IFieldAddResult =
+        await sp.web.lists
           .getByTitle(userAlertsList)
           .fields.addMultilineText(
-            "ServerRelativeUrl",
+            "AlertsToAdd",
             6,
             true,
             false,
             false,
             true
           );
-      const userId: IFieldAddResult = await clientPortalWeb.lists
+          const alertsToDeleteField: IFieldAddResult =
+        await sp.web.lists
+          .getByTitle(userAlertsList)
+          .fields.addMultilineText(
+            "AlertsToDelete",
+            6,
+            true,
+            false,
+            false,
+            true
+          );
+      const UserPrincipalNameField: IFieldAddResult = await sp.web.lists
         .getByTitle(userAlertsList)
-        .fields.addText("UserId", 255);
-      const absoluteURL: IFieldAddResult = await clientPortalWeb.lists
+        .fields.addText("UserPrincipalName", 255);
+      const absoluteURLField: IFieldAddResult = await sp.web.lists
         .getByTitle(userAlertsList)
         .fields.addText("AbsoluteUrl", 255);
-      const alertType: IFieldAddResult = await clientPortalWeb.lists
+      const alertTypeField: IFieldAddResult = await sp.web.lists
         .getByTitle(userAlertsList)
         .fields.addText("AlertType", 255);
-      const alertFrequency: IFieldAddResult = await clientPortalWeb.lists
+      const alertFrequencyField: IFieldAddResult = await sp.web.lists
         .getByTitle(userAlertsList)
         .fields.addText("AlertFrequency", 255);
 
@@ -347,6 +391,11 @@ const ManageAlerts = ({
       console.log("list already existed!!!");
       addUserAlertsListItem();
     }
+  };
+
+  // TODO: filter items based on sub-portal name
+  const onChangeFilterText = (ev: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, text: string): void => {
+    setItems(text ? subWebInfo.filter(i => i.Title.toLowerCase().indexOf(text) > -1) : subWebInfo);
   };
 
   // onChange function fired when user changes selection on Alert Type dropdown
@@ -396,6 +445,7 @@ const ManageAlerts = ({
         }}
         // styles={{ root: { maxHeight: 700 } }}
       >
+        <TextField label="Filter by Sub-Portal Name:" onChange={onChangeFilterText} className={filterControlStyles} />
         <div className={detailsListContainerStyles}>
           <MarqueeSelection selection={selection}>
             <DetailsList
