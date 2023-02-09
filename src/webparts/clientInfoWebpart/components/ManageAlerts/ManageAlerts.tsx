@@ -35,12 +35,12 @@ import "@pnp/sp/items";
 import { IItemAddResult } from "@pnp/sp/items";
 
 const addDetailsListContainerStyles = mergeStyles({
-  height: 300,
+  height: 250,
   overflowY: "scroll",
 });
 
 const detailsListContainerStyles = mergeStyles({
-  height: 700,
+  height: 500,
   overflowY: "scroll",
 });
 
@@ -84,6 +84,7 @@ const ManageAlerts = ({
   const [currentAlertsInfo, setCurrentAlertsInfo] = useState<object[]>([]);
   const [currentUserId, setCurrentUserId] = useState<IUserInfo>();
   const [items, setItems] = useState<ISubWeb[]>([]);
+  const [itemsToBeAddedForAlerts, setItemsToBeAddedForAlerts] = useState<ISubWeb[]>([]);
   const [selectionDetails, setSelectionDetails] = useState<any>([]);
   const [alertSelectedSubPortals, setAlertSelectedSubPortals] = useState<
     string[]
@@ -100,7 +101,7 @@ const ManageAlerts = ({
   const alertsArrayInfo: object[] = [];
   const subWebsWithKey: ISubWeb[] = [];
 
-  // TODO: Assess and complete the implementation of DetailsList
+
   let selection: Selection;
   let selectionForAlertsToAdd: Selection;
   let itemDetailsToBeSaved = [];
@@ -131,33 +132,6 @@ const ManageAlerts = ({
     },
   ];;
 
-  // // TODO: Update columns to reflect matter number and sub-portal type
-  // columns: IColumn[] = [
-  //   {
-  //     key: "column1",
-  //     name: "Sub-Portal Name",
-  //     fieldName: "Title",
-  //     minWidth: 100,
-  //     maxWidth: 200,
-  //     isResizable: true,
-  //   },
-  //   {
-  //     key: "column2",
-  //     name: "Matter Number",
-  //     fieldName: "matterNumber",
-  //     minWidth: 100,
-  //     maxWidth: 200,
-  //     isResizable: true,
-  //   },
-  //   {
-  //     key: "column3",
-  //     name: "Portal Type",
-  //     fieldName: "typeOfSubPortal",
-  //     minWidth: 100,
-  //     maxWidth: 210,
-  //     isResizable: true,
-  //   },
-  // ];
 
   // * useEffect to get Subwebs
   useEffect(() => {
@@ -220,6 +194,7 @@ const ManageAlerts = ({
 
       // console.log(subWebsWithKey);
       setSubWebInfo(subWebsWithKey);
+      console.log('refetch of subwebs occured::::');
       setItems(subWebsWithKey);
     }
 
@@ -269,18 +244,16 @@ const ManageAlerts = ({
                 (subPortalType === "AUD-WF" || subPortalType === "TAX-WF") &&
                 alert.d.results.length === 3
               ) {
-                // console.log("in set items in alerts call");
-                // console.log(item.Id);
                 alertsToSet.push(item.Id);
               } else if (
                 (subPortalType === "AUD-FE" || subPortalType === "ADV-FE") &&
                 alert.d.results.length === 1
               ) {
-                // console.log(item.Id);
                 alertsToSet.push(item.Id);
               }
 
               alertsArrayInfo.push(alert);
+              // console.log(alertsToSet);
               setAlertSelectedSubPortals(alertsToSet);
             }
           })
@@ -302,6 +275,7 @@ const ManageAlerts = ({
       setTimeout(() => {
         alertSelectedSubPortals.forEach((alertItem) => {
           // console.log(alertItem);
+          // selection.setKeySelected(alertItem, true, false);
           selection.setKeySelected(alertItem, true, false);
         });
       }, 500);
@@ -310,10 +284,11 @@ const ManageAlerts = ({
 
   // only used for tracking/logging state values
   useEffect(() => {
-    console.log("in selectionDetails useEffect");
-    console.log(selectionDetails);
-    console.log('currentAlertsInfo: ', currentAlertsInfo);
-  }, [selectionDetails]);
+    // console.log("in selectionDetails useEffect");
+    // console.log(selectionDetails);
+    // console.log('currentAlertsInfo: ', currentAlertsInfo);
+    // console.log('logging items array: ', items);
+  });
 
   // TODO: Formulate list item info/object and add list item to list
   const addUserAlertsListItem = async () => {
@@ -424,14 +399,42 @@ const ManageAlerts = ({
 
   // TODO: function to capture items selected by user and adds them to top DetailsList Component and removes them from bottom DetailsList component
   const getSelectionDetails = () => {
+    let selectedItem: number;
+    let newArrayForAddAlerts = [];
+    let x;
+    let subWebInfoClone = subWebInfo;
+
     const selectionItems = selection.getSelection();
-    console.log(selectionItems);
+    const selectionGetItems = selection.getItems();
+
+    // console.log('selection items: ', selectionItems);
+    // console.log('get items: ', selectionGetItems);
+    console.log('subWebInfoClone length: ', subWebInfoClone.length);
+
+    selectionItems.forEach(item => {
+      subWebInfoClone.forEach(i => {
+        if (item.key === i.key) {
+          selectedItem = subWebInfoClone.indexOf(i);
+          x = subWebInfoClone.splice(selectedItem, 1);
+          newArrayForAddAlerts.push(x[0]);
+        }
+      });
+    });
+
+    console.log('subWebInfoClone length after splice: ', subWebInfoClone.length);
+
+
+    console.log('newArrayForAddAlerts: ', newArrayForAddAlerts);
+
+    setItemsToBeAddedForAlerts(newArrayForAddAlerts);
+    setItems(subWebInfoClone);
+
     setSelectionDetails(selectionItems);
   };
 
-   // this selection controls what sub-portal items get added to the "Alerts to be Added" DetailsList at top of page
+   // TODO: selection handler for when user selects an item in the top DetailsList comp
    selectionForAlertsToAdd = new Selection({
-    onSelectionChanged: () => getSelectionDetails(),
+    // onSelectionChanged: () => getSelectionDetails(),
     getKey: (item: any) => item.key,
   });
 
@@ -459,9 +462,9 @@ const ManageAlerts = ({
         // styles={{ root: { maxHeight: 700 } }}
       >
         <div className={addDetailsListContainerStyles}>
-          <MarqueeSelection selection={selection}>
+          <MarqueeSelection selection={selectionForAlertsToAdd}>
             <DetailsList
-              items={selectionDetails}
+              items={itemsToBeAddedForAlerts}
               columns={columns}
               checkboxVisibility={CheckboxVisibility.always}
               setKey="set"
@@ -534,7 +537,6 @@ const ManageAlerts = ({
           />
         </div>
         <DialogFooter>
-          {/* TODO: change save button to call function that checks for alerts list at client level, if no list then create it and then add the alert item */}
           <PrimaryButton onClick={ensureAlertsListExists} text="Save Alerts" />
           <DefaultButton onClick={() => onAlertModalHide(true)} text="Cancel" />
         </DialogFooter>
