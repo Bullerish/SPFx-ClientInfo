@@ -2024,7 +2024,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     onSelectDate={this._onSelectDate}
                                                     formatDate={this._onFormatDate}
                                                     minDate={minDate}
-                                                    value={advMax} // was this.state.portalExpiration New date set to default to 36 months
+                                                    value={this.state.portalExpiration != null ? this.state.portalExpiration : advMax} // was this.state.portalExpiration New date set to default to 36 months
                                                     maxDate={advMax}
                                                 />
                                                 {(this.state.validate && this.state.portalExpiration == null) ?
@@ -2043,7 +2043,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     formatDate={this._onFormatDate}
                                                     minDate={minDate}
                                                     maxDate={maxDate} // 12 months                                                    
-                                                    value={maxDate} // now 12 months.  was this.state.DateExtend                                                    
+                                                    value={this.state.fileExpiration != null ? this.state.fileExpiration : maxDate} // was maxDate                  
+                                                    // value should be the max date unless the user picked somethign different
+                                                                                                        
                                                 />
                                                 <div className={styles.fileExpText}>
                                                 Files will be deleted from the portal on this date. The portal will available for rollover for an additional 6 months.
@@ -2065,7 +2067,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     formatDate={this._onFormatDate}
                                                     minDate={minDate}
                                                     maxDate={maxDate} // 12 months                                                    
-                                                    value={maxDate} // now 12 months.  was this.state.DateExtend                                                    
+                                                    value={this.state.fileExpiration != null ? this.state.fileExpiration : maxDate} // now 12 months.  was this.state.DateExtend                                                    
                                                 />
                                                 {(this.state.validate && this.state.DateExtend == null) ?
                                                     <div className={styles.reqval}>Portal Expiration is mandatory.</div> : ''}
