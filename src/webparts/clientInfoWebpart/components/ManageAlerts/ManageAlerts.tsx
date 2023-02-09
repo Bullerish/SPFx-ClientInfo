@@ -376,7 +376,12 @@ const ManageAlerts = ({
 
   // * function that runs when the user enters text into the Filter text box
   const onChangeFilterText = (ev: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, text: string): void => {
-    setItems(text ? subWebInfo.filter(i => i.Title.toLowerCase().indexOf(text) > -1) : subWebInfo);
+
+    const output: any[] = subWebInfo.filter(obj => {
+      return itemsToBeAddedForAlerts.indexOf(obj) === -1;
+    });
+
+    setItems(text ? output.filter(i => i.Title.toLowerCase().indexOf(text) > -1) : output);
   };
 
   // * onChange function fired when user changes selection on Alert Type dropdown
@@ -401,35 +406,34 @@ const ManageAlerts = ({
   const getSelectionDetails = () => {
     let selectedItem: number;
     let newArrayForAddAlerts = [];
-    let x;
-    let subWebInfoClone = subWebInfo;
+    let testArr = [];
+    // let subWebInfoClone = subWebInfo;
 
     const selectionItems = selection.getSelection();
     const selectionGetItems = selection.getItems();
 
-    // console.log('selection items: ', selectionItems);
-    // console.log('get items: ', selectionGetItems);
-    console.log('subWebInfoClone length: ', subWebInfoClone.length);
+    console.log('loggin selectionGetItems: ', selectionGetItems);
 
-    selectionItems.forEach(item => {
-      subWebInfoClone.forEach(i => {
-        if (item.key === i.key) {
-          selectedItem = subWebInfoClone.indexOf(i);
-          x = subWebInfoClone.splice(selectedItem, 1);
-          newArrayForAddAlerts.push(x[0]);
-        }
-      });
+
+    newArrayForAddAlerts = [...selectionItems];
+
+    console.log('newArrayForAddAlerts', newArrayForAddAlerts);
+
+    setItemsToBeAddedForAlerts(itemsToBeAddedForAlerts => [...itemsToBeAddedForAlerts, ...selectionItems as any[]]);
+
+
+    const output: any[] = selectionGetItems.filter(obj => {
+      return selectionItems.indexOf(obj) === -1;
     });
 
-    console.log('subWebInfoClone length after splice: ', subWebInfoClone.length);
+    console.log('logging output: ', output);
 
 
-    console.log('newArrayForAddAlerts: ', newArrayForAddAlerts);
 
-    setItemsToBeAddedForAlerts(newArrayForAddAlerts);
-    setItems(subWebInfoClone);
+    // setItemsToBeAddedForAlerts(newArrayForAddAlerts);
+    setItems(output);
 
-    setSelectionDetails(selectionItems);
+    // setSelectionDetails(selectionDetails);
   };
 
    // TODO: selection handler for when user selects an item in the top DetailsList comp
