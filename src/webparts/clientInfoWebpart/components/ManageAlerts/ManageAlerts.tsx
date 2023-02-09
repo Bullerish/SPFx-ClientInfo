@@ -40,7 +40,7 @@ const addDetailsListContainerStyles = mergeStyles({
 });
 
 const detailsListContainerStyles = mergeStyles({
-  height: 500,
+  height: 400,
   overflowY: "scroll",
 });
 
@@ -99,6 +99,7 @@ const ManageAlerts = ({
 
   const userAlertsList = "UserAlertsList";
   const alertsArrayInfo: object[] = [];
+  const existingAlerts: object[] = [];
   const subWebsWithKey: ISubWeb[] = [];
 
   let selection: Selection;
@@ -212,6 +213,7 @@ const ManageAlerts = ({
     let subPortalType: string = "";
     let alertsToSet: string[] = [];
 
+
     if (subWebInfo.length > 0 && currentUserId.Id) {
       console.log("In Alerts useEffect");
       // get current alerts set for user
@@ -243,15 +245,19 @@ const ManageAlerts = ({
                 alert.d.results.length === 3
               ) {
                 alertsToSet.push(item.Id);
+                // testing creating existing alert array
+                existingAlerts.push({ subPortId: item.Id, subPortRelativeUrl: item.ServerRelativeUrl, alertId: alert.d.results[0].ID });
+
               } else if (
-                (subPortalType === "AUD-FE" || subPortalType === "ADV-FE") &&
+                (subPortalType === "AUD-FE"/* || subPortalType === "ADV-FE"*/) &&
                 alert.d.results.length === 1
-              ) {
-                alertsToSet.push(item.Id);
+                ) {
+                  alertsToSet.push(item.Id);
+                  existingAlerts.push({ subPortId: item.Id, subPortRelativeUrl: item.ServerRelativeUrl, alertId: alert.d.results[0].ID });
               }
 
               alertsArrayInfo.push(alert);
-              // console.log(alertsToSet);
+
               setAlertSelectedSubPortals(alertsToSet);
             }
           })
@@ -260,6 +266,7 @@ const ManageAlerts = ({
             throw new Error("There has been an error fetching Alerts Data");
           });
       });
+      console.log('logging existingAlerts arr: ', existingAlerts);
       setCurrentAlertsInfo(alertsArrayInfo);
       // setSelectionAlertItems(alertsArrayInfo);
     }
@@ -284,11 +291,12 @@ const ManageAlerts = ({
   useEffect(() => {
     // console.log("in selectionDetails useEffect");
     // console.log(selectionDetails);
-    // console.log('currentAlertsInfo: ', currentAlertsInfo);
+    console.log('currentAlertsInfo: ', currentAlertsInfo);
+    console.log('alert selected subportals: ', alertSelectedSubPortals);
     // console.log('logging items array: ', items);
   });
 
-  // TODO: Formulate list item info/object and add list item to list
+  // TODO: Need to add Alerts to delete in the payload to the user list
   const addUserAlertsListItem = async () => {
     let listItem: object = {};
     console.log('in AddUserAlertslistItem Func');
@@ -406,7 +414,7 @@ const ManageAlerts = ({
     const selectionItems = selectionForAlertsToAdd.getSelection();
     const selectionGetItems = selectionForAlertsToAdd.getItems();
 
-    console.log('loggin selectionGetItems: ', selectionGetItems);
+    // console.log('loggin selectionGetItems: ', selectionGetItems);
     // console.log('newArrayForAddAlerts', newArrayForAddAlerts);
 
     setItems(items => [...items, ...selectionItems as any[]]);
@@ -415,7 +423,7 @@ const ManageAlerts = ({
       return selectionItems.indexOf(obj) === -1;
     });
 
-    console.log('logging output: ', output);
+    // console.log('logging output: ', output);
 
     setItemsToBeAddedForAlerts(output);
   };
@@ -428,8 +436,8 @@ const ManageAlerts = ({
     const selectionItems = selection.getSelection();
     const selectionGetItems = selection.getItems();
 
-    console.log('loggin selectionGetItems: ', selectionGetItems);
-    console.log('newArrayForAddAlerts', newArrayForAddAlerts);
+    // console.log('loggin selectionGetItems: ', selectionGetItems);
+    // console.log('newArrayForAddAlerts', newArrayForAddAlerts);
 
     setItemsToBeAddedForAlerts(itemsToBeAddedForAlerts => [...itemsToBeAddedForAlerts, ...selectionItems as any[]]);
 
@@ -437,7 +445,7 @@ const ManageAlerts = ({
       return selectionItems.indexOf(obj) === -1;
     });
 
-    console.log('logging output: ', output);
+    // console.log('logging output: ', output);
 
     setItems(output);
   };
