@@ -101,7 +101,6 @@ const ManageAlerts = ({
   const alertsArrayInfo: object[] = [];
   const subWebsWithKey: ISubWeb[] = [];
 
-
   let selection: Selection;
   let selectionForAlertsToAdd: Selection;
   let itemDetailsToBeSaved = [];
@@ -131,7 +130,6 @@ const ManageAlerts = ({
       isResizable: true,
     },
   ];;
-
 
   // * useEffect to get Subwebs
   useEffect(() => {
@@ -320,7 +318,7 @@ const ManageAlerts = ({
 
   };
 
-  // * checks for UserAlertsList, if it doesn't exist it gets created then columns will be added
+  // checks for UserAlertsList, if it doesn't exist it gets created then columns will be added
   const ensureAlertsListExists = async () => {
     console.log(selectionDetails);
 
@@ -374,7 +372,7 @@ const ManageAlerts = ({
     }
   };
 
-  // * function that runs when the user enters text into the Filter text box
+  // function that runs when the user enters text into the Filter text box
   const onChangeFilterText = (ev: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, text: string): void => {
 
     const output: any[] = subWebInfo.filter(obj => {
@@ -384,7 +382,7 @@ const ManageAlerts = ({
     setItems(text ? output.filter(i => i.Title.toLowerCase().indexOf(text) > -1) : output);
   };
 
-  // * onChange function fired when user changes selection on Alert Type dropdown
+  // onChange function fired when user changes selection on Alert Type dropdown
   const onAlertTypeChange = (
     event: React.FormEvent<HTMLDivElement>,
     item: IDropdownOption
@@ -393,7 +391,7 @@ const ManageAlerts = ({
     setAlertTypeItem(item);
   };
 
-  // * onChange function fired when user changes selection on Alert Frequency
+  // onChange function fired when user changes selection on Alert Frequency
   const onAlertFrequencyChange = (
     event: React.FormEvent<HTMLDivElement>,
     item: IDropdownOption
@@ -403,24 +401,15 @@ const ManageAlerts = ({
   };
 
   // TODO: function to capture items selected by user and adds them to top DetailsList Component and removes them from bottom DetailsList component
-  const getSelectionDetails = () => {
-    let selectedItem: number;
-    let newArrayForAddAlerts = [];
-    let testArr = [];
-    // let subWebInfoClone = subWebInfo;
+  const transferToMainDetailsList = () => {
 
-    const selectionItems = selection.getSelection();
-    const selectionGetItems = selection.getItems();
+    const selectionItems = selectionForAlertsToAdd.getSelection();
+    const selectionGetItems = selectionForAlertsToAdd.getItems();
 
     console.log('loggin selectionGetItems: ', selectionGetItems);
+    // console.log('newArrayForAddAlerts', newArrayForAddAlerts);
 
-
-    newArrayForAddAlerts = [...selectionItems];
-
-    console.log('newArrayForAddAlerts', newArrayForAddAlerts);
-
-    setItemsToBeAddedForAlerts(itemsToBeAddedForAlerts => [...itemsToBeAddedForAlerts, ...selectionItems as any[]]);
-
+    setItems(items => [...items, ...selectionItems as any[]]);
 
     const output: any[] = selectionGetItems.filter(obj => {
       return selectionItems.indexOf(obj) === -1;
@@ -428,23 +417,40 @@ const ManageAlerts = ({
 
     console.log('logging output: ', output);
 
+    setItemsToBeAddedForAlerts(output);
+  };
 
 
-    // setItemsToBeAddedForAlerts(newArrayForAddAlerts);
+  // TODO: function to capture items selected by user and adds them to top DetailsList Component and removes them from bottom DetailsList component
+  const transferToAddAlertsDetailsList = () => {
+    let newArrayForAddAlerts = [];
+
+    const selectionItems = selection.getSelection();
+    const selectionGetItems = selection.getItems();
+
+    console.log('loggin selectionGetItems: ', selectionGetItems);
+    console.log('newArrayForAddAlerts', newArrayForAddAlerts);
+
+    setItemsToBeAddedForAlerts(itemsToBeAddedForAlerts => [...itemsToBeAddedForAlerts, ...selectionItems as any[]]);
+
+    const output: any[] = selectionGetItems.filter(obj => {
+      return selectionItems.indexOf(obj) === -1;
+    });
+
+    console.log('logging output: ', output);
+
     setItems(output);
-
-    // setSelectionDetails(selectionDetails);
   };
 
    // TODO: selection handler for when user selects an item in the top DetailsList comp
    selectionForAlertsToAdd = new Selection({
-    // onSelectionChanged: () => getSelectionDetails(),
+    onSelectionChanged: () => transferToMainDetailsList(),
     getKey: (item: any) => item.key,
   });
 
   // this selection controls what sub-portal items get added to the "Alerts to be Added" DetailsList at top of page
   selection = new Selection({
-    onSelectionChanged: () => getSelectionDetails(),
+    onSelectionChanged: () => transferToAddAlertsDetailsList(),
     getKey: (item: any) => item.key,
   });
 
