@@ -25,6 +25,7 @@ import {
   IDropdownOption,
 } from "office-ui-fabric-react/lib/Dropdown";
 import { TextField } from "office-ui-fabric-react/lib/TextField";
+import { Text } from 'office-ui-fabric-react/lib/Text';
 // import { GlobalValues } from "../../Dataprovider/GlobalValue";
 import { mergeStyles } from "office-ui-fabric-react/lib/Styling";
 import { sp } from "@pnp/sp";
@@ -42,6 +43,11 @@ const addDetailsListContainerStyles = mergeStyles({
 
 const detailsListContainerStyles = mergeStyles({
   height: 400,
+  overflowY: "scroll",
+});
+
+const confirmationContainerStyles = mergeStyles({
+  height: 350,
   overflowY: "scroll",
 });
 
@@ -95,6 +101,7 @@ const ManageAlerts = ({
   const [alertSelectedSubPortals, setAlertSelectedSubPortals] = useState<
     ISubWeb[]
   >([]);
+  const [alertsToDelete, setAlertsToDelete] = useState<ISubWeb[]>([]);
   const [alertTypeItem, setAlertTypeItem] = useState<IDropdownOption>({
     key: "allChanges",
     text: "All Changes",
@@ -102,6 +109,8 @@ const ManageAlerts = ({
   const [alertFrequencyItem, setAlertFrequencyItem] = useState<IDropdownOption>(
     { key: "immediately", text: "Send notification immediately" }
   );
+  const [isConfirmationHidden, setIsConfirmationHidden] =
+    useState<boolean>(true);
 
   const hostUrl: string = window.location.host;
   const absoluteUrl: string = spContext.pageContext._web.absoluteUrl;
@@ -113,7 +122,7 @@ const ManageAlerts = ({
   const subWebsWithKey: ISubWeb[] = [];
 
   let itemDetailsToBeSaved = [];
-  let activeItemArr = [];
+  // let activeItemArr = [];
   let columns: IColumn[] = [
     {
       key: "column1",
@@ -331,14 +340,13 @@ const ManageAlerts = ({
     }
   }, [isAlertModalOpen]);
 
-
-
   // TODO: Need to add Alerts to delete in the payload to the user list
   const addUserAlertsListItem = async () => {
     let listItem: object = {};
+    // let itemDetailsToBeSaved = [];
     console.log("in AddUserAlertslistItem Func");
 
-    selectionDetails.forEach((el) => {
+    itemsToBeAddedForAlerts.forEach((el) => {
       // console.log(el);
       itemDetailsToBeSaved.push(el.ServerRelativeUrl);
     });
@@ -399,10 +407,9 @@ const ManageAlerts = ({
     }
   };
 
-  // TODO: logic to process for determining if existing alerts are to be deleted
+  // logic to process for determining if existing alerts are to be deleted
   const factorAlertsToDelete = () => {
-
-    console.log('itemsToBeAdded count: ', itemsToBeAddedForAlerts.length);
+    console.log("itemsToBeAdded count: ", itemsToBeAddedForAlerts.length);
 
     const output: any[] = alertSelectedSubPortals.filter((obj1) => {
       return !itemsToBeAddedForAlerts.some((obj2) => {
@@ -410,13 +417,11 @@ const ManageAlerts = ({
       });
     });
 
-
     // console.log("logging alertSelectedSubPortals: ", alertSelectedSubPortals);
 
     console.log("itemsToDelete: ", output);
-
-
-
+    setAlertsToDelete(output);
+    setIsConfirmationHidden(false);
   };
 
   // // TODO: testing functionality
@@ -580,7 +585,7 @@ const ManageAlerts = ({
             <DetailsList
               items={itemsToBeAddedForAlerts}
               columns={columns}
-              checkboxVisibility={CheckboxVisibility.always}
+              checkboxVisibility={CheckboxVisibility.onHover}
               setKey="set"
               // onActiveItemChanged={onActiveItemChanged}
               onShouldVirtualize={() => false}
@@ -607,7 +612,7 @@ const ManageAlerts = ({
             <DetailsList
               items={items}
               columns={columns}
-              checkboxVisibility={CheckboxVisibility.always}
+              checkboxVisibility={CheckboxVisibility.onHover}
               setKey="set"
               onShouldVirtualize={() => false}
               selectionMode={SelectionMode.multiple}
@@ -658,6 +663,76 @@ const ManageAlerts = ({
         <DialogFooter>
           <PrimaryButton onClick={factorAlertsToDelete} text="Save Alerts" />
           <DefaultButton onClick={() => onAlertModalHide(true)} text="Cancel" />
+        </DialogFooter>
+      </Dialog>
+      <Dialog
+        hidden={isConfirmationHidden}
+        onDismiss={() => setIsConfirmationHidden(true)}
+        minWidth={500}
+        dialogContentProps={{
+          type: DialogType.normal,
+          title: "Alerts Summary Confirmation",
+          showCloseButton: true,
+        }}
+        modalProps={{
+          isBlocking: true,
+          // styles: { main: { maxHeight: 700, overflowY: 'scroll' } },
+        }}
+        // styles={{ root: { maxHeight: 700 } }}
+      >
+        <div className={confirmationContainerStyles}>
+          <Text variant="large" block nowrap>Alerts will be added for:</Text>
+          {/* confirmation DetailsList for itemsToBeAdded */}
+          <DetailsList
+            items={itemsToBeAddedForAlerts}
+            columns={columns}
+            checkboxVisibility={CheckboxVisibility.hidden}
+            setKey="set"
+            compact={true}
+            onShouldVirtualize={() => false}
+            selectionMode={SelectionMode.none}
+            // styles={{ root: { height: "500px" } }}
+            layoutMode={DetailsListLayoutMode.justified}
+            constrainMode={1}
+            // selection={selection}
+            selectionPreservedOnEmptyClick={true}
+            ariaLabelForSelectionColumn="Toggle selection"
+            ariaLabelForSelectAllCheckbox="Toggle selection for all items"
+            // checkButtonAriaLabel="Row checkbox"
+            // onItemInvoked={onItemInvoked}
+          />
+        </div>
+        <div className={confirmationContainerStyles}>
+          <Text variant="large" block nowrap>Alerts will be deleted for:</Text>
+          {/* confirmation DetailsList for itemsToBeAdded */}
+          <DetailsList
+            items={alertsToDelete}
+            columns={columns}
+            checkboxVisibility={CheckboxVisibility.hidden}
+            setKey="set"
+            compact={true}
+            onShouldVirtualize={() => false}
+            selectionMode={SelectionMode.none}
+            // styles={{ root: { height: "500px" } }}
+            layoutMode={DetailsListLayoutMode.justified}
+            constrainMode={1}
+            // selection={selection}
+            selectionPreservedOnEmptyClick={true}
+            ariaLabelForSelectionColumn="Toggle selection"
+            ariaLabelForSelectAllCheckbox="Toggle selection for all items"
+            // checkButtonAriaLabel="Row checkbox"
+            // onItemInvoked={onItemInvoked}
+          />
+        </div>
+        <DialogFooter>
+          <PrimaryButton
+            onClick={ensureAlertsListExists}
+            text="Confirm"
+          />
+          <DefaultButton
+            onClick={() => setIsConfirmationHidden(true)}
+            text="Cancel"
+          />
         </DialogFooter>
       </Dialog>
     </div>
