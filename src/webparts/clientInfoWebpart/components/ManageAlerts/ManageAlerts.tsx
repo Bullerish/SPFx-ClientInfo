@@ -16,6 +16,7 @@ import {
   IColumn,
   CheckboxVisibility,
   SelectionMode,
+  IObjectWithKey,
 } from "office-ui-fabric-react/lib/DetailsList";
 import { MarqueeSelection } from "office-ui-fabric-react/lib/MarqueeSelection";
 import {
@@ -85,7 +86,6 @@ const ManageAlerts = ({
   onAlertModalHide,
 }): JSX.Element => {
   const [subWebInfo, setSubWebInfo] = useState<ISubWeb[]>([]);
-  // const [currentAlertsInfo, setCurrentAlertsInfo] = useState<object[]>([]);
   const [currentUserId, setCurrentUserId] = useState<IUserInfo>();
   const [items, setItems] = useState<ISubWeb[]>([]);
   const [itemsToBeAddedForAlerts, setItemsToBeAddedForAlerts] = useState<
@@ -112,12 +112,6 @@ const ManageAlerts = ({
   const existingAlerts: ISubWeb[] = [];
   const subWebsWithKey: ISubWeb[] = [];
 
-  const selection: Selection = new Selection({
-    onSelectionChanged: () => transferToAddAlertsDetailsList(),
-    getKey: (item: any) => item.key,
-  });
-
-  const selectionForAlertsToAdd: Selection = new Selection();
   let itemDetailsToBeSaved = [];
   let activeItemArr = [];
   let columns: IColumn[] = [
@@ -146,6 +140,9 @@ const ManageAlerts = ({
       isResizable: true,
     },
   ];
+
+  let selection: Selection;
+  let selectionForAlertsToAdd: Selection;
 
   // useEffect to get Subwebs
   //
@@ -232,7 +229,7 @@ const ManageAlerts = ({
     let subPortalTypeName: string = "";
     let subPortalTypeFunc: string = "";
     let subPortalType: string = "";
-    const itemsSelection = selection.getItems();
+    // const itemsSelection = selection.getItems();
     // let alertsToSet: string[] = [];
 
     if (subWebInfo.length > 0 && currentUserId.Id) {
@@ -334,16 +331,7 @@ const ManageAlerts = ({
     }
   }, [isAlertModalOpen]);
 
-  // TODO: keep working on resetting itemsToBeAddedForAlerts
-  useEffect(() => {
-    activeItemArr = [];
-    console.log("items useEffect fired");
 
-    updateItemsToBeAddedForAlerts();
-
-    selectionForAlertsToAdd.setItems(itemsToBeAddedForAlerts, false);
-    selectionForAlertsToAdd.setAllSelected(true);
-  }, [items]);
 
   // TODO: Need to add Alerts to delete in the payload to the user list
   const addUserAlertsListItem = async () => {
@@ -413,66 +401,76 @@ const ManageAlerts = ({
 
   // TODO: logic to process for determining if existing alerts are to be deleted
   const factorAlertsToDelete = () => {
-    const itemsToDelete = itemsToBeAddedForAlerts.filter((obj) => {
-      console.log(obj);
-      return alertSelectedSubPortals.indexOf(obj) !== -1;
+
+    console.log('itemsToBeAdded count: ', itemsToBeAddedForAlerts.length);
+
+    const output: any[] = alertSelectedSubPortals.filter((obj1) => {
+      return !itemsToBeAddedForAlerts.some((obj2) => {
+        return obj1.key === obj2.key;
+      });
     });
 
-    console.log("logging alertSelectedSubPortals: ", alertSelectedSubPortals);
 
-    console.log("itemsToDelete: ", itemsToDelete);
+    // console.log("logging alertSelectedSubPortals: ", alertSelectedSubPortals);
+
+    console.log("itemsToDelete: ", output);
+
+
+
   };
 
-  // TODO: testing functionality
-  const updateItemsToBeAddedForAlerts = () => {
-    console.log('in updateItemsToBeAddedForAlerts::::');
+  // // TODO: testing functionality
+  // const updateItemsToBeAddedForAlerts = async () => {
+  //   console.log("in updateItemsToBeAddedForAlerts::::");
 
-    console.log('logging activeItemArr::: ', activeItemArr);
+  //   console.log("logging activeItemArr::: ", activeItemArr);
 
-    // const output: any[] = itemsToBeAddedForAlerts.filter((obj1) => {
-    //   return !activeItemArr.some((obj2) => {
-    //     return obj1.key === obj2.key;
-    //   });
-    // });
+  //   // const output: any[] = itemsToBeAddedForAlerts.filter((obj1) => {
+  //   //   return !activeItemArr.some((obj2) => {
+  //   //     return obj1.key === obj2.key;
+  //   //   });
+  //   // });
 
-    const output = itemsToBeAddedForAlerts.filter(obj => {
-      return activeItemArr.indexOf(obj) === -1;
-    });
+  //   // const output = itemsToBeAddedForAlerts.filter(obj => {
+  //   //   return activeItemArr.indexOf(obj) === -1;
+  //   // });
 
-    console.log("logging output: ", output);
-  };
+  //   // console.log("logging output from updateItemsToBeAddedForAlerts: ", newItems);
+  // };
 
   // EVENT HANDLERS BELOW
-  // TODO: finish working with transfer state from staged alerts to be set
-  const onActiveItemChanged = (
-    item: ISubWeb[],
-    index: number,
-    ev: React.FocusEvent<HTMLElement>
-  ) => {
-    console.log("ON ACTIVE ITEM CHANGED FIRING");
-    // transferToMainDetailsList();
-    activeItemArr = [];
-    activeItemArr = [item];
-    // const selectionGetItems = selectionForAlertsToAdd.getItems();
-    // console.log(activeItemArr);
+  // // TODO: finish working with transfer state from staged alerts to be set
+  // const onActiveItemChanged = (
+  //   item: ISubWeb[],
+  //   index: number,
+  //   ev: React.FocusEvent<HTMLElement>
+  // ) => {
+  //   ev.stopPropagation();
+  //   console.log("ON ACTIVE ITEM CHANGED FIRING");
+  //   // activeItemArr = [];
+  //   // activeItemArr.push(item);
+  //   // const selectionGetItems = selectionForAlertsToAdd.getItems();
+  //   console.log("logging activeItemArr: ", activeItemArr);
 
-    setItems((items) => [...items, item as any]);
+  //   const output: any[] = itemsToBeAddedForAlerts.filter((obj) => {
+  //     return activeItemArr.indexOf(obj as any) === -1;
+  //   });
 
-    // const output: any[] = itemsToBeAddedForAlerts.filter((obj) => {
-    //   return activeItemArr.indexOf(obj as any) === -1;
-    // });
+  //   // const output: any[] = items.filter((obj1) => {
+  //   //   return !itemsToBeAddedForAlerts.some((obj2) => {
+  //   //     return obj1.key === obj2.key;
+  //   //   });
+  //   // });
 
-    // const output: any[] = items.filter((obj1) => {
-    //   return !itemsToBeAddedForAlerts.some((obj2) => {
-    //     return obj1.key === obj2.key;
-    //   });
-    // });
+  //   // console.log("logging output from onActiveItemChanged: ", output);
+  //   // setAlertsFactored(output);
+  //   // setItemsToBeAddedForAlerts(output);
+  //   // updateItemsToBeAddedForAlerts(output);
 
-    // console.log("logging output: ", output);
-
-    // selectionForAlertsToAdd.setItems(output, false);
-    // setItemsToBeAddedForAlerts(output);
-  };
+  //   setItems((prevState) => [...prevState, item as any]);
+  //   // selectionForAlertsToAdd.setItems(output, false);
+  //   // setItemsToBeAddedForAlerts(output);
+  // };
 
   // function that runs when the user enters text into the Filter text box
   const onChangeFilterText = (
@@ -510,13 +508,14 @@ const ManageAlerts = ({
 
   // TODO: function to capture items selected by user and adds them to top DetailsList Component and removes them from bottom DetailsList component
   const transferToMainDetailsList = () => {
+    console.log("transferToMainDetailsList fired::");
     const selectionItems = selectionForAlertsToAdd.getSelection();
     const selectionGetItems = selectionForAlertsToAdd.getItems();
 
     // console.log('loggin selectionGetItems: ', selectionGetItems);
     // console.log('newArrayForAddAlerts', newArrayForAddAlerts);
 
-    setItems((items) => [...items, ...(selectionItems as any[])]);
+    setItems((prevState) => [...prevState, ...(selectionItems as any[])]);
 
     const output: any[] = selectionGetItems.filter((obj) => {
       return selectionItems.indexOf(obj) === -1;
@@ -529,16 +528,13 @@ const ManageAlerts = ({
 
   // TODO: function to capture items selected by user and adds them to top DetailsList Component and removes them from bottom DetailsList component
   const transferToAddAlertsDetailsList = () => {
-    let newArrayForAddAlerts = [];
+    console.log("transferToAddAlertsDetailsList fired::");
 
     const selectionItems = selection.getSelection();
     const selectionGetItems = selection.getItems();
 
-    // console.log('loggin selectionGetItems: ', selectionGetItems);
-    // console.log('newArrayForAddAlerts', newArrayForAddAlerts);
-
-    setItemsToBeAddedForAlerts((itemsToBeAddedForAlerts) => [
-      ...itemsToBeAddedForAlerts,
+    setItemsToBeAddedForAlerts((prevState) => [
+      ...prevState,
       ...(selectionItems as any[]),
     ]);
 
@@ -552,17 +548,15 @@ const ManageAlerts = ({
   };
   // END EVENT HANDLERS
 
-  // TODO: selection handler for when user selects an item in the top DetailsList comp
-  // selectionForAlertsToAdd = new Selection({
-  //   onSelectionChanged: () => transferToMainDetailsList(),
-  //   getKey: (item: any) => item.key,
-  // });
+  selection = new Selection({
+    onSelectionChanged: () => transferToAddAlertsDetailsList(),
+    getKey: (item: any) => item.key,
+  });
 
-  // this selection controls what sub-portal items get added to the "Alerts to be Added" DetailsList at top of page
-  // selection = new Selection({
-  //   onSelectionChanged: () => transferToAddAlertsDetailsList(),
-  //   getKey: (item: any) => item.key,
-  // });
+  selectionForAlertsToAdd = new Selection({
+    onSelectionChanged: () => transferToMainDetailsList(),
+    getKey: (item: any) => item.key,
+  });
 
   return (
     <div>
@@ -588,7 +582,7 @@ const ManageAlerts = ({
               columns={columns}
               checkboxVisibility={CheckboxVisibility.always}
               setKey="set"
-              onActiveItemChanged={onActiveItemChanged}
+              // onActiveItemChanged={onActiveItemChanged}
               onShouldVirtualize={() => false}
               selectionMode={SelectionMode.multiple}
               // styles={{ root: { height: "500px" } }}
