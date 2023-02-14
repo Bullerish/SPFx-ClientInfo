@@ -212,7 +212,7 @@ const ManageAlerts = ({
             typeOfSubPortal = "File Exchange";
           }
 
-          let subWebItemWithKey = {
+          let subWebItemWithKey: any = {
             ...subWebItem,
             key: subWebItem.Id,
             subPortalType: subPortalType,
