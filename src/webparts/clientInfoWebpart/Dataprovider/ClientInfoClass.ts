@@ -1,5 +1,4 @@
 import { GlobalValues } from "./GlobalValue";
-import "@pnp/polyfill-ie11";
 import { sp } from "@pnp/sp";
 import { ICamlQuery } from "@pnp/sp/lists";
 import "@pnp/sp/webs";
@@ -13,8 +12,7 @@ export class ClientInfoClass {
     sp.setup({
       sp: {
         baseUrl: GlobalValues.SiteURL,
-      },
-      ie11: true,
+      }
     });
     return sp;
   }
@@ -23,8 +21,7 @@ export class ClientInfoClass {
     sp.setup({
       sp: {
         baseUrl: GlobalValues.HubSiteURL,
-      },
-      ie11: true,
+      }
     });
     return sp;
 
