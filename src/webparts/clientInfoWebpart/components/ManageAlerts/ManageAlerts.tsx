@@ -25,12 +25,12 @@ import {
   IDropdownOption,
 } from "office-ui-fabric-react/lib/Dropdown";
 import { TextField } from "office-ui-fabric-react/lib/TextField";
-import { Text } from 'office-ui-fabric-react/lib/Text';
+import { Text } from "office-ui-fabric-react/lib/Text";
 // import { GlobalValues } from "../../Dataprovider/GlobalValue";
 import { mergeStyles } from "office-ui-fabric-react/lib/Styling";
 import { sp } from "@pnp/sp";
 import { IFieldAddResult } from "@pnp/sp/fields/types";
-import '@pnp/sp/site-users';
+import "@pnp/sp/site-users";
 import "@pnp/sp/webs";
 import "@pnp/sp/lists";
 import "@pnp/sp/fields";
@@ -38,32 +38,8 @@ import "@pnp/sp/items";
 import { IItemAddResult } from "@pnp/sp/items";
 import { ISiteUser } from "@pnp/sp/site-users";
 import { ISiteUserInfo } from "@pnp/sp/site-users/types";
+import styles from "../ClientInfoWebpart.module.scss";
 
-const addDetailsListContainerStyles = mergeStyles({
-  height: 250,
-  overflowY: "scroll",
-});
-
-const detailsListContainerStyles = mergeStyles({
-  height: 400,
-  overflowY: "scroll",
-});
-
-const confirmationContainerStyles = mergeStyles({
-  height: 350,
-  overflowY: "scroll",
-});
-
-const alertSettingsContainerStyles = mergeStyles({
-  display: "flex",
-  justifyContent: "space-around",
-  padding: "15px 0 15px 0",
-});
-
-const filterControlStyles = mergeStyles({
-  margin: "0 30px 20px 0",
-  maxWidth: "300px",
-});
 
 // for subwebs call
 export interface ISubWeb {
@@ -88,7 +64,6 @@ export interface IDetailsListBasicExampleState {
   selectionDetails: {};
 }
 
-
 // parent container Manage Alerts component
 const ManageAlerts = ({
   spContext,
@@ -101,7 +76,7 @@ const ManageAlerts = ({
   const [itemsToBeAddedForAlerts, setItemsToBeAddedForAlerts] = useState<
     ISubWeb[]
   >([]);
-  const [selectionDetails, setSelectionDetails] = useState<any>([]);
+  // const [selectionDetails, setSelectionDetails] = useState<any>([]);
   const [alertSelectedSubPortals, setAlertSelectedSubPortals] = useState<
     ISubWeb[]
   >([]);
@@ -354,10 +329,13 @@ const ManageAlerts = ({
     console.log("in AddUserAlertslistItem Func");
 
     itemsToBeAddedForAlerts.forEach((el) => {
-      itemDetailsToBeSaved.push({ serverRelativeUrl: el.ServerRelativeUrl, name: el.Title });
+      itemDetailsToBeSaved.push({
+        serverRelativeUrl: el.ServerRelativeUrl,
+        name: el.Title,
+      });
     });
 
-    alertsToDelete.forEach(el => {
+    alertsToDelete.forEach((el) => {
       if (el.alertId) {
         itemDetailsToBeDeleted.push(el.alertId);
       }
@@ -365,8 +343,8 @@ const ManageAlerts = ({
 
     // formulate object to input as payload below
     listItem = {
-      Title: currentUserId ? currentUserId.UserPrincipalName : '',
-      UserPrincipalName: currentUserId ? currentUserId.UserPrincipalName : '',
+      Title: currentUserId ? currentUserId.UserPrincipalName : "",
+      UserPrincipalName: currentUserId ? currentUserId.UserPrincipalName : "",
       AbsoluteUrl: absoluteUrl,
       AlertType: alertTypeItem.key,
       AlertFrequency: alertFrequencyItem.key,
@@ -589,10 +567,11 @@ const ManageAlerts = ({
         modalProps={{
           isBlocking: true,
           // styles: { main: { maxHeight: 700, overflowY: 'scroll' } },
+          className: styles.manageAlerts
         }}
         // styles={{ root: { maxHeight: 700 } }}
       >
-        <div className={addDetailsListContainerStyles}>
+        <div className={styles.addDetailsListContainerStyles}>
           <MarqueeSelection selection={selectionForAlertsToAdd}>
             <DetailsList
               items={itemsToBeAddedForAlerts}
@@ -614,12 +593,13 @@ const ManageAlerts = ({
             />
           </MarqueeSelection>
         </div>
+
         <TextField
           label="Filter by Sub-Portal Name:"
           onChange={() => onChangeFilterText}
-          className={filterControlStyles}
+          className={styles.filterControlStyles}
         />
-        <div className={detailsListContainerStyles}>
+        <div className={styles.detailsListContainerStyles}>
           <MarqueeSelection selection={selection}>
             <DetailsList
               items={items}
@@ -640,7 +620,7 @@ const ManageAlerts = ({
             />
           </MarqueeSelection>
         </div>
-        <div className={alertSettingsContainerStyles}>
+        <div className={styles.alertSettingsContainerStyles}>
           <Dropdown
             label="Alert Type"
             selectedKey={alertTypeItem ? alertTypeItem.key : undefined}
@@ -692,8 +672,10 @@ const ManageAlerts = ({
         }}
         // styles={{ root: { maxHeight: 700 } }}
       >
-        <div className={confirmationContainerStyles}>
-          <Text variant="large" block nowrap>Alerts will be added for:</Text>
+        <div className={styles.confirmationContainerStyles}>
+          <Text variant="large" block nowrap>
+            Alerts will be added for:
+          </Text>
           {/* confirmation DetailsList for itemsToBeAdded */}
           <DetailsList
             items={itemsToBeAddedForAlerts}
@@ -714,8 +696,10 @@ const ManageAlerts = ({
             // onItemInvoked={onItemInvoked}
           />
         </div>
-        <div className={confirmationContainerStyles}>
-          <Text variant="large" block nowrap>Alerts will be deleted for:</Text>
+        <div className={styles.confirmationContainerStyles}>
+          <Text variant="large" block nowrap>
+            Alerts will be deleted for:
+          </Text>
           {/* confirmation DetailsList for itemsToBeAdded */}
           <DetailsList
             items={alertsToDelete}
@@ -737,10 +721,7 @@ const ManageAlerts = ({
           />
         </div>
         <DialogFooter>
-          <PrimaryButton
-            onClick={ensureAlertsListExists}
-            text="Confirm"
-          />
+          <PrimaryButton onClick={ensureAlertsListExists} text="Confirm" />
           <DefaultButton
             onClick={() => setIsConfirmationHidden(true)}
             text="Cancel"
