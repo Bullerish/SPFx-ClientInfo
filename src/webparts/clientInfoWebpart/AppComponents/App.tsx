@@ -35,19 +35,19 @@ class App extends React.Component<IApp> {
 
   public onAlertModalHide = () => {
     this.showHideAlertsModal(false);
-  };
+  }
 
   // show/hide Manage Alerts Modal
   public showHideAlertsModal = (isVisible) => {
     this.setState({ isAlertModalOpen: isVisible });
-  };
+  }
 
   public OnModalHide = () => {
     this.ShowHideErrorDialog(false);
-  };
+  }
   public ShowHideErrorDialog = (isVisible) => {
     this.setState({ isModalOpen: isVisible });
-  };
+  }
   public LoadData = () => {
     let obj = new ClientInfoClass();
     obj.GetClientInfo().then((results) => {
@@ -57,7 +57,7 @@ class App extends React.Component<IApp> {
         ClientInfoState: objState.UpdateState(objState, results),
       });
     });
-  };
+  }
 
   public render() {
     var url = window.location.href;
@@ -187,6 +187,6 @@ class App extends React.Component<IApp> {
     } catch (error) {
       console.log("Data load Error: " + error);
     }
-  };
+  }
 }
 export default App;
