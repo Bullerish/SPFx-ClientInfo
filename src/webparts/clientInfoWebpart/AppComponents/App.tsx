@@ -6,6 +6,7 @@ import { ClientInfoState } from "../Dataprovider/AppState";
 import { Text, Link } from "office-ui-fabric-react";
 import CreateEngagement from "../components/Create Engagement/CreateEngagement";
 import { ErrorDialog } from "./ErrorDialog";
+import ManageAlerts from "../components/ManageAlerts/ManageAlerts";
 import { sp } from "@pnp/sp";
 import "@pnp/sp/webs";
 import "@pnp/sp/site-groups/web";
@@ -20,6 +21,7 @@ class App extends React.Component<IApp> {
   public state = {
     ClientInfoState: new ClientInfoState(),
     isModalOpen: false,
+    isAlertModalOpen: false
   };
 
   public componentDidMount() {
@@ -38,7 +40,7 @@ class App extends React.Component<IApp> {
   }
 
   // show/hide Manage Alerts Modal
-  public showHideAlertsModal = (isVisible) => {
+  public showHideAlertsModal = (isVisible: boolean) => {
     this.setState({ isAlertModalOpen: isVisible });
   }
 
@@ -133,6 +135,8 @@ class App extends React.Component<IApp> {
             </div>
           </div>
         </div>
+        {/* Manage Alerts component */}
+        <ManageAlerts spContext={this.props.spContext} isAlertModalOpen={this.state.isAlertModalOpen} onAlertModalHide={this.onAlertModalHide} />
         <ErrorDialog
           OnModalHide={this.OnModalHide}
           isModalOpen={this.state.isModalOpen}
