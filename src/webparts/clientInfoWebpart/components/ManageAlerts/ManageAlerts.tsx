@@ -30,11 +30,14 @@ import { Text } from 'office-ui-fabric-react/lib/Text';
 import { mergeStyles } from "office-ui-fabric-react/lib/Styling";
 import { sp } from "@pnp/sp";
 import { IFieldAddResult } from "@pnp/sp/fields/types";
-// import { Web } from "@pnp/sp/webs";
+import '@pnp/sp/site-users';
+import "@pnp/sp/webs";
 import "@pnp/sp/lists";
 import "@pnp/sp/fields";
 import "@pnp/sp/items";
 import { IItemAddResult } from "@pnp/sp/items";
+import { ISiteUser } from "@pnp/sp/site-users";
+import { ISiteUserInfo } from "@pnp/sp/site-users/types";
 
 const addDetailsListContainerStyles = mergeStyles({
   height: 250,
@@ -85,6 +88,7 @@ export interface IDetailsListBasicExampleState {
   selectionDetails: {};
 }
 
+
 // parent container Manage Alerts component
 const ManageAlerts = ({
   spContext,
@@ -92,7 +96,7 @@ const ManageAlerts = ({
   onAlertModalHide,
 }): JSX.Element => {
   const [subWebInfo, setSubWebInfo] = useState<ISubWeb[]>([]);
-  const [currentUserId, setCurrentUserId] = useState<IUserInfo>();
+  const [currentUserId, setCurrentUserId] = useState<ISiteUserInfo>();
   const [items, setItems] = useState<ISubWeb[]>([]);
   const [itemsToBeAddedForAlerts, setItemsToBeAddedForAlerts] = useState<
     ISubWeb[]
@@ -121,8 +125,8 @@ const ManageAlerts = ({
   const existingAlerts: ISubWeb[] = [];
   const subWebsWithKey: ISubWeb[] = [];
 
-  let itemDetailsToBeSaved = [];
-  let itemDetailsToBeDeleted = [];
+  let itemDetailsToBeSaved: object[] = [];
+  let itemDetailsToBeDeleted: string[] = [];
   // let activeItemArr = [];
   let columns: IColumn[] = [
     {
@@ -226,6 +230,7 @@ const ManageAlerts = ({
     }
 
     async function getCurrentUserId() {
+      // const userId = await sp.web.currentUser();
       const userId = await sp.web.currentUser();
       setCurrentUserId(userId);
     }
@@ -242,7 +247,7 @@ const ManageAlerts = ({
     // const itemsSelection = selection.getItems();
     // let alertsToSet: string[] = [];
 
-    if (subWebInfo.length > 0 && currentUserId.Id) {
+    if (subWebInfo.length > 0 && currentUserId) {
       console.log("In Alerts useEffect");
       // get current alerts set for user
       subWebInfo.forEach((item) => {
@@ -344,6 +349,7 @@ const ManageAlerts = ({
   // TODO: Need to add Alerts to delete in the payload to the user list
   const addUserAlertsListItem = async () => {
     let listItem: object = {};
+    // let newItem: object = {};
     // let itemDetailsToBeSaved = [];
     console.log("in AddUserAlertslistItem Func");
 
@@ -352,13 +358,15 @@ const ManageAlerts = ({
     });
 
     alertsToDelete.forEach(el => {
-      itemDetailsToBeDeleted.push(el.alertId);
+      if (el.alertId) {
+        itemDetailsToBeDeleted.push(el.alertId);
+      }
     });
 
     // formulate object to input as payload below
     listItem = {
-      Title: currentUserId.UserPrincipalName,
-      UserPrincipalName: currentUserId.UserPrincipalName,
+      Title: currentUserId ? currentUserId.UserPrincipalName : '',
+      UserPrincipalName: currentUserId ? currentUserId.UserPrincipalName : '',
       AbsoluteUrl: absoluteUrl,
       AlertType: alertTypeItem.key,
       AlertFrequency: alertFrequencyItem.key,
@@ -485,7 +493,7 @@ const ManageAlerts = ({
   const onChangeFilterText = (
     ev: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>,
     text: string
-  ): void => {
+  ) => {
     const output: any[] = subWebInfo.filter((obj) => {
       return itemsToBeAddedForAlerts.indexOf(obj) === -1;
     });
@@ -608,7 +616,7 @@ const ManageAlerts = ({
         </div>
         <TextField
           label="Filter by Sub-Portal Name:"
-          onChange={onChangeFilterText}
+          onChange={() => onChangeFilterText}
           className={filterControlStyles}
         />
         <div className={detailsListContainerStyles}>
@@ -636,7 +644,7 @@ const ManageAlerts = ({
           <Dropdown
             label="Alert Type"
             selectedKey={alertTypeItem ? alertTypeItem.key : undefined}
-            onChange={onAlertTypeChange}
+            onChange={() => onAlertTypeChange}
             placeholder="Select an option"
             options={[
               { key: "allChanges", text: "All Changes" },
@@ -654,7 +662,7 @@ const ManageAlerts = ({
             selectedKey={
               alertFrequencyItem ? alertFrequencyItem.key : undefined
             }
-            onChange={onAlertFrequencyChange}
+            onChange={() => onAlertFrequencyChange}
             placeholder="Select an option"
             options={[
               { key: "immediately", text: "Send notification immediately" },
