@@ -129,7 +129,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         addusers1: [],
         emailaddress: [],
         PortalChoiceSelected: "",
-        
+
         //Screen 3 Var
         AdvisoryTemplate: [],
         AdvisoryTemplateSelected: "",
@@ -528,7 +528,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 });
                 let EngagementNumberEndZero = item.name.slice(-2);
                 if (EngagementNumberEndZero == "00") {
-                    updatedworkyear = true; 
+                    updatedworkyear = true;
                 }
                 else {
                     updatedworkyear = false;
@@ -536,8 +536,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
                 Engagementdata.filter(async (e) => {
 
-                    if (e.Title == item.name) {    
-                        ExDate = (6) + '-' + (1) + '-' + (parseInt(e.WorkYear) + 2);                     
+                    if (e.Title == item.name) {
+                        ExDate = (6) + '-' + (1) + '-' + (parseInt(e.WorkYear) + 2);
                         let dt = new Date(ExDate);
                         const ExDate1: Date = dt;
 
@@ -662,7 +662,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                 this.insertdata(SPUrl, listname, JSON.stringify(PortalData), requestDigest.d.GetContextWebInformation.FormDigestValue)
                                     .then((response) => {
                                         this.CheckIfEngCreated().then((engcrt) => {
-                                            if (response && engcrt) {
+                                            if ((response !== null) && (engcrt !== null)) {
 
                                                 this.SaveEngagementList();
                                                 resolve(response);
@@ -712,7 +712,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                     .then((response) => {
                                         this.CheckIfEngCreated().then((engcrt) => {
 
-                                            if (response && engcrt) {
+                                            if ((response !== null) && (engcrt !== null)) {
                                                 this.SaveEngagementList();
                                                 resolve(response);
                                                 this.setState({ IsPortalEntryCreated: "Y" });
@@ -737,7 +737,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             if (this.state.PortalChoiceSelected == 'Rollover') {
                 PortalRollOver = true;
                 RolloverUrl = GlobalValues.SiteURL + "/" + this.state.TeamURL + "-" + this.state.PortalTypeURL + "-" + this.state.RolloverURL;
-            }            
+            }
             return new Promise<number>((resolve, reject) => {
                 this.getListItemEntityTypeName(SPUrl, listname)
                     .then((listEntityName) => {
@@ -762,7 +762,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                             'ServiceType': this.state.ServiceTypeSelected,
                             'Supplemental': this.state.SupplementalSelected,
                             'TemplateType': this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Create New' ? this.state.ServiceTypeSelected : this.state.AdvisoryTemplateSelected,
-                            'isNotificationEmail': this.state.emailNotification,       
+                            'isNotificationEmail': this.state.emailNotification,
                             'FileExpiration': this.state.fileExpiration,
                             'PortalExpiration': this.state.portalExpiration,//(this.state.DateExtend ? this.state.DateExtend : this.state.portalExpiration),
                             'PortalId': PortalId,
@@ -776,7 +776,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                     this.ShowHideProgressBar(true);
                                     SplitObj.SaveSplitEngagement(PortalData, this.state.AsuranceSplitData).then(value => {
                                         this.CheckIfEngCreated().then((engcrt) => {
-                                            if (value == true && engcrt) {
+                                            if (value == true && engcrt !== null) {
                                                 this.SaveEngagementList();
                                                 this.ShowHideProgressBar(false);
                                                 resolve(1);
@@ -797,7 +797,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                     SplitRolloverObj.SaveSplitEngagementRollover(PortalData, this.state.AssuranceSplitRollover).then(val => {
                                         this.CheckIfEngCreated().then((engcrt) => {
 
-                                            if (val == true && engcrt) {
+                                            if (val == true && engcrt !== null) {
                                                 this.SaveEngagementList();
                                                 this.ShowHideProgressBar(false);
                                                 resolve(1);
@@ -820,7 +820,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                         .then((response) => {
                                             this.CheckIfEngCreated().then((engcrt) => {
 
-                                                if (response && engcrt) {
+                                                if (response !== null && engcrt !== null) {
                                                     this.SaveEngagementList();
                                                     resolve(response);
                                                     this.setState({ IsPortalEntryCreated: "Y" });
@@ -1040,7 +1040,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         this.setState({ showMessageBar: false });
     }
 
-    private _getPeoplePickerItems(items: any[]) {        
+    private _getPeoplePickerItems(items: any[]) {
         this.spsetup();
         let getSelectedUsers = [];
         let getusersEmails = [];
@@ -1056,8 +1056,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         });
     }
 
-    private _validateSiteOwner(items: any[]) {        
-        // show error message if this is a guest user                     
+    private _validateSiteOwner(items: any[]) {
+        // show error message if this is a guest user
         let userEmail = items[0].secondaryText.toLowerCase();
         if ((userEmail.indexOf('cohnreznick.com') == -1) && (userEmail.indexOf('cohnreznickdev') == -1)) {
             // this is a guest user, do not validate
@@ -1136,10 +1136,10 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         });
     }
 
-    private _onSelectDate2 = (date: Date | null | undefined): void => {        
+    private _onSelectDate2 = (date: Date | null | undefined): void => {
         this.setState({
            // DateExtend: date
-           portalExpiration: portalExpDate,           
+           portalExpiration: portalExpDate,
         });
     }
 
@@ -1277,7 +1277,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         return option;
     }
 
-    public onChangeYear = (event, item) => {        
+    public onChangeYear = (event, item) => {
         if (item) {
             this.setState({ Year: item.key });
 
@@ -1502,8 +1502,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     placeholder="Select an option"
                                                     onChange={this.onChangeYear}
                                                     options={this.GetYearOption()}
-                                                    selectedKey={this.state.Year}                                                    
-                                                />                                                
+                                                    selectedKey={this.state.Year}
+                                                />
                                                 : <TextField disabled className={styles.engagementPrint} defaultValue={this.state.Year} />
                                             }
                                             {(this.state.validate && (this.state.Year == "" || this.state.Year == null)) ?
@@ -1513,16 +1513,16 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                         <div className={`${styles.engagementnames} ${styles.column2}`}>
                                             <PeoplePicker
                                                 context={this.props.spContext}
-                                                titleText="Site Owner"                                                
+                                                titleText="Site Owner"
                                                 showtooltip={false}
-                                                isRequired={true}
-                                                selectedItems={(items) => this._validateSiteOwner(items)}
+                                                required={true}
+                                                onChange={(items) => this._validateSiteOwner(items)}
                                                 showHiddenInUI={false}
                                                 principalTypes={[PrincipalType.User]}
                                                 ensureUser={true}
                                                 personSelectionLimit={1}
-                                                placeholder="Enter name or email"                                                 
-                                                defaultSelectedUsers={this.state.addusers}                                                                                             
+                                                placeholder="Enter name or email"
+                                                defaultSelectedUsers={this.state.addusers}
                                             />
                                             {(this.state.validate && this.state.addusers.length == 0) ?
                                               <div className={styles.reqval}>Site Owner is mandatory and must be a CohnReznick employee.</div> : ''
@@ -1735,8 +1735,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                     {/* Do NOT DELETE THIS CODE */}
                                     {/* Do NOT DELETE THIS CODE */}
                                     {/* Do NOT DELETE THIS CODE */}
-                                    {/* {this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Create New' ?	
-                                        <AssuranceEngSplit OnSplitChange={this.SetAssuranceSplitData} AsuranceSplitData={this.state.AsuranceSplitData} spContext={this.props.spContext}></AssuranceEngSplit>	
+                                    {/* {this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Create New' ?
+                                        <AssuranceEngSplit OnSplitChange={this.SetAssuranceSplitData} AsuranceSplitData={this.state.AsuranceSplitData} spContext={this.props.spContext}></AssuranceEngSplit>
                                         : ""} */}
                                     <div>
                                         <div className={styles.formcontrol}>
@@ -1814,7 +1814,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     {/* Do NOT DELETE THIS CODE */}
                                                     {/* Do NOT DELETE THIS CODE */}
                                                     {/* Do NOT DELETE THIS CODE */}
-                                                    {/* 
+                                                    {/*
                                                     {this.state.TeamSelected == 'Assurance' && this.state.AssuranceSplitRollover.length > 0 && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Rollover' ?
                                                         <AssuranceEngSplitRolloverUsers spContext={this.props.spContext} Data={this.state.AssuranceSplitRollover} Control={this.SetAssuranceSplitDataRollOver}></AssuranceEngSplitRolloverUsers>
                                                         : ""}
@@ -1831,15 +1831,15 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                 </div> : ""}
                                         </div>
                                         <div className={styles.pnppicker}>
-                                            <PeoplePicker                                                
+                                            <PeoplePicker
                                                 context={this.props.spContext}
-                                                titleText={this.state.peoplePickerTitle}                                                
+                                                titleText={this.state.peoplePickerTitle}
                                                 showtooltip={false}
-                                                isRequired={false}
-                                                disabled={false}                                                
-                                                selectedItems={(items) => this._getUserItems(items)}
+                                                required={false}
+                                                disabled={false}
+                                                onChange={(items) => this._getUserItems(items)}
                                                 showHiddenInUI={false}
-                                                principalTypes={[PrincipalType.User]}                                                
+                                                principalTypes={[PrincipalType.User]}
                                                 ensureUser={true}
                                                 personSelectionLimit={100}
                                                 placeholder="Enter name or email"
@@ -2048,7 +2048,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                         }
                                         {this.state.TeamSelected != 'Advisory' && this.state.PortalTypeSelected == 'Workflow' &&
                                             // Assurance and Tax Workflow portals
-                                            <div className={`{styles.labelprint} ${styles.fileExpDatePicker}`}>                                                
+                                            <div className={`{styles.labelprint} ${styles.fileExpDatePicker}`}>
                                                 <DatePicker
                                                     label="File Expiration"
                                                     placeholder="MM/DD/YYYY"
@@ -2057,16 +2057,16 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     onSelectDate={this._onSelectDateFileExp}
                                                     formatDate={this._onFormatDate}
                                                     minDate={minDate}
-                                                    maxDate={maxDate} // 12 months                                                    
-                                                    value={maxDate} // now 12 months.  was this.state.DateExtend                                                    
+                                                    maxDate={maxDate} // 12 months
+                                                    value={maxDate} // now 12 months.  was this.state.DateExtend
                                                 />
                                                 <div className={styles.fileExpText}>
                                                 Files will be deleted from the portal on this date. The portal will available for rollover for an additional 6 months.
                                                 </div>
                                                 {(this.state.validate && this.state.DateExtend == null) ?
-                                                    <div className={styles.reqval}>File Expiration is mandatory.</div> : ''}                                                
+                                                    <div className={styles.reqval}>File Expiration is mandatory.</div> : ''}
                                             </div>
-                                            
+
                                         }
                                         {this.state.TeamSelected != 'Advisory' && this.state.PortalTypeSelected != 'Workflow' &&
                                             // Assurance File Exchange Portals
@@ -2079,8 +2079,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     onSelectDate={this._onSelectDate2}
                                                     formatDate={this._onFormatDate}
                                                     minDate={minDate}
-                                                    maxDate={maxDate} // 12 months                                                    
-                                                    value={maxDate} // now 12 months.  was this.state.DateExtend                                                    
+                                                    maxDate={maxDate} // 12 months
+                                                    value={maxDate} // now 12 months.  was this.state.DateExtend
                                                 />
                                                 {(this.state.validate && this.state.DateExtend == null) ?
                                                     <div className={styles.reqval}>Portal Expiration is mandatory.</div> : ''}
@@ -2242,9 +2242,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
     private submitDialog = async (e) => {
 
-        if (this.state.currentScreen == "screen1") {            
+        if (this.state.currentScreen == "screen1") {
             if (this.state.EngagementNumberSelected == "" || this.state.addusers.length == 0
-                || this.state.Year == null || this.state.PortalTypeSelected == "" 
+                || this.state.Year == null || this.state.PortalTypeSelected == ""
                 || (this.state.TeamSelected == "" && this.state.PortalTypeSelected == 'K1')
             ) {
                 this.setState({
