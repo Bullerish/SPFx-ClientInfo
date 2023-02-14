@@ -283,6 +283,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             Checkeng: false,
             WorkpaperPath: "",
             AsuranceSplitData: {
+
                 disabled: true,
                 maxval: 0,
                 setSliderValue: 0,
@@ -301,6 +302,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             IsPortalEntryCreated: ""
 
         });
+
         updatedworkyear = false;
         Isnextyear = false;
     }
@@ -314,18 +316,23 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     public openDialog(e) {
+
         this.ResetState();
         this.loadAssuranceSupplemental();
         e.preventDefault();
+
         this.setState({
             currentScreen: "screen1",
             isOpen: true,
             dialogbuttonname: "Next",
             titleText: ""
+
         });
+
         let absoluteUrl = GlobalValues.SiteURL;
         let finalabsoluteUrl = absoluteUrl.split("/");
         CRN = finalabsoluteUrl[finalabsoluteUrl.length - 1];
+
     }
 
     public ShowHideProgressBar = (isVisible) => {
@@ -348,6 +355,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     public loadEngagements = async (Team) => {
+
         this.setState({
             EngagementNumber: [],
             EngagementNumberSelected: "",
@@ -367,6 +375,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         EngagementNumberTags = this.state.EngagementNumber;
     }
 
+
     public loadAdvisoryTemplates = () => {
         let obj = new ClientInfoClass();
         obj.GetAdvisoryTemplates().then((results) => {
@@ -375,6 +384,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             });
         });
     }
+
 
     public loadServiceTypes = () => {
         let obj = new ClientInfoClass();
@@ -395,6 +405,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     public loadIndustryTypes = () => {
+
         let _IndustryType = [];
         let obj = new ClientInfoClass();
         obj.GetIndustryTypes().then((results) => {
@@ -418,17 +429,23 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     public loadAssuranceSupplemental = () => {
         let obj = new ClientInfoClass();
         const newArray = [];
+
         obj.GetSupplemental().then((results) => {
+
             results = results
                 .slice(0)
                 .sort((a, b) =>
                     (false ? a["Title"] < b["Title"] : a["ID"] > b["ID"]) ? 1 : -1);
             this.state.Supplemental.push({ key: "N/A", text: "N/A" });
+
             results.forEach(e => {
                 if (!newArray.some(o => o.Title === e.Title)) {
                     newArray.push({ ...e });
                 }
+
             });
+
+
             newArray.forEach((element) => {
                 this.state.Supplemental.push({ key: element.Id.toString(), text: element.Title });
             });
@@ -446,6 +463,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 }
             }
             if (engagementExists == false) {
+
                 this.setState({ PortalsCreatedFinal: this.state.PortalsCreated + "," + this.state.PortalTypeURL, Checkeng: true });
                 return true;
             }
@@ -490,6 +508,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         });
     });
     public _onChangeEngagementNumber = async (tagList: { key: string, name: string }[]) => {
+
         if (tagList.length == 0) {
             this.closeMessageBar();
             this.setState({
@@ -498,6 +517,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 Year: ""
             });
             this.state.EngagementNumberSelected1.length = 0;
+
         } else {
             // this.spsetup();
             await tagList.filter(item => {
@@ -511,7 +531,11 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 else {
                     updatedworkyear = false;
                 }
+
                 Engagementdata.filter(async (e) => {
+
+                    if (e.Title == item.name) {    
+                        ExDate = (6) + '-' + (1) + '-' + (parseInt(e.WorkYear) + 2);                     
                     if (e.Title == item.name) {
                         ExDate = (6) + '-' + (1) + '-' + (parseInt(e.WorkYear) + 2);
                         let dt = new Date(ExDate);
@@ -535,6 +559,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     private newEngagementNumber() {
+
         if (updatedworkyear == true) {
             let updatedYear = this.state.Year.toString().slice(-2);
             let engNumber = this.state.EngagementNumberSelected.substring(0, this.state.EngagementNumberSelected.length - 2);
@@ -738,16 +763,16 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                             'SiteOwnerId': this.state.addusersID,
                             'SiteUrl': { Url: site },
                             'EngagementMembers': this.state.CRUserSelected,
-                            'ClientMembers': this.state.PortalChoiceSelected == "Create New" ? this.state.FinalAccessUserList : this.state.CLUserSelected,
-                            'Rollover': PortalRollOver,
+                          'ClientMembers': this.state.PortalChoiceSelected == "Create New" ? this.state.FinalAccessUserList : this.state.CLUserSelected,
+                          'Rollover': PortalRollOver,
                             'RolloverUrl': { Url: RolloverUrl },
                             'IndustryType': this.state.IndustryTypeSelected,
                             'ServiceType': this.state.ServiceTypeSelected,
                             'Supplemental': this.state.SupplementalSelected,
                             'TemplateType': this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Create New' ? this.state.ServiceTypeSelected : this.state.AdvisoryTemplateSelected,
-                            'isNotificationEmail': this.state.emailNotification,
-                            'FileExpiration': fileExpirationDate,
-                            'PortalExpiration': portalExpirationDate,//(this.state.DateExtend ? this.state.DateExtend : this.state.portalExpiration),
+                            'isNotificationEmail': this.state.emailNotification,       
+                            'FileExpiration': this.state.fileExpiration,
+                            'PortalExpiration': this.state.portalExpiration,//(this.state.DateExtend ? this.state.DateExtend : this.state.portalExpiration),
                             'PortalId': PortalId,
                             'WorkpaperPath': this.state.WorkpaperPath
                         };
@@ -1096,6 +1121,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             items.forEach((e) => {
                 this.state.FinalAccessUserList += e.secondaryText + ";";
                 selectedCLuser.push(e.text);
+
             });
             if (this.state.PortalTypeSelected == "Workflow" && this.state.TeamSelected == "Advisory") {
                 let userList = "";
@@ -1171,7 +1197,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     private _onSelectDateFileExp = (date: Date | null | undefined): void => {
-        portalExpDate = addMonths(date, 6); // set the portal expiration for 6 months after the file expiration        
+        portalExpDate = addMonths(date, 6); // set the portal expiration for 6 months after the file expiration
         this.setState({
             // DateExtend: date
             portalExpiration: portalExpDate,
@@ -2060,7 +2086,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     onSelectDate={this._onSelectDate}
                                                     formatDate={this._onFormatDate}
                                                     minDate={minDate}
-                                                    value={this.state.portalExpiration != null ? this.state.portalExpiration : advMax} // was this.state.portalExpiration New date set to default to 36 months
+                                                    value={advMax} // was this.state.portalExpiration New date set to default to 36 months
                                                     maxDate={advMax}
                                                 />
                                                 {(this.state.validate && this.state.portalExpiration == null) ?
@@ -2080,8 +2106,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     minDate={minDate}
                                                     maxDate={maxDate} // 12 months                                                    
                                                     value={this.state.fileExpiration != null ? this.state.fileExpiration : maxDate} // was maxDate                  
-                                                // value should be the max date unless the user picked somethign different
-
+                                                    // value should be the max date unless the user picked somethign different
+                                                                                                        
                                                 />
                                                 <div className={styles.fileExpText}>
                                                     Files will be deleted from the portal on this date. The portal will available for rollover for an additional 6 months.
@@ -2103,7 +2129,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     formatDate={this._onFormatDate}
                                                     minDate={minDate}
                                                     maxDate={maxDate} // 12 months                                                    
-                                                    value={this.state.fileExpiration != null ? this.state.fileExpiration : maxDate} // now 12 months.  was this.state.DateExtend                                                    
+                                                    value={maxDate} // now 12 months.  was this.state.DateExtend                                                    
                                                 />
                                                 {(this.state.validate && this.state.DateExtend == null) ?
                                                     <div className={styles.reqval}>Portal Expiration is mandatory.</div> : ''}
@@ -2264,7 +2290,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     private submitDialog = async (e) => {
-        if (this.state.currentScreen == "screen1") {
+        if (this.state.currentScreen == "screen1") {            
             if (this.state.EngagementNumberSelected == "" || this.state.addusers.length == 0
                 || this.state.Year == null || this.state.PortalTypeSelected == ""
                 || (this.state.TeamSelected == "" && this.state.PortalTypeSelected == 'K1')
@@ -2272,10 +2298,12 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 this.setState({
                     validate: true
                 });
+
             } else {
                 this.checkEngagement();
                 this.newEngagementNumber();
                 if (this.state.PortalTypeSelected == 'K1' && this.state.Checkeng == true) {
+
                     this.setState({
                         validate: false,
                         currentScreen: "screen5",
@@ -2322,6 +2350,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             }
         } else if (this.state.currentScreen == "screen3") {            
             if (this.state.PortalTypeSelected == "Workflow" && this.state.TeamSelected == "Advisory") {
+
                 if (this.state.addusers.length == 0 || this.state.AdvisoryTemplateSelected == "") {
                     this.setState({
                         validate: true
@@ -2340,6 +2369,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 }
             }
             else if (this.state.PortalTypeSelected == "Workflow" && this.state.TeamSelected == "Assurance") {
+
                 if (this.state.PortalChoiceSelected == "Create New") {
                     if (this.state.addusers.length == 0 || this.state.IndustryTypeSelected == "" || this.state.SupplementalSelected == "") {
                         this.setState({
@@ -2373,6 +2403,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 }
                 else if (this.state.PortalChoiceSelected == "Rollover") {
                     let txtval = true;
+
                     this.state.AssuranceSplitRollover.map(ev => {
                         if (ev.NewSplitValue == "") {
                             txtval = false;

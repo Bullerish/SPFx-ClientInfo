@@ -3,9 +3,10 @@ import { GlobalValues } from "../Dataprovider/GlobalValue";
 import styles from "../components/ClientInfoWebpart.module.scss";
 import { ClientInfoClass } from "../Dataprovider/ClientInfoClass";
 import { ClientInfoState } from "../Dataprovider/AppState";
-import { Text, Link } from "office-ui-fabric-react";
+import { Text, Link, DefaultButton } from "office-ui-fabric-react";
 import CreateEngagement from "../components/Create Engagement/CreateEngagement";
 import { ErrorDialog } from "./ErrorDialog";
+import ManageAlerts from "../components/ManageAlerts/ManageAlerts";
 import { sp } from "@pnp/sp";
 import "@pnp/sp/webs";
 import "@pnp/sp/site-groups/web";
@@ -19,7 +20,8 @@ export interface IApp {
 class App extends React.Component<IApp> {
   public state = {
     ClientInfoState: new ClientInfoState(),
-    isModalOpen: false
+    isModalOpen: false,
+    isAlertModalOpen: false
   };
 
   public componentDidMount() {
@@ -30,12 +32,24 @@ class App extends React.Component<IApp> {
       this.ShowHideErrorDialog(true);
     });
   }
+
+  public onAlertModalHide = () => {
+    this.showHideAlertsModal(false);
+  }
+
+   // show/hide Manage Alerts Modal
+   public showHideAlertsModal = (isVisible) => {
+    this.setState({ isAlertModalOpen: isVisible });
+  }
+
   public OnModalHide = () => {
     this.ShowHideErrorDialog(false);
   }
+
   public ShowHideErrorDialog = (isVisible) => {
     this.setState({ isModalOpen: isVisible });
   }
+
   public LoadData = () => {
     let obj = new ClientInfoClass();
     obj.GetClientInfo().then((results) => {
@@ -68,6 +82,9 @@ class App extends React.Component<IApp> {
               <div className={styles.manageSubportal}>
                 {IsPermissionPage == false ?
                   <div className={styles.flexinncontainer}>
+                    <div>
+                      <Link href={"#"} onClick={() => this.setState({ isAlertModalOpen: true })}>Manage Alerts</Link>
+                    </div>
                     {GlobalValues.isCRADUser ?
                       <div>
                         <Link href={this.props.spContext.pageContext.web.absoluteUrl + GlobalValues.PermissionPage}>Manage Portal</Link>
@@ -87,6 +104,8 @@ class App extends React.Component<IApp> {
             </div>
           </div>
         </div>
+        {/* Manage Alerts component */}
+        <ManageAlerts spContext={this.props.spContext} isAlertModalOpen={this.state.isAlertModalOpen} onAlertModalHide={this.onAlertModalHide} />
         <ErrorDialog OnModalHide={this.OnModalHide} isModalOpen={this.state.isModalOpen} ></ErrorDialog>
       </React.Fragment>
     );
@@ -109,7 +128,7 @@ class App extends React.Component<IApp> {
       };
 
       IsItemExists = await sp.web.lists.getByTitle("PBIReportUpdate").items.getAll().then(async (data) => {
-        if((data.filter(x=> x.Title == ClientNumber && x.IsDatarefreshed == true).length == 0)){
+        if((data.filter(x=> x.Title == ClientNumber && x.IsDatarefreshed == true).length == 0)) {
           await sp.web.lists.getByTitle("PBIReportUpdate").items.add(objToSave).then(async (item) => {
             GlobalValues.errorTitle = "Success";
             GlobalValues.errorMsg = "Your request to refresh Dashboard data has been submitted successfully!!";
@@ -129,4 +148,5 @@ class App extends React.Component<IApp> {
     }
   }
 }
+
 export default App;
