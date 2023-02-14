@@ -68,6 +68,9 @@ class App extends React.Component<IApp> {
               <div className={styles.manageSubportal}>
                 {IsPermissionPage == false ?
                   <div className={styles.flexinncontainer}>
+                    <div>
+                      <Link href={"#"} onClick={() => this.setState({ isAlertModalOpen: true })}>Manage Alerts</Link>
+                    </div>
                     {GlobalValues.isCRADUser ?
                       <div>
                         <Link href={this.props.spContext.pageContext.web.absoluteUrl + GlobalValues.PermissionPage}>Manage Portal</Link>
