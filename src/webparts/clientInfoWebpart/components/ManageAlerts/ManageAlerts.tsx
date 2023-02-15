@@ -324,6 +324,7 @@ const ManageAlerts = ({
   // TODO: Need to add Alerts to delete in the payload to the user list
   const addUserAlertsListItem = async () => {
     let listItem: object = {};
+    let listItemId: number;
     // let newItem: object = {};
     // let itemDetailsToBeSaved = [];
     console.log("in AddUserAlertslistItem Func");
@@ -355,11 +356,29 @@ const ManageAlerts = ({
 
     console.log("item details to be saved: ", listItem);
 
-    const itemAddResult: IItemAddResult = await sp.web.lists
-      .getByTitle(userAlertsList)
-      .items.add(listItem);
+    // TODO: check to see if list item with Title === UserPrincipalName exists, if so, grab item ID and do an update instead of add
 
-    console.log("itemAddResult: ", itemAddResult);
+    let itemResult = await sp.web.lists.getByTitle(userAlertsList).items.filter(`Title eq '${currentUserId.UserPrincipalName}'`)();
+
+
+    if (itemResult.length > 0) {
+      listItemId = itemResult[0].Id
+
+      const updateResult = await sp.web.lists.getByTitle(userAlertsList).items.getById(listItemId).update(listItem);
+      console.log('existing item updated');
+    } else {
+      const itemAddResult: IItemAddResult = await sp.web.lists
+        .getByTitle(userAlertsList)
+        .items.add(listItem);
+
+        console.log('item was newly created');
+    }
+
+
+
+
+
+    // console.log("itemAddResult: ", itemAddResult);
   };
 
   // checks for UserAlertsList, if it doesn't exist it gets created then columns will be added
