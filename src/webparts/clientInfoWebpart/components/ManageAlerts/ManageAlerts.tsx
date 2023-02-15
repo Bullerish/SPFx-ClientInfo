@@ -39,6 +39,7 @@ import { IItemAddResult } from "@pnp/sp/items";
 import { ISiteUser } from "@pnp/sp/site-users";
 import { ISiteUserInfo } from "@pnp/sp/site-users/types";
 import styles from "../ClientInfoWebpart.module.scss";
+import StatusDialog from './StatusDialog';
 
 
 // for subwebs call
@@ -90,6 +91,8 @@ const ManageAlerts = ({
   );
   const [isConfirmationHidden, setIsConfirmationHidden] =
     useState<boolean>(true);
+  const [isSubmissionSuccessful, setIsSubmissionSuccessful] = useState<boolean>();
+  const [statusDialogHidden, setStatusDialogHidden] = useState<boolean>();
 
   const hostUrl: string = window.location.host;
   const absoluteUrl: string = spContext.pageContext._web.absoluteUrl;
@@ -100,7 +103,7 @@ const ManageAlerts = ({
   const existingAlerts: ISubWeb[] = [];
   const subWebsWithKey: ISubWeb[] = [];
 
-  let itemDetailsToBeSaved: object[] = [];
+  let itemDetailsToBeSaved: string[] = [];
   let itemDetailsToBeDeleted: string[] = [];
   // let activeItemArr = [];
   let columns: IColumn[] = [
@@ -325,15 +328,11 @@ const ManageAlerts = ({
   const addUserAlertsListItem = async () => {
     let listItem: object = {};
     let listItemId: number;
-    // let newItem: object = {};
-    // let itemDetailsToBeSaved = [];
+
     console.log("in AddUserAlertslistItem Func");
 
     itemsToBeAddedForAlerts.forEach((el) => {
-      itemDetailsToBeSaved.push({
-        serverRelativeUrl: el.ServerRelativeUrl,
-        name: el.Title,
-      });
+      itemDetailsToBeSaved.push(el.ServerRelativeUrl);
     });
 
     alertsToDelete.forEach((el) => {
@@ -349,33 +348,43 @@ const ManageAlerts = ({
       AbsoluteUrl: absoluteUrl,
       AlertType: alertTypeItem.key,
       AlertFrequency: alertFrequencyItem.key,
-      AlertsToAdd: JSON.stringify(itemDetailsToBeSaved),
-      // TODO: factor logic for items to be deleted and input data here similar to AlertsToAdd
+      AlertsToAdd: itemDetailsToBeSaved.toString().replace(/,/g, ';'),
       AlertsToDelete: itemDetailsToBeDeleted.toString().replace(/,/g, ";"),
     };
 
     console.log("item details to be saved: ", listItem);
 
-    // TODO: check to see if list item with Title === UserPrincipalName exists, if so, grab item ID and do an update instead of add
-
     let itemResult = await sp.web.lists.getByTitle(userAlertsList).items.filter(`Title eq '${currentUserId.UserPrincipalName}'`)();
 
-
     if (itemResult.length > 0) {
-      listItemId = itemResult[0].Id
+      listItemId = itemResult[0].Id;
 
       const updateResult = await sp.web.lists.getByTitle(userAlertsList).items.getById(listItemId).update(listItem);
-      console.log('existing item updated');
+      console.log('existing item updated', updateResult);
+
+      if (updateResult.data !== (null || undefined)) {
+        setIsSubmissionSuccessful(true);
+        setStatusDialogHidden(false);
+      } else {
+        setIsSubmissionSuccessful(false);
+        setStatusDialogHidden(false);
+      }
+
     } else {
       const itemAddResult: IItemAddResult = await sp.web.lists
         .getByTitle(userAlertsList)
         .items.add(listItem);
 
-        console.log('item was newly created');
+        if (itemAddResult.data) {
+          setIsSubmissionSuccessful(true);
+          setStatusDialogHidden(false);
+        } else {
+          setIsSubmissionSuccessful(false);
+          setStatusDialogHidden(false);
+        }
+
+        console.log('item was newly created', itemAddResult);
     }
-
-
-
 
 
     // console.log("itemAddResult: ", itemAddResult);
@@ -562,6 +571,10 @@ const ManageAlerts = ({
   };
   // END EVENT HANDLERS
 
+  const onSetStatusDialogHidden = () => {
+    setStatusDialogHidden(true);
+  };
+
   selection = new Selection({
     onSelectionChanged: () => transferToAddAlertsDetailsList(),
     getKey: (item: any) => item.key,
@@ -747,6 +760,7 @@ const ManageAlerts = ({
           />
         </DialogFooter>
       </Dialog>
+      <StatusDialog isSubmissionSuccessful={isSubmissionSuccessful} statusDialogHidden={statusDialogHidden} />
     </div>
   );
 };
