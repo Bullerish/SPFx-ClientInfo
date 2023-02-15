@@ -6,7 +6,6 @@ import { ClientInfoState } from "../Dataprovider/AppState";
 import { Text, Link, DefaultButton } from "office-ui-fabric-react";
 import CreateEngagement from "../components/Create Engagement/CreateEngagement";
 import { ErrorDialog } from "./ErrorDialog";
-import ManageAlerts from "../components/ManageAlerts/ManageAlerts";
 import { sp } from "@pnp/sp";
 import "@pnp/sp/webs";
 import "@pnp/sp/site-groups/web";
@@ -103,9 +102,7 @@ class App extends React.Component<IApp> {
               </div>
             </div>
           </div>
-        </div>
-        {/* Manage Alerts component */}
-        <ManageAlerts spContext={this.props.spContext} isAlertModalOpen={this.state.isAlertModalOpen} onAlertModalHide={this.onAlertModalHide} />
+        </div>        
         <ErrorDialog OnModalHide={this.OnModalHide} isModalOpen={this.state.isModalOpen} ></ErrorDialog>
       </React.Fragment>
     );
