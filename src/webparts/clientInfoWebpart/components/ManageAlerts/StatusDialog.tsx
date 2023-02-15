@@ -5,36 +5,33 @@ import {
   DialogType,
   DialogFooter,
 } from "office-ui-fabric-react/lib/Dialog";
-import { initializeIcons } from '@uifabric/icons';
-import { Icon } from 'office-ui-fabric-react/lib/Icon';
+import { initializeIcons } from "@uifabric/icons";
+import { Icon } from "office-ui-fabric-react/lib/Icon";
+import styles from "../ClientInfoWebpart.module.scss";
+import { PrimaryButton, Stack, Text } from "office-ui-fabric-react";
 
 initializeIcons();
 
-
-
-
-
-const StatusDialog = ({ isSubmissionSuccessful, statusDialogHidden }) => {
-
-let message: string = '';
-
-
-if (isSubmissionSuccessful) {
-  message = 'Success';
-} else if (!isSubmissionSuccessful) {
-  message = 'Submission Failed';
-}
+const StatusDialog = ({
+  isSubmissionSuccessful,
+  statusDialogHidden,
+  onSetStatusDialogHidden,
+}) => {
+  let message: string = isSubmissionSuccessful
+    ? "Please allow up to 15 minutes for your alert changes to take effect."
+    : "Failed to save your alert settings. Please try again.";
 
   return (
     <>
       <Dialog
         hidden={statusDialogHidden}
-        onDismiss={() => statusDialogHidden(true)}
+        onDismiss={() => onSetStatusDialogHidden(true)}
         minWidth={500}
         dialogContentProps={{
           type: DialogType.normal,
-          title: message,
+          title: isSubmissionSuccessful ? "Success" : "Error",
           showCloseButton: true,
+          className: styles.statusDialog,
         }}
         modalProps={{
           isBlocking: true,
@@ -42,7 +39,28 @@ if (isSubmissionSuccessful) {
         }}
         // styles={{ root: { maxHeight: 700 } }}
       >
-        <Icon iconName="Completed" className="ms-IconExample" />
+        <Stack>
+          <Stack.Item align="center">
+            <Text variant="large" className={styles.subText}>
+              {message}
+            </Text>
+          </Stack.Item>
+          <Stack.Item align="center">
+            <Icon
+              iconName={isSubmissionSuccessful ? "Completed" : "ErrorBadge"}
+              className={
+                isSubmissionSuccessful ? styles.iconSuccess : styles.iconError
+              }
+            />
+          </Stack.Item>
+        </Stack>
+
+        <DialogFooter>
+          <PrimaryButton
+            onClick={() => onSetStatusDialogHidden(true)}
+            text="Close"
+          />
+        </DialogFooter>
       </Dialog>
     </>
   );

@@ -760,7 +760,7 @@ const ManageAlerts = ({
           />
         </DialogFooter>
       </Dialog>
-      <StatusDialog isSubmissionSuccessful={isSubmissionSuccessful} statusDialogHidden={statusDialogHidden} />
+      <StatusDialog isSubmissionSuccessful={isSubmissionSuccessful} statusDialogHidden={statusDialogHidden} onSetStatusDialogHidden={onSetStatusDialogHidden} />
     </div>
   );
 };

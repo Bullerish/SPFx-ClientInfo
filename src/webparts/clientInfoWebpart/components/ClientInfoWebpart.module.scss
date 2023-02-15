@@ -984,3 +984,33 @@
 
 
 }
+
+.statusDialog {
+
+
+  .infoContainer {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .subText {
+    flex-grow: 1;
+  }
+
+  .iconSuccess {
+    color: $ms-color-success;
+    font-size: 50pt;
+    display: inline-block;
+    flex-grow: 1;
+  }
+
+  .iconError {
+    color: $ms-color-error;
+    font-size: 50pt;
+    display: inline-block;
+    flex-grow: 1;
+  }
+
+
+}
