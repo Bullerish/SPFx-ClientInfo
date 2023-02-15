@@ -520,7 +520,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
         } else {
             // this.spsetup();
-            await tagList.filter(item => {
+            tagList.filter(item => {
                 this.setState({
                     EngagementNumberSelected: item.name
                 });
@@ -533,10 +533,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 }
 
                 Engagementdata.filter(async (e) => {
-
-                    if (e.Title == item.name) {    
-                        ExDate = (6) + '-' + (1) + '-' + (parseInt(e.WorkYear) + 2);                     
-                    if (e.Title == item.name) {
+                    if (e.Title == item.name) {                                                
                         ExDate = (6) + '-' + (1) + '-' + (parseInt(e.WorkYear) + 2);
                         let dt = new Date(ExDate);
                         const ExDate1: Date = dt;
