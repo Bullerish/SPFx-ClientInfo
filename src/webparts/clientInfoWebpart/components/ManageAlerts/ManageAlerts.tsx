@@ -39,8 +39,7 @@ import { IItemAddResult } from "@pnp/sp/items";
 import { ISiteUser } from "@pnp/sp/site-users";
 import { ISiteUserInfo } from "@pnp/sp/site-users/types";
 import styles from "../ClientInfoWebpart.module.scss";
-import StatusDialog from './StatusDialog';
-
+import StatusDialog from "./StatusDialog";
 
 // for subwebs call
 export interface ISubWeb {
@@ -91,7 +90,8 @@ const ManageAlerts = ({
   );
   const [isConfirmationHidden, setIsConfirmationHidden] =
     useState<boolean>(true);
-  const [isSubmissionSuccessful, setIsSubmissionSuccessful] = useState<boolean>();
+  const [isSubmissionSuccessful, setIsSubmissionSuccessful] =
+    useState<boolean>();
   const [statusDialogHidden, setStatusDialogHidden] = useState<boolean>();
 
   const hostUrl: string = window.location.host;
@@ -307,10 +307,6 @@ const ManageAlerts = ({
       console.log("in If condition for isAlertModalOpen");
       // console.log('logging items state: ', items);
 
-      // // const output: any[] = items.filter((obj) => {
-      // //   return itemsToBeAddedForAlerts.indexOf(obj) !== -1;
-      // // });
-
       const output: any[] = items.filter((obj1) => {
         return !itemsToBeAddedForAlerts.some((obj2) => {
           return obj1.key === obj2.key;
@@ -320,11 +316,10 @@ const ManageAlerts = ({
       console.log("logging output: ", output);
       setItems(output);
 
-      // selection.setItems(output, false);
     }
   }, [isAlertModalOpen]);
 
-  // TODO: Need to add Alerts to delete in the payload to the user list
+  // adds listItem either by updating the record or adding a new one if it doesn't already exist for the user
   const addUserAlertsListItem = async () => {
     let listItem: object = {};
     let listItemId: number;
@@ -348,19 +343,24 @@ const ManageAlerts = ({
       AbsoluteUrl: absoluteUrl,
       AlertType: alertTypeItem.key,
       AlertFrequency: alertFrequencyItem.key,
-      AlertsToAdd: itemDetailsToBeSaved.toString().replace(/,/g, ';'),
+      AlertsToAdd: itemDetailsToBeSaved.toString().replace(/,/g, ";"),
       AlertsToDelete: itemDetailsToBeDeleted.toString().replace(/,/g, ";"),
     };
 
     console.log("item details to be saved: ", listItem);
 
-    let itemResult = await sp.web.lists.getByTitle(userAlertsList).items.filter(`Title eq '${currentUserId.UserPrincipalName}'`)();
+    let itemResult = await sp.web.lists
+      .getByTitle(userAlertsList)
+      .items.filter(`Title eq '${currentUserId.UserPrincipalName}'`)();
 
     if (itemResult.length > 0) {
       listItemId = itemResult[0].Id;
 
-      const updateResult = await sp.web.lists.getByTitle(userAlertsList).items.getById(listItemId).update(listItem);
-      console.log('existing item updated', updateResult);
+      const updateResult = await sp.web.lists
+        .getByTitle(userAlertsList)
+        .items.getById(listItemId)
+        .update(listItem);
+      console.log("existing item updated", updateResult);
 
       if (updateResult.data !== (null || undefined)) {
         setIsSubmissionSuccessful(true);
@@ -369,23 +369,21 @@ const ManageAlerts = ({
         setIsSubmissionSuccessful(false);
         setStatusDialogHidden(false);
       }
-
     } else {
       const itemAddResult: IItemAddResult = await sp.web.lists
         .getByTitle(userAlertsList)
         .items.add(listItem);
 
-        if (itemAddResult.data) {
-          setIsSubmissionSuccessful(true);
-          setStatusDialogHidden(false);
-        } else {
-          setIsSubmissionSuccessful(false);
-          setStatusDialogHidden(false);
-        }
+      if (itemAddResult.data) {
+        setIsSubmissionSuccessful(true);
+        setStatusDialogHidden(false);
+      } else {
+        setIsSubmissionSuccessful(false);
+        setStatusDialogHidden(false);
+      }
 
-        console.log('item was newly created', itemAddResult);
+      console.log("item was newly created", itemAddResult);
     }
-
 
     // console.log("itemAddResult: ", itemAddResult);
   };
@@ -426,7 +424,7 @@ const ManageAlerts = ({
   };
 
   // logic to process for determining if existing alerts are to be deleted
-  const factorAlertsToDelete = () => {
+  const factorAlertsToDelete = (): void => {
     console.log("itemsToBeAdded count: ", itemsToBeAddedForAlerts.length);
 
     const output: any[] = alertSelectedSubPortals.filter((obj1) => {
@@ -440,6 +438,25 @@ const ManageAlerts = ({
     console.log("itemsToDelete: ", output);
     setAlertsToDelete(output);
     setIsConfirmationHidden(false);
+  };
+
+  // reset state to after subwebs call and default settings
+  const resetState = (): void => {
+    console.log('in resetState func::');
+
+    setItems(subWebInfo);
+    setItemsToBeAddedForAlerts(alertSelectedSubPortals);
+    setAlertsToDelete([]);
+    setAlertTypeItem({
+      key: "allChanges",
+      text: "All Changes",
+    });
+    setAlertFrequencyItem({
+      key: "immediately",
+      text: "Send notification immediately",
+    });
+    setIsSubmissionSuccessful(null);
+
   };
 
   // // TODO: testing functionality
@@ -529,7 +546,7 @@ const ManageAlerts = ({
     setAlertFrequencyItem(item);
   };
 
-  // TODO: function to capture items selected by user and adds them to top DetailsList Component and removes them from bottom DetailsList component
+  // function to capture items selected by user and adds them to top DetailsList Component and removes them from bottom DetailsList component
   const transferToMainDetailsList = () => {
     console.log("transferToMainDetailsList fired::");
     const selectionItems = selectionForAlertsToAdd.getSelection();
@@ -549,7 +566,7 @@ const ManageAlerts = ({
     setItemsToBeAddedForAlerts(output);
   };
 
-  // TODO: function to capture items selected by user and adds them to top DetailsList Component and removes them from bottom DetailsList component
+  // function to capture items selected by user and adds them to top DetailsList Component and removes them from bottom DetailsList component
   const transferToAddAlertsDetailsList = () => {
     console.log("transferToAddAlertsDetailsList fired::");
 
@@ -569,11 +586,16 @@ const ManageAlerts = ({
 
     setItems(output);
   };
-  // END EVENT HANDLERS
 
+  // TODO: once user clicks close or x on statusDialog, we close all dialogs/modals and reset state
   const onSetStatusDialogHidden = () => {
     setStatusDialogHidden(true);
+    setIsConfirmationHidden(true);
+    onAlertModalHide(true);
+
+    resetState();
   };
+  // END EVENT HANDLERS
 
   selection = new Selection({
     onSelectionChanged: () => transferToAddAlertsDetailsList(),
@@ -599,7 +621,7 @@ const ManageAlerts = ({
         modalProps={{
           isBlocking: true,
           // styles: { main: { maxHeight: 700, overflowY: 'scroll' } },
-          className: styles.manageAlerts
+          className: styles.manageAlerts,
         }}
         // styles={{ root: { maxHeight: 700 } }}
       >
@@ -760,7 +782,11 @@ const ManageAlerts = ({
           />
         </DialogFooter>
       </Dialog>
-      <StatusDialog isSubmissionSuccessful={isSubmissionSuccessful} statusDialogHidden={statusDialogHidden} onSetStatusDialogHidden={onSetStatusDialogHidden} />
+      <StatusDialog
+        isSubmissionSuccessful={isSubmissionSuccessful}
+        statusDialogHidden={statusDialogHidden}
+        onSetStatusDialogHidden={onSetStatusDialogHidden}
+      />
     </div>
   );
 };
