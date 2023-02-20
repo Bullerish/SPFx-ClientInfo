@@ -88,6 +88,14 @@ const ManageAlerts = ({
   const [alertFrequencyItem, setAlertFrequencyItem] = useState<IDropdownOption>(
     { key: "immediately", text: "Send notification immediately" }
   );
+  const [timeDay, setTimeDay] = useState<IDropdownOption>({
+    key: "Sunday",
+    text: "Sunday",
+  });
+  const [timeTime, setTimeTime] = useState<IDropdownOption>({
+    key: "12AM",
+    text: "12:00 AM",
+  });
   const [isConfirmationHidden, setIsConfirmationHidden] =
     useState<boolean>(true);
   const [isSubmissionSuccessful, setIsSubmissionSuccessful] =
@@ -315,7 +323,6 @@ const ManageAlerts = ({
 
       console.log("logging output: ", output);
       setItems(output);
-
     }
   }, [isAlertModalOpen]);
 
@@ -338,20 +345,22 @@ const ManageAlerts = ({
 
     // formulate object to input as payload below
     listItem = {
-      Title: currentUserId ? currentUserId.UserPrincipalName : "",
-      UserPrincipalName: currentUserId ? currentUserId.UserPrincipalName : "",
+      Title: currentUserId ? currentUserId.LoginName : "",
+      UserPrincipalName: currentUserId ? currentUserId.LoginName : "",
       AbsoluteUrl: absoluteUrl,
       AlertType: alertTypeItem.key,
       AlertFrequency: alertFrequencyItem.key,
       AlertsToAdd: itemDetailsToBeSaved.toString().replace(/,/g, ";"),
       AlertsToDelete: itemDetailsToBeDeleted.toString().replace(/,/g, ";"),
+      TimeDay: timeDay.key,
+      TimeTime: timeTime.key,
     };
 
     console.log("item details to be saved: ", listItem);
 
     let itemResult = await sp.web.lists
       .getByTitle(userAlertsList)
-      .items.filter(`Title eq '${currentUserId.UserPrincipalName}'`)();
+      .items.filter(`Title eq '${currentUserId.LoginName}'`)();
 
     if (itemResult.length > 0) {
       listItemId = itemResult[0].Id;
@@ -415,6 +424,12 @@ const ManageAlerts = ({
       const alertFrequencyField: IFieldAddResult = await sp.web.lists
         .getByTitle(userAlertsList)
         .fields.addText("AlertFrequency", 255);
+      const timeDayField: IFieldAddResult = await sp.web.lists
+        .getByTitle(userAlertsList)
+        .fields.addText("TimeDay", 255);
+      const timeTimeField: IFieldAddResult = await sp.web.lists
+        .getByTitle(userAlertsList)
+        .fields.addText("TimeTime", 255);
 
       addUserAlertsListItem();
     } else {
@@ -442,7 +457,7 @@ const ManageAlerts = ({
 
   // reset state to after subwebs call and default settings
   const resetState = (): void => {
-    console.log('in resetState func::');
+    console.log("in resetState func::");
 
     setItems(subWebInfo);
     setItemsToBeAddedForAlerts(alertSelectedSubPortals);
@@ -455,8 +470,9 @@ const ManageAlerts = ({
       key: "immediately",
       text: "Send notification immediately",
     });
+    setTimeDay({ key: "Sunday", text: "Sunday" });
+    setTimeTime({ key: "12AM", text: "12:00 AM" });
     setIsSubmissionSuccessful(null);
-
   };
 
   // // TODO: testing functionality
@@ -546,6 +562,22 @@ const ManageAlerts = ({
     setAlertFrequencyItem(item);
   };
 
+  // onChange function fired when user changes selection on Day of Week
+  const onTimeDayChange = (
+    event: React.FormEvent<HTMLDivElement>,
+    item: IDropdownOption
+  ): void => {
+    setTimeDay(item);
+  };
+
+  // onChange function fired when user changes selection on Day of Week
+  const onTimeTimeChange = (
+    event: React.FormEvent<HTMLDivElement>,
+    item: IDropdownOption
+  ): void => {
+    setTimeTime(item);
+  };
+
   // function to capture items selected by user and adds them to top DetailsList Component and removes them from bottom DetailsList component
   const transferToMainDetailsList = () => {
     console.log("transferToMainDetailsList fired::");
@@ -587,7 +619,7 @@ const ManageAlerts = ({
     setItems(output);
   };
 
-  // TODO: once user clicks close or x on statusDialog, we close all dialogs/modals and reset state
+  // once user clicks close or x on statusDialog, we close all dialogs/modals and reset state
   const onSetStatusDialogHidden = () => {
     setStatusDialogHidden(true);
     setIsConfirmationHidden(true);
@@ -626,6 +658,9 @@ const ManageAlerts = ({
         // styles={{ root: { maxHeight: 700 } }}
       >
         <div className={styles.addDetailsListContainerStyles}>
+          <Text variant="mediumPlus">
+            Sub-Portals staged for alert creation:
+          </Text>
           <MarqueeSelection selection={selectionForAlertsToAdd}>
             <DetailsList
               items={itemsToBeAddedForAlerts}
@@ -647,12 +682,14 @@ const ManageAlerts = ({
             />
           </MarqueeSelection>
         </div>
-
         <TextField
           label="Filter by Sub-Portal Name:"
           onChange={() => onChangeFilterText}
           className={styles.filterControlStyles}
         />
+        <Text variant="mediumPlus">
+          Select Sub-Portals below to stage for alerts:
+        </Text>
         <div className={styles.detailsListContainerStyles}>
           <MarqueeSelection selection={selection}>
             <DetailsList
@@ -678,7 +715,7 @@ const ManageAlerts = ({
           <Dropdown
             label="Alert Type"
             selectedKey={alertTypeItem ? alertTypeItem.key : undefined}
-            onChange={() => onAlertTypeChange}
+            onChange={onAlertTypeChange}
             placeholder="Select an option"
             options={[
               { key: "allChanges", text: "All Changes" },
@@ -696,7 +733,7 @@ const ManageAlerts = ({
             selectedKey={
               alertFrequencyItem ? alertFrequencyItem.key : undefined
             }
-            onChange={() => onAlertFrequencyChange}
+            onChange={onAlertFrequencyChange}
             placeholder="Select an option"
             options={[
               { key: "immediately", text: "Send notification immediately" },
@@ -704,6 +741,59 @@ const ManageAlerts = ({
               { key: "weeklySummary", text: "Send a weekly summary" },
             ]}
             styles={{ dropdown: { width: 300 } }}
+          />
+        </div>
+        <div className={styles.dayTimeSettingsContainerStyles}>
+          <Dropdown
+            label="Day of Week"
+            disabled={alertFrequencyItem.key === "weeklySummary" ? false : true}
+            selectedKey={timeDay ? timeDay.key : undefined}
+            onChange={onTimeDayChange}
+            placeholder="Select an option"
+            options={[
+              { key: "Sunday", text: "Sunday" },
+              { key: "Monday", text: "Monday" },
+              { key: "Tuesday", text: "Tuesday" },
+              { key: "Wednesday", text: "Wednesday" },
+              { key: "Thursday", text: "Thursday" },
+              { key: "Friday", text: "Friday" },
+              { key: "Saturday", text: "Saturday" },
+            ]}
+            styles={{ dropdown: { width: 150 } }}
+          />
+          <Dropdown
+            label="Time"
+            selectedKey={timeTime ? timeTime.key : undefined}
+            disabled={alertFrequencyItem.key === "weeklySummary" || alertFrequencyItem.key === 'dailySummary' ? false : true}
+            onChange={onTimeTimeChange}
+            placeholder="Select an option"
+            options={[
+              { key: "0", text: "12:00 AM" },
+              { key: "1", text: "1:00 AM" },
+              { key: "2", text: "2:00 AM" },
+              { key: "3", text: "3:00 AM" },
+              { key: "4", text: "4:00 AM" },
+              { key: "5", text: "5:00 AM" },
+              { key: "6", text: "6:00 AM" },
+              { key: "7", text: "7:00 AM" },
+              { key: "8", text: "8:00 AM" },
+              { key: "9", text: "9:00 AM" },
+              { key: "10", text: "10:00 AM" },
+              { key: "11", text: "11:00 AM" },
+              { key: "12", text: "12:00 PM" },
+              { key: "13", text: "1:00 PM" },
+              { key: "14", text: "2:00 PM" },
+              { key: "15", text: "3:00 PM" },
+              { key: "16", text: "4:00 PM" },
+              { key: "17", text: "5:00 PM" },
+              { key: "18", text: "6:00 PM" },
+              { key: "19", text: "7:00 PM" },
+              { key: "20", text: "8:00 PM" },
+              { key: "21", text: "9:00 PM" },
+              { key: "22", text: "10:00 PM" },
+              { key: "23", text: "11:00 PM" },
+            ]}
+            styles={{ dropdown: { width: 150 } }}
           />
         </div>
         <DialogFooter>

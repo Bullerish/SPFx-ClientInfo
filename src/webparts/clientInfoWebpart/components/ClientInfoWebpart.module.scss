@@ -976,12 +976,16 @@
     padding: 15px 0 15px 0;
   }
 
+  .dayTimeSettingsContainerStyles {
+    display: flex;
+    justify-content: end;
+    margin: 0 72px 15px 0;
+  }
+
   .filterControlStyles {
     margin: 0 30px 20px 0;
     max-width: 300px;
   }
-
-
 
 }
 
