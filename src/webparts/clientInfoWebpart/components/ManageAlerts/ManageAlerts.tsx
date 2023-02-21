@@ -471,7 +471,7 @@ const ManageAlerts = ({
       text: "Send notification immediately",
     });
     setTimeDay({ key: "Sunday", text: "Sunday" });
-    setTimeTime({ key: "12AM", text: "12:00 AM" });
+    setTimeTime({ key: "0", text: "12:00 AM" });
     setIsSubmissionSuccessful(null);
   };
 
@@ -643,7 +643,7 @@ const ManageAlerts = ({
     <div>
       <Dialog
         hidden={!isAlertModalOpen}
-        onDismiss={() => onAlertModalHide(true)}
+        onDismiss={onSetStatusDialogHidden}
         minWidth={960}
         dialogContentProps={{
           type: DialogType.normal,
@@ -798,7 +798,7 @@ const ManageAlerts = ({
         </div>
         <DialogFooter>
           <PrimaryButton onClick={factorAlertsToDelete} text="Save Alerts" />
-          <DefaultButton onClick={() => onAlertModalHide(true)} text="Cancel" />
+          <DefaultButton onClick={onSetStatusDialogHidden} text="Cancel" />
         </DialogFooter>
       </Dialog>
       <Dialog
