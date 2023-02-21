@@ -93,7 +93,7 @@ const ManageAlerts = ({
     text: "Sunday",
   });
   const [timeTime, setTimeTime] = useState<IDropdownOption>({
-    key: "12AM",
+    key: "0",
     text: "12:00 AM",
   });
   const [isConfirmationHidden, setIsConfirmationHidden] =
@@ -339,7 +339,7 @@ const ManageAlerts = ({
 
     alertsToDelete.forEach((el) => {
       if (el.alertId) {
-        itemDetailsToBeDeleted.push(el.alertId);
+        itemDetailsToBeDeleted.push(el.alertId + '+' + el.ServerRelativeUrl);
       }
     });
 
