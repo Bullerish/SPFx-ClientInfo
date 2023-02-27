@@ -257,7 +257,7 @@ const ManageAlerts = ({
                 item.ServerRelativeUrl.split("/")[3].split("-")[1];
               subPortalType = subPortalTypeName + "-" + subPortalTypeFunc;
 
-              // console.log("subportal type: ", subPortalType);
+              console.log("existing alert data: ", alert.d.results);
 
               if (
                 (subPortalType === "AUD-WF" || subPortalType === "TAX-WF") &&
@@ -333,13 +333,25 @@ const ManageAlerts = ({
 
     console.log("in AddUserAlertslistItem Func");
 
-    itemsToBeAddedForAlerts.forEach((el) => {
+    // remove existing alerts prior to adding list item so we don't create duplicates
+    const output: any[] = itemsToBeAddedForAlerts.filter((obj1) => {
+      return !alertSelectedSubPortals.some((obj2) => {
+        return obj1.key === obj2.key;
+      });
+    });
+
+    console.log(
+      "itemsToBeAddedForAlerts without pre-existing alerts: ",
+      output
+    );
+
+    output.forEach((el) => {
       itemDetailsToBeSaved.push(el.ServerRelativeUrl);
     });
 
     alertsToDelete.forEach((el) => {
       if (el.alertId) {
-        itemDetailsToBeDeleted.push(el.alertId + '+' + el.ServerRelativeUrl);
+        itemDetailsToBeDeleted.push(el.alertId + "+" + el.ServerRelativeUrl);
       }
     });
 
@@ -537,6 +549,8 @@ const ManageAlerts = ({
       return itemsToBeAddedForAlerts.indexOf(obj) === -1;
     });
 
+    console.log(output);
+
     setItems(
       text
         ? output.filter((i) => i.Title.toLowerCase().indexOf(text) > -1)
@@ -684,7 +698,7 @@ const ManageAlerts = ({
         </div>
         <TextField
           label="Filter by Sub-Portal Name:"
-          onChange={() => onChangeFilterText}
+          onChange={onChangeFilterText}
           className={styles.filterControlStyles}
         />
         <Text variant="mediumPlus">
@@ -764,7 +778,12 @@ const ManageAlerts = ({
           <Dropdown
             label="Time"
             selectedKey={timeTime ? timeTime.key : undefined}
-            disabled={alertFrequencyItem.key === "weeklySummary" || alertFrequencyItem.key === 'dailySummary' ? false : true}
+            disabled={
+              alertFrequencyItem.key === "weeklySummary" ||
+              alertFrequencyItem.key === "dailySummary"
+                ? false
+                : true
+            }
             onChange={onTimeTimeChange}
             placeholder="Select an option"
             options={[
@@ -816,6 +835,7 @@ const ManageAlerts = ({
         }}
         // styles={{ root: { maxHeight: 700 } }}
       >
+        { itemsToBeAddedForAlerts.length > 0 &&
         <div className={styles.confirmationContainerStyles}>
           <Text variant="large" block nowrap>
             Alerts will be added for:
@@ -840,30 +860,33 @@ const ManageAlerts = ({
             // onItemInvoked={onItemInvoked}
           />
         </div>
-        <div className={styles.confirmationContainerStyles}>
-          <Text variant="large" block nowrap>
-            Alerts will be deleted for:
-          </Text>
-          {/* confirmation DetailsList for itemsToBeAdded */}
-          <DetailsList
-            items={alertsToDelete}
-            columns={columns}
-            checkboxVisibility={CheckboxVisibility.hidden}
-            setKey="set"
-            compact={true}
-            onShouldVirtualize={() => false}
-            selectionMode={SelectionMode.none}
-            // styles={{ root: { height: "500px" } }}
-            layoutMode={DetailsListLayoutMode.justified}
-            constrainMode={1}
-            // selection={selection}
-            selectionPreservedOnEmptyClick={true}
-            ariaLabelForSelectionColumn="Toggle selection"
-            ariaLabelForSelectAllCheckbox="Toggle selection for all items"
-            // checkButtonAriaLabel="Row checkbox"
-            // onItemInvoked={onItemInvoked}
-          />
-        </div>
+}
+        {alertsToDelete.length > 0 && (
+          <div className={styles.confirmationContainerStyles}>
+            <Text variant="large" block nowrap>
+              Alerts will be deleted for:
+            </Text>
+            {/* confirmation DetailsList for itemsToBeAdded */}
+            <DetailsList
+              items={alertsToDelete}
+              columns={columns}
+              checkboxVisibility={CheckboxVisibility.hidden}
+              setKey="set"
+              compact={true}
+              onShouldVirtualize={() => false}
+              selectionMode={SelectionMode.none}
+              // styles={{ root: { height: "500px" } }}
+              layoutMode={DetailsListLayoutMode.justified}
+              constrainMode={1}
+              // selection={selection}
+              selectionPreservedOnEmptyClick={true}
+              ariaLabelForSelectionColumn="Toggle selection"
+              ariaLabelForSelectAllCheckbox="Toggle selection for all items"
+              // checkButtonAriaLabel="Row checkbox"
+              // onItemInvoked={onItemInvoked}
+            />
+          </div>
+        )}
         <DialogFooter>
           <PrimaryButton onClick={ensureAlertsListExists} text="Confirm" />
           <DefaultButton
