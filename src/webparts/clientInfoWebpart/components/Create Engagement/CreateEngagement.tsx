@@ -533,8 +533,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 }
 
                 Engagementdata.filter(async (e) => {
-                    if (e.Title == item.name) {                                                
-                        ExDate = (6) + '-' + (1) + '-' + (parseInt(e.WorkYear) + 2);
+
+                    if (e.Title == item.name) {    
+                        ExDate = (6) + '-' + (1) + '-' + (parseInt(e.WorkYear) + 2);                     
                         let dt = new Date(ExDate);
                         const ExDate1: Date = dt;
                         this.setState({
@@ -658,7 +659,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                 this.insertdata(SPUrl, listname, JSON.stringify(PortalData), requestDigest.d.GetContextWebInformation.FormDigestValue)
                                     .then((response) => {
                                         this.CheckIfEngCreated().then((engcrt) => {
-                                            if (response !== null && engcrt !== null) {
+                                            if ((response !== null) && (engcrt !== null)) {
 
                                                 this.SaveEngagementList();
                                                 resolve(response);
@@ -708,7 +709,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                     .then((response) => {
                                         this.CheckIfEngCreated().then((engcrt) => {
 
-                                            if (response !== null && engcrt !== null) {
+                                            if ((response !== null) && (engcrt !== null)) {
                                                 this.SaveEngagementList();
                                                 resolve(response);
                                                 this.setState({ IsPortalEntryCreated: "Y" });
@@ -733,16 +734,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             if (this.state.PortalChoiceSelected == 'Rollover') {
                 PortalRollOver = true;
                 RolloverUrl = GlobalValues.SiteURL + "/" + this.state.TeamURL + "-" + this.state.PortalTypeURL + "-" + this.state.RolloverURL;
-            }
-            let fileExpirationDate = this.state.fileExpiration;
-            let portalExpirationDate = this.state.portalExpiration;
-            if ((this.state.PortalTypeSelected == "Workflow") && (this.state.TeamSelected != "Advisory")) {
-                if (fileExpirationDate == null) {
-                    // user never changed the defaults
-                    fileExpirationDate = maxDate;
-                    portalExpirationDate = portalExpDate;
-                }
-            }
+            }            
             return new Promise<number>((resolve, reject) => {
                 this.getListItemEntityTypeName(SPUrl, listname)
                     .then((listEntityName) => {
@@ -767,7 +759,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                             'ServiceType': this.state.ServiceTypeSelected,
                             'Supplemental': this.state.SupplementalSelected,
                             'TemplateType': this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Create New' ? this.state.ServiceTypeSelected : this.state.AdvisoryTemplateSelected,
-                            'isNotificationEmail': this.state.emailNotification,       
+                            'isNotificationEmail': this.state.emailNotification,
                             'FileExpiration': this.state.fileExpiration,
                             'PortalExpiration': this.state.portalExpiration,//(this.state.DateExtend ? this.state.DateExtend : this.state.portalExpiration),
                             'PortalId': PortalId,
@@ -823,7 +815,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                     this.insertdata(SPUrl, listname, JSON.stringify(PortalData), requestDigest.d.GetContextWebInformation.FormDigestValue)
                                         .then((response) => {
                                             this.CheckIfEngCreated().then((engcrt) => {
-                                                if (response !== null && engcrt !== null) {
+
+                                                if ((response !== null) && (engcrt !== null)) {
                                                     this.SaveEngagementList();
                                                     resolve(response);
                                                     this.setState({ IsPortalEntryCreated: "Y" });
@@ -1059,55 +1052,14 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         });
     }
 
-    private _validateSiteOwner(items: any[]) {
-        if (items.length > 0) {
-            // show error message if this is a guest user                     
-            let userEmail = items[0].secondaryText.toLowerCase();
-            if ((userEmail.indexOf('cohnreznick.com') == -1) && (userEmail.indexOf('cohnreznickdev') == -1)) {
-                // this is a guest user, do not validate
-            }
-            else {
-                this._getPeoplePickerItems(items);
-            }
+    private _validateSiteOwner(items: any[]) {        
+        // show error message if this is a guest user                     
+        let userEmail = items[0].secondaryText.toLowerCase();
+        if ((userEmail.indexOf('cohnreznick.com') == -1) && (userEmail.indexOf('cohnreznickdev') == -1)) {
+            // this is a guest user, do not validate
         }
-    }
-
-    private async _onPeoplePickerSelectionOffer(items: any[]) {
-        console.log('items', items);
-        let crUser = true;
-        for (let i = 0; i < items.length; i++) {
-            // show error message if this is a guest user   
-            let userEmail = items[0].secondaryText.toLowerCase();
-            if ((userEmail.indexOf('cohnreznick.com') == -1) && (userEmail.indexOf('cohnreznickdev') == -1)) {
-                // this is a guest user, do not validate
-                crUser = false;
-            }
-        }
-        if (!crUser) {
-            this.setState({
-                validate: true
-            });
-            return 'Only CohnReznick employees may be added on portal creation.';
-        }
-    }
-
-    private async validateSiteUsers(items: any[]) {        
-        let crUser = true;
-        for (let i = 0; i < items.length; i++) {
-            // show error message if this is a guest user   
-            let userEmail = items[i].secondaryText.toLowerCase();            
-            if ((userEmail.indexOf('cohnreznick.com') == -1) && (userEmail.indexOf('cohnreznickdev') == -1)) {
-                // this is a guest user, do not validate
-                crUser = false;
-                break;
-            }
-        }
-        if (crUser) {            
-            this._getUserItems(items);
-            this.setState({ validate: false });
-        }
-        else {            
-            this.setState({ validate: true });
+        else {
+            this._getPeoplePickerItems(items);
         }
     }
 
@@ -1182,8 +1134,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
     private _onSelectDate2 = (date: Date | null | undefined): void => {
         this.setState({
-            // DateExtend: date
-            portalExpiration: portalExpDate,
+           // DateExtend: date
+           portalExpiration: portalExpDate,           
         });
     }
 
@@ -1560,7 +1512,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                 titleText="Site Owner"
                                                 showtooltip={false}
                                                 required={true}
-                                                onChange={this._validateSiteOwner.bind(this)}
+                                                onChange={(items) => this._validateSiteOwner(items)}
                                                 showHiddenInUI={false}
                                                 principalTypes={[PrincipalType.User]}
                                                 ensureUser={true}
@@ -1779,8 +1731,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                     {/* Do NOT DELETE THIS CODE */}
                                     {/* Do NOT DELETE THIS CODE */}
                                     {/* Do NOT DELETE THIS CODE */}
-                                    {/* {this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Create New' ?	
-                                        <AssuranceEngSplit OnSplitChange={this.SetAssuranceSplitData} AsuranceSplitData={this.state.AsuranceSplitData} spContext={this.props.spContext}></AssuranceEngSplit>	
+                                    {/* {this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Create New' ?
+                                        <AssuranceEngSplit OnSplitChange={this.SetAssuranceSplitData} AsuranceSplitData={this.state.AsuranceSplitData} spContext={this.props.spContext}></AssuranceEngSplit>
                                         : ""} */}
                                     <div>
                                         <div className={styles.formcontrol}>
@@ -1858,7 +1810,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     {/* Do NOT DELETE THIS CODE */}
                                                     {/* Do NOT DELETE THIS CODE */}
                                                     {/* Do NOT DELETE THIS CODE */}
-                                                    {/* 
+                                                    {/*
                                                     {this.state.TeamSelected == 'Assurance' && this.state.AssuranceSplitRollover.length > 0 && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Rollover' ?
                                                         <AssuranceEngSplitRolloverUsers spContext={this.props.spContext} Data={this.state.AssuranceSplitRollover} Control={this.SetAssuranceSplitDataRollOver}></AssuranceEngSplitRolloverUsers>
                                                         : ""}
@@ -1881,8 +1833,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                 showtooltip={false}
                                                 required={false}
                                                 disabled={false}
-                                                onChange={this.validateSiteUsers.bind(this)}
-                                                onGetErrorMessage={this._onPeoplePickerSelectionOffer.bind(this)}
+                                                onChange={(items) => this._getUserItems(items)}
                                                 showHiddenInUI={false}
                                                 principalTypes={[PrincipalType.User]}
                                                 ensureUser={true}
@@ -2102,9 +2053,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     formatDate={this._onFormatDate}
                                                     minDate={minDate}
                                                     maxDate={maxDate} // 12 months                                                    
-                                                    value={this.state.fileExpiration != null ? this.state.fileExpiration : maxDate} // was maxDate                  
-                                                    // value should be the max date unless the user picked somethign different
-                                                                                                        
+                                                    value={maxDate} // now 12 months.  was this.state.DateExtend                                                    
                                                 />
                                                 <div className={styles.fileExpText}>
                                                     Files will be deleted from the portal on this date. The portal will available for rollover for an additional 6 months.
@@ -2125,8 +2074,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     onSelectDate={this._onSelectDate2}
                                                     formatDate={this._onFormatDate}
                                                     minDate={minDate}
-                                                    maxDate={maxDate} // 12 months                                                    
-                                                    value={maxDate} // now 12 months.  was this.state.DateExtend                                                    
+                                                    maxDate={maxDate} // 12 months
+                                                    value={maxDate} // now 12 months.  was this.state.DateExtend
                                                 />
                                                 {(this.state.validate && this.state.DateExtend == null) ?
                                                     <div className={styles.reqval}>Portal Expiration is mandatory.</div> : ''}
@@ -2287,6 +2236,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     private submitDialog = async (e) => {
+
         if (this.state.currentScreen == "screen1") {            
             if (this.state.EngagementNumberSelected == "" || this.state.addusers.length == 0
                 || this.state.Year == null || this.state.PortalTypeSelected == ""

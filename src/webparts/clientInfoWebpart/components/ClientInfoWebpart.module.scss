@@ -116,7 +116,7 @@
     background: #555;
   }
 
-  // Dialog Header 
+  // Dialog Header
   [class^="ms-Dialog-header"] {
     [class^="ms-Dialog-title"] {
       font-size  : 21px;
@@ -213,9 +213,9 @@
         }
 
         .engnumbername {
-          display: flex;  
-          justify-content: space-between;    
-          padding-top:20px;    
+          display: flex;
+          justify-content: space-between;
+          padding-top:20px;
 
           Label {
             font-weight: 600;
@@ -850,7 +850,7 @@
               font-size   : 13px;
             }
           }
-          
+
           // K1 Screen
         }
 
@@ -887,7 +887,7 @@
             [class*="ms-TextField-fieldGroup"] {
               width: 260px;
             }
-          } 
+          }
           .fileExpDatePicker {
             display: flex;
             align-items: end;
@@ -895,7 +895,7 @@
           .fileExpText {
             padding:0px 10px;
             width: 50%;
-          }         
+          }
         }
       }
 
@@ -949,4 +949,72 @@
       }
     }
   }
+}
+
+// Manage Alerts SCSS here
+.manageAlerts {
+
+
+  .addDetailsListContainerStyles {
+    height: 250px;
+    overflow-y: scroll;
+  }
+
+  .detailsListContainerStyles {
+    max-height: 400px;
+    overflow-y: scroll;
+  }
+
+  .confirmationContainerStyles {
+    height: 350px;
+    overflow-y: scroll;
+  }
+
+  .alertSettingsContainerStyles {
+    display: flex;
+    justify-content: space-around;
+    padding: 15px 0 15px 0;
+  }
+
+  .dayTimeSettingsContainerStyles {
+    display: flex;
+    justify-content: end;
+    margin: 0 72px 15px 0;
+  }
+
+  .filterControlStyles {
+    margin: 0 30px 20px 0;
+    max-width: 300px;
+  }
+
+}
+
+.statusDialog {
+
+
+  .infoContainer {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .subText {
+    flex-grow: 1;
+  }
+
+  .iconSuccess {
+    color: $ms-color-success;
+    font-size: 50pt;
+    display: inline-block;
+    flex-grow: 1;
+  }
+
+  .iconError {
+    color: $ms-color-error;
+    font-size: 50pt;
+    display: inline-block;
+    flex-grow: 1;
+  }
+
+
 }
