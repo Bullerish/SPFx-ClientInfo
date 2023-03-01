@@ -28,6 +28,7 @@ export default class ClientInfoWebpartWebPart extends BaseClientSideWebPart<
   }
 
   public render(): void {
+    console.log('version is 1.0.0.62');
     const element: React.ReactElement<IClientInfoWebpartProps> = React.createElement(
       ClientInfoWebpart,
       {
