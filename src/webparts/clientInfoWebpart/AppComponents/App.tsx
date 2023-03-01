@@ -146,13 +146,13 @@ class App extends React.Component<IApp> {
       </React.Fragment>
     );
   }
-
+/* UNUSED FUNCTION
   public UpdatePBIReportData = async () => {
     try {
       var ClientNumber = GlobalValues.SiteURL.split("/")[4];
       var IsItemExists: boolean = false;
 
-      GlobalValues._SetupSP();
+      //GlobalValues._SetupSP();
       let objToSave = {
         Title: ClientNumber,
         SIteUrl: GlobalValues.SiteURL,
@@ -194,6 +194,7 @@ class App extends React.Component<IApp> {
       console.log("Data load Error: " + error);
     }
   }
+  */
 }
 
 export default App;

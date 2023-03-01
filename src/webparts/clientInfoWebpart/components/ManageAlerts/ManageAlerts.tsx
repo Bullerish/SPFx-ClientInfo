@@ -26,12 +26,11 @@ import {
 } from "office-ui-fabric-react/lib/Dropdown";
 import { TextField } from "office-ui-fabric-react/lib/TextField";
 import { Text } from "office-ui-fabric-react/lib/Text";
-// import { GlobalValues } from "../../Dataprovider/GlobalValue";
 import { mergeStyles } from "office-ui-fabric-react/lib/Styling";
 import { sp } from "@pnp/sp";
 import { IFieldAddResult } from "@pnp/sp/fields/types";
 import "@pnp/sp/site-users";
-import "@pnp/sp/webs";
+import {Web } from "@pnp/sp/webs";
 import "@pnp/sp/lists";
 import "@pnp/sp/fields";
 import "@pnp/sp/items";
@@ -40,6 +39,7 @@ import { ISiteUser } from "@pnp/sp/site-users";
 import { ISiteUserInfo } from "@pnp/sp/site-users/types";
 import styles from "../ClientInfoWebpart.module.scss";
 import StatusDialog from "./StatusDialog";
+import { GlobalValues } from "../../Dataprovider/GlobalValue";
 
 // for subwebs call
 export interface ISubWeb {
@@ -215,8 +215,7 @@ const ManageAlerts = ({
       setItems(subWebsWithKey);
     }
 
-    async function getCurrentUserId() {
-      // const userId = await sp.web.currentUser();
+    async function getCurrentUserId() {      
       const userId = await sp.web.currentUser();
       setCurrentUserId(userId);
     }
@@ -370,14 +369,15 @@ const ManageAlerts = ({
 
     console.log("item details to be saved: ", listItem);
 
-    let itemResult = await sp.web.lists
+    let hubWeb = Web(GlobalValues.HubSiteURL);
+    let itemResult = await hubWeb.lists
       .getByTitle(userAlertsList)
       .items.filter(`Title eq '${currentUserId.LoginName}'`)();
 
     if (itemResult.length > 0) {
       listItemId = itemResult[0].Id;
 
-      const updateResult = await sp.web.lists
+      const updateResult = await hubWeb.lists
         .getByTitle(userAlertsList)
         .items.getById(listItemId)
         .update(listItem);
@@ -391,7 +391,7 @@ const ManageAlerts = ({
         setStatusDialogHidden(false);
       }
     } else {
-      const itemAddResult: IItemAddResult = await sp.web.lists
+      const itemAddResult: IItemAddResult = await hubWeb.lists
         .getByTitle(userAlertsList)
         .items.add(listItem);
 
@@ -412,34 +412,35 @@ const ManageAlerts = ({
   // checks for UserAlertsList, if it doesn't exist it gets created then columns will be added
   const ensureAlertsListExists = async () => {
     // console.log(selectionDetails);
-    const alertsListEnsureResult = await sp.web.lists.ensure(userAlertsList);
+    let hubWeb = Web(GlobalValues.HubSiteURL);
+    const alertsListEnsureResult = await hubWeb.lists.ensure(userAlertsList);
 
     if (alertsListEnsureResult.created) {
       console.log("list was created somewhere!!!!!");
 
       // since list was newly created, need to add all the relevant columns/fields
-      const alertsToAddField: IFieldAddResult = await sp.web.lists
+      const alertsToAddField: IFieldAddResult = await hubWeb.lists
         .getByTitle(userAlertsList)
         .fields.addMultilineText("AlertsToAdd", 6, true, false, false, true);
-      const alertsToDeleteField: IFieldAddResult = await sp.web.lists
+      const alertsToDeleteField: IFieldAddResult = await hubWeb.lists
         .getByTitle(userAlertsList)
         .fields.addMultilineText("AlertsToDelete", 6, true, false, false, true);
-      const UserPrincipalNameField: IFieldAddResult = await sp.web.lists
+      const UserPrincipalNameField: IFieldAddResult = await hubWeb.lists
         .getByTitle(userAlertsList)
         .fields.addText("UserPrincipalName", 255);
-      const absoluteURLField: IFieldAddResult = await sp.web.lists
+      const absoluteURLField: IFieldAddResult = await hubWeb.lists
         .getByTitle(userAlertsList)
         .fields.addText("AbsoluteUrl", 255);
-      const alertTypeField: IFieldAddResult = await sp.web.lists
+      const alertTypeField: IFieldAddResult = await hubWeb.lists
         .getByTitle(userAlertsList)
         .fields.addText("AlertType", 255);
-      const alertFrequencyField: IFieldAddResult = await sp.web.lists
+      const alertFrequencyField: IFieldAddResult = await hubWeb.lists
         .getByTitle(userAlertsList)
         .fields.addText("AlertFrequency", 255);
-      const timeDayField: IFieldAddResult = await sp.web.lists
+      const timeDayField: IFieldAddResult = await hubWeb.lists
         .getByTitle(userAlertsList)
         .fields.addText("TimeDay", 255);
-      const timeTimeField: IFieldAddResult = await sp.web.lists
+      const timeTimeField: IFieldAddResult = await hubWeb.lists
         .getByTitle(userAlertsList)
         .fields.addText("TimeTime", 255);
 

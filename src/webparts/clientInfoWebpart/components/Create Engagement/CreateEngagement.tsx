@@ -13,7 +13,7 @@ import { addDays, addMonths } from "office-ui-fabric-react/lib/utilities/dateMat
 import { GlobalValues } from "../../Dataprovider/GlobalValue";
 import "@pnp/sp/files";
 import "@pnp/sp/folders";
-import "@pnp/sp/webs";
+import { Web } from "@pnp/sp/webs";
 import "@pnp/sp/site-users/web";
 import AssuranceEngSplit from "./AssuranceEngSplit";
 import AssuranceEngSplitRollover from "./AssuranceEngSplitRollover";
@@ -306,7 +306,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         updatedworkyear = false;
         Isnextyear = false;
     }
-
+/*
     public spsetup() {
         sp.setup({
             sp: {
@@ -314,7 +314,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             }
         });
     }
-
+*/
     public openDialog(e) {
 
         this.ResetState();
@@ -519,7 +519,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             this.state.EngagementNumberSelected1.length = 0;
 
         } else {
-            // this.spsetup();
+            //this.spsetup();
             tagList.filter(item => {
                 this.setState({
                     EngagementNumberSelected: item.name
@@ -837,9 +837,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     public UploadFile = (async (file, FinalEngNumber) => {
-        this.spsetup();
+        //this.spsetup();
         let filePrefix = "K1-" + FinalEngNumber + "-";
-
+        let hubWeb = 
         await sp.web.getFolderByServerRelativeUrl(GlobalValues.K1InvestorDocumentsURL).files.add(filePrefix + file.name, file, true).then(async (results) => {
             return await results.file.getItem().then(async (listItem) => {
                 listItem.update({
@@ -936,11 +936,12 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     public Rollover = async () => {
-        this.spsetup();
+        //this.spsetup();
         let PortalType = this.state.PortalTypeSelected;
         let Team = this.state.TeamSelected;
+        let hubWeb = Web(GlobalValues.HubSiteURL);
         if (Isnextyear == true) {
-            await sp.web.lists.getByTitle(GlobalValues.EngagementPortalList).items.filter("EngagementNumberEndZero eq '" + this.state.EngagementNumberSelected + "'").getAll().then((data) => {
+            await hubWeb.lists.getByTitle(GlobalValues.EngagementPortalList).items.filter("EngagementNumberEndZero eq '" + this.state.EngagementNumberSelected + "'").getAll().then((data) => {
                 data = data.filter(e => e.PortalExist == true && e.ClientNumber == CRN && e.PortalType == PortalType && e.Team == Team);
                 let eng = this.state.UpdatedEngagementNumberSelected.slice(-2);
                 let e1 = parseInt(eng) - 1;
@@ -978,7 +979,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             let e1 = parseInt(eng) - 1;
             let str1 = this.state.EngagementNumberSelected.slice(0, -2) + e1.toString();
 
-            await sp.web.lists.getByTitle(GlobalValues.EngagementPortalList).items.filter("Title eq '" + str1 + "'").getAll().then((data) => {
+            await hubWeb.lists.getByTitle(GlobalValues.EngagementPortalList).items.filter("Title eq '" + str1 + "'").getAll().then((data) => {
                 data = data.filter(e => e.PortalExist == true && e.ClientNumber == CRN && e.PortalType == PortalType && e.Team == Team);
                 if (data.length != 0) {
                     let WorkYear = parseInt(data[0].WorkYear);
@@ -1037,7 +1038,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     private _getPeoplePickerItems(items: any[]) {
-        this.spsetup();
+        //this.spsetup();
         let getSelectedUsers = [];
         let getusersEmails = [];
         for (let item in items) {
@@ -1278,9 +1279,10 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             this.setState({ Year: item.key });
 
             if (updatedworkyear == true) {
-                this.spsetup();
+               // this.spsetup();
                 Isnextyear = false;
-                sp.web.lists.getByTitle(GlobalValues.EngagementPortalList).items.filter("EngagementNumberEndZero eq '" + this.state.EngagementNumberSelected + "'").getAll().then((data) => {
+                let hubWeb = Web(GlobalValues.HubSiteURL);
+                hubWeb.lists.getByTitle(GlobalValues.EngagementPortalList).items.filter("EngagementNumberEndZero eq '" + this.state.EngagementNumberSelected + "'").getAll().then((data) => {
                     let data1 = data.filter(e => e.WorkYear == item.key && e.ClientNumber == CRN && e.PortalType == this.state.PortalTypeSelected && e.Team == this.state.TeamSelected);
                     let data2 = data.filter(e => e.WorkYear == parseInt(item.key) - 1 && e.ClientNumber == CRN && e.PortalType == this.state.PortalTypeSelected && e.Team == this.state.TeamSelected);
                     let data3 = data.filter(e => e.WorkYear == parseInt(item.key) - 1 && e.ClientNumber == CRN && e.PortalType == this.state.PortalTypeSelected && e.Team == this.state.TeamSelected && e.SplitSuffix != "");
@@ -2504,16 +2506,17 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     private CheckDuplicateAdvantagePortal = (async (_currPortalId) => {
-        this._SetupSP();
+        //this._SetupSP();
         let _isDuplicate: boolean = false;
         const caml: ICamlQuery = {
             ViewXml: "<View><Query><Where><Eq><FieldRef Name='PortalId'/><Value Type='Text'>" + _currPortalId + "</Value></Eq></Where></Query></View>",
         };
-        return await sp.web.lists.getByTitle("Engagement Portal List").getItemsByCAMLQuery(caml).then((data) => {
+        let hubWeb = Web(GlobalValues.HubSiteURL);
+        return await hubWeb.lists.getByTitle("Engagement Portal List").getItemsByCAMLQuery(caml).then((data) => {
             return data.length > 0 ? _isDuplicate = true : _isDuplicate = false;
         });
     });
-
+/*
     private _SetupSP() {
         sp.setup({
             sp: {
@@ -2521,6 +2524,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             }
         });
     }
+*/
 }
 
 export default CreateEngagement;
