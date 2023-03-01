@@ -54,6 +54,7 @@ class App extends React.Component<IApp> {
 
   public LoadData = () => {
     let obj = new ClientInfoClass();
+    console.log('load data');
     obj.GetClientInfo().then((results) => {
       let objState = this.state.ClientInfoState;
       objState.UpdateState(objState, results);
