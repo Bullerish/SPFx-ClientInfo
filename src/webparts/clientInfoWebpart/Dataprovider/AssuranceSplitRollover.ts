@@ -1,5 +1,6 @@
 
 import { sp } from "@pnp/sp";
+import { Web } from "@pnp/sp/webs";
 import { GlobalValues } from "./GlobalValue";
 import { ClientInfoClass } from "../Dataprovider/ClientInfoClass";
 
@@ -28,7 +29,7 @@ export class AssuranceSplitRolloverModel {
 }
 
 export class AssuranceSplitRollover {
-
+/*
   public HubSite_SetupSP() {
     sp.setup({
       sp: {
@@ -38,7 +39,7 @@ export class AssuranceSplitRollover {
     return sp;
 
   }
-
+*/
   public uuidv4() {
     return GlobalValues.uuidv4String.replace(/[xy]/g, (c) => {
       var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
@@ -144,7 +145,7 @@ export class AssuranceSplitRollover {
   public GetAssuranceSplitRollover = async (EngNo, CurrentEngNo, Teamtype, PortalType, Isnextyear) => {
     let url = GlobalValues.SiteURL;
     url = url.substring(0, url.lastIndexOf("/"));
-    this.HubSite_SetupSP();
+    //this.HubSite_SetupSP();
     let counter = 1;
     let query = "";
     if (Isnextyear == true) {
@@ -154,7 +155,8 @@ export class AssuranceSplitRollover {
       query = "Title eq '" + EngNo + "'";
     }
 
-    return await this.HubSite_SetupSP().web.lists
+    let hubWeb = Web(GlobalValues.ClientPortalURL);
+    return await hubWeb.lists
       .getByTitle(GlobalValues.EngagementPortalList)
       .items.filter(query).getAll()
       .then((results) => {

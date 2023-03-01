@@ -1,13 +1,14 @@
 import { GlobalValues } from "./GlobalValue";
 import { sp } from "@pnp/sp";
 import { ICamlQuery } from "@pnp/sp/lists";
-import "@pnp/sp/webs";
+import { Web } from "@pnp/sp/webs";
 import "@pnp/sp/lists";
 import "@pnp/sp/items";
 import "@pnp/sp/site-groups/web";
 import "@pnp/sp/site-users/web";
 
 export class ClientInfoClass {
+ /*
   public _SetupSP() {
     sp.setup({
       sp: {
@@ -26,11 +27,13 @@ export class ClientInfoClass {
     return sp;
 
   }
+*/
+  private hubWebConnection = Web(GlobalValues.ClientPortalURL);
 
   public GetClientInfo = async () => {
     let url = GlobalValues.SiteURL;
     url = url.substring(0, url.lastIndexOf("/"));
-    this.HubSite_SetupSP();
+    //this.HubSite_SetupSP();
 
     let ClientInformationData = {
       LinkTitle: "",
@@ -39,8 +42,8 @@ export class ClientInfoClass {
 
     let absoluteUrl = GlobalValues.SiteURL;
     let finalabsoluteUrl = absoluteUrl.split("/");
-    let CRN = finalabsoluteUrl[finalabsoluteUrl.length - 1];
-    await sp.web.lists
+    let CRN = finalabsoluteUrl[finalabsoluteUrl.length - 1];    
+    await this.hubWebConnection.lists
       .getByTitle(GlobalValues.ClientList)
       .items.filter("ClientNumber eq '" + CRN + "'").getAll()
       .then((results) => {
@@ -69,9 +72,9 @@ export class ClientInfoClass {
     let absoluteUrl = GlobalValues.SiteURL;
     let finalabsoluteUrl = absoluteUrl.split("/");
     let CRN = finalabsoluteUrl[finalabsoluteUrl.length - 1];
-    this.HubSite_SetupSP();
-
-    const Engagementdata = await this.HubSite_SetupSP().web.lists
+    //this.HubSite_SetupSP();
+    
+    const Engagementdata = await this.hubWebConnection.lists
       .getByTitle(GlobalValues.EngagementList)
       .items.filter("ClientNumber eq '" + CRN + "'").getAll()
       .then((results) => {
@@ -82,11 +85,12 @@ export class ClientInfoClass {
   }
 
   public GetEngPortalListItemID = async (_currPortalId) => {
-    this.HubSite_SetupSP();
+    //this.HubSite_SetupSP();
     const caml: ICamlQuery = {
       ViewXml: "<View><Query><Where><Eq><FieldRef Name='PortalId'/><Value Type='Text'>" + _currPortalId + "</Value></Eq></Where></Query></View>",
     };
-    return await sp.web.lists.getByTitle(GlobalValues.EngagementPortalList).getItemsByCAMLQuery(caml).then((data) => {
+    
+    return await this.hubWebConnection.lists.getByTitle(GlobalValues.EngagementPortalList).getItemsByCAMLQuery(caml).then((data) => {
       return data[0].ID;
     });
   }
@@ -95,9 +99,9 @@ export class ClientInfoClass {
     let url = GlobalValues.SiteURL;
     url = url.substring(0, url.lastIndexOf("/"));
 
-    this.HubSite_SetupSP();
-
-    const AdvisoryTemplatesdata = await this.HubSite_SetupSP().web.lists
+    //this.HubSite_SetupSP();
+    
+    const AdvisoryTemplatesdata = await this.hubWebConnection.lists
       .getByTitle(GlobalValues.AdvisoryTemplatesList)
       .items.orderBy('Title', true).get()
       .then((results) => {
@@ -110,10 +114,9 @@ export class ClientInfoClass {
   public GetIndustryTypes = async () => {
     let url = GlobalValues.SiteURL;
     url = url.substring(0, url.lastIndexOf("/"));
-    this.HubSite_SetupSP();
-
-
-    const IndustryTypesdata = await this.HubSite_SetupSP().web.lists
+    //this.HubSite_SetupSP();
+    
+    const IndustryTypesdata = await this.hubWebConnection.lists
       .getByTitle(GlobalValues.IndustryTypesList)
       .items.orderBy('Title', true).getAll()
       .then((results) => {
@@ -125,9 +128,9 @@ export class ClientInfoClass {
   public GetSupplemental = async () => {
     let url = GlobalValues.SiteURL;
     url = url.substring(0, url.lastIndexOf("/"));
-    this.HubSite_SetupSP();
-
-    const Supplementaldata = await this.HubSite_SetupSP().web.lists
+    //this.HubSite_SetupSP();
+    
+    const Supplementaldata = await this.hubWebConnection.lists
       .getByTitle(GlobalValues.AssuranceSupplementalList)
       .items.orderBy('Title', true).getAll()
       .then((results) => {
@@ -139,10 +142,9 @@ export class ClientInfoClass {
   public GetServiceTypes = async () => {
     let url = GlobalValues.SiteURL;
     url = url.substring(0, url.lastIndexOf("/"));
-    this.HubSite_SetupSP();
+    //this.HubSite_SetupSP();
 
-
-    const ServiceTypesdata = await this.HubSite_SetupSP().web.lists
+    const ServiceTypesdata = await this.hubWebConnection.lists
       .getByTitle(GlobalValues.ServiceTypesList)
       .items.orderBy('Title', true).getAll()
       .then((results) => {
@@ -152,21 +154,20 @@ export class ClientInfoClass {
   }
 
 
-  public GetUsersByGroup = (async (groupName) => {
-    this._SetupSP();
-    const users = await this._SetupSP().web.siteGroups.getByName(groupName).users();
+  public GetUsersByGroup = (async (groupName) => {    
+    const users = await sp.web.siteGroups.getByName(groupName).users();
     return users;
   });
 
   public SaveEngagementList = async (PortalsCreated, id) => {
     let url = GlobalValues.SiteURL;
     url = url.substring(0, url.lastIndexOf("/"));
-    this.HubSite_SetupSP();
+    //this.HubSite_SetupSP();
     let objToSave = {
       "Portals_x0020_Created": PortalsCreated,
     };
 
-    await this.HubSite_SetupSP().web.lists.getByTitle(GlobalValues.EngagementList).items.getById(id).update(objToSave).then((data) => {
+    await this.hubWebConnection.lists.getByTitle(GlobalValues.EngagementList).items.getById(id).update(objToSave).then((data) => {
       return true;
     });
   }
@@ -176,7 +177,7 @@ export class ClientInfoClass {
     let query = "";
     query = "Title eq '" + EngNo + "'";
 
-    return await this.HubSite_SetupSP().web.lists
+    return await this.hubWebConnection.lists
       .getByTitle(GlobalValues.EngagementPortalList)
       .items.filter(query).getAll()
       .then((results) => {
