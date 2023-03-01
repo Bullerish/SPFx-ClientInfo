@@ -211,7 +211,7 @@ const ManageAlerts = ({
 
       // console.log(subWebsWithKey);
       setSubWebInfo(subWebsWithKey);
-      console.log("refetch of subwebs occured::::");
+      //console.log("refetch of subwebs occured::::");
       setItems(subWebsWithKey);
     }
 
