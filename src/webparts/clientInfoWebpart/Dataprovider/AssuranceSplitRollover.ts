@@ -155,7 +155,7 @@ export class AssuranceSplitRollover {
       query = "Title eq '" + EngNo + "'";
     }
 
-    let hubWeb = Web(GlobalValues.ClientPortalURL);
+    let hubWeb = Web(GlobalValues.HubSiteURL);
     return await hubWeb.lists
       .getByTitle(GlobalValues.EngagementPortalList)
       .items.filter(query).getAll()

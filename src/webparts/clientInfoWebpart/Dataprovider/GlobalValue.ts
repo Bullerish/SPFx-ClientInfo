@@ -3,8 +3,7 @@ import { sp } from "@pnp/sp";
 export class GlobalValues {
   public static SiteURL = "";
   public static PermissionPage = "/SitePages/ManageClientPermissions.aspx";
-  public static ClientPortalURL = window.location.origin + '/sites/ClientPortal';
-
+  
   public static isCRADUser = false;
   public static isCRETUser = false;
   public static isCLUser = false;

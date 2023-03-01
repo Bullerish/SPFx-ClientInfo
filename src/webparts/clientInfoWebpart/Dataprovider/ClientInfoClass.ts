@@ -28,7 +28,6 @@ export class ClientInfoClass {
 
   }
 */
-  private hubWebConnection = Web(GlobalValues.ClientPortalURL);
 
   public GetClientInfo = async () => {
     let url = GlobalValues.SiteURL;
@@ -43,26 +42,13 @@ export class ClientInfoClass {
     let absoluteUrl = GlobalValues.SiteURL;
     let finalabsoluteUrl = absoluteUrl.split("/");
     let CRN = finalabsoluteUrl[finalabsoluteUrl.length - 1];    
-    await this.hubWebConnection.lists
+    const hubWeb = Web(GlobalValues.HubSiteURL);
+    await hubWeb.lists
       .getByTitle(GlobalValues.ClientList)
       .items.filter("ClientNumber eq '" + CRN + "'").getAll()
-      .then((results) => {
-        let data = {
-          ClientNumber: "",
-          Title: ""
-        };
-        let browserUrl = window.location.href;
-        let ClientNum = browserUrl.split("/")[4];
-
-        for (let i = 0; i < results.length; i++) {
-          let ClientNumber = results[i].ClientNumber;
-          if (ClientNumber == ClientNum) {
-            data = results[i];
-            break;
-          }
-        }
-        ClientInformationData.ClientNumber = data.ClientNumber;
-        ClientInformationData.LinkTitle = data.Title;
+      .then((results) => {   
+        ClientInformationData.ClientNumber = results[0].ClientNumber;
+        ClientInformationData.LinkTitle = results[0].Title;        
       });
 
     return ClientInformationData;
@@ -73,8 +59,8 @@ export class ClientInfoClass {
     let finalabsoluteUrl = absoluteUrl.split("/");
     let CRN = finalabsoluteUrl[finalabsoluteUrl.length - 1];
     //this.HubSite_SetupSP();
-    
-    const Engagementdata = await this.hubWebConnection.lists
+    const hubWeb = Web(GlobalValues.HubSiteURL);
+    const Engagementdata = await hubWeb.lists
       .getByTitle(GlobalValues.EngagementList)
       .items.filter("ClientNumber eq '" + CRN + "'").getAll()
       .then((results) => {
@@ -89,8 +75,8 @@ export class ClientInfoClass {
     const caml: ICamlQuery = {
       ViewXml: "<View><Query><Where><Eq><FieldRef Name='PortalId'/><Value Type='Text'>" + _currPortalId + "</Value></Eq></Where></Query></View>",
     };
-    
-    return await this.hubWebConnection.lists.getByTitle(GlobalValues.EngagementPortalList).getItemsByCAMLQuery(caml).then((data) => {
+    const hubWeb = Web(GlobalValues.HubSiteURL);
+    return await hubWeb.lists.getByTitle(GlobalValues.EngagementPortalList).getItemsByCAMLQuery(caml).then((data) => {
       return data[0].ID;
     });
   }
@@ -100,8 +86,8 @@ export class ClientInfoClass {
     url = url.substring(0, url.lastIndexOf("/"));
 
     //this.HubSite_SetupSP();
-    
-    const AdvisoryTemplatesdata = await this.hubWebConnection.lists
+    const hubWeb = Web(GlobalValues.HubSiteURL);
+    const AdvisoryTemplatesdata = await hubWeb.lists
       .getByTitle(GlobalValues.AdvisoryTemplatesList)
       .items.orderBy('Title', true).get()
       .then((results) => {
@@ -115,8 +101,8 @@ export class ClientInfoClass {
     let url = GlobalValues.SiteURL;
     url = url.substring(0, url.lastIndexOf("/"));
     //this.HubSite_SetupSP();
-    
-    const IndustryTypesdata = await this.hubWebConnection.lists
+    const hubWeb = Web(GlobalValues.HubSiteURL);
+    const IndustryTypesdata = await hubWeb.lists
       .getByTitle(GlobalValues.IndustryTypesList)
       .items.orderBy('Title', true).getAll()
       .then((results) => {
@@ -129,8 +115,8 @@ export class ClientInfoClass {
     let url = GlobalValues.SiteURL;
     url = url.substring(0, url.lastIndexOf("/"));
     //this.HubSite_SetupSP();
-    
-    const Supplementaldata = await this.hubWebConnection.lists
+    const hubWeb = Web(GlobalValues.HubSiteURL);
+    const Supplementaldata = await hubWeb.lists
       .getByTitle(GlobalValues.AssuranceSupplementalList)
       .items.orderBy('Title', true).getAll()
       .then((results) => {
@@ -143,8 +129,8 @@ export class ClientInfoClass {
     let url = GlobalValues.SiteURL;
     url = url.substring(0, url.lastIndexOf("/"));
     //this.HubSite_SetupSP();
-
-    const ServiceTypesdata = await this.hubWebConnection.lists
+    const hubWeb = Web(GlobalValues.HubSiteURL);
+    const ServiceTypesdata = await hubWeb.lists
       .getByTitle(GlobalValues.ServiceTypesList)
       .items.orderBy('Title', true).getAll()
       .then((results) => {
@@ -166,8 +152,8 @@ export class ClientInfoClass {
     let objToSave = {
       "Portals_x0020_Created": PortalsCreated,
     };
-
-    await this.hubWebConnection.lists.getByTitle(GlobalValues.EngagementList).items.getById(id).update(objToSave).then((data) => {
+    const hubWeb = Web(GlobalValues.HubSiteURL);
+    await hubWeb.lists.getByTitle(GlobalValues.EngagementList).items.getById(id).update(objToSave).then((data) => {
       return true;
     });
   }
@@ -176,8 +162,8 @@ export class ClientInfoClass {
   public CheckIfEngCreated = (async (EngNo) => {
     let query = "";
     query = "Title eq '" + EngNo + "'";
-
-    return await this.hubWebConnection.lists
+    const hubWeb = Web(GlobalValues.HubSiteURL);
+    return await hubWeb.lists
       .getByTitle(GlobalValues.EngagementPortalList)
       .items.filter(query).getAll()
       .then((results) => {

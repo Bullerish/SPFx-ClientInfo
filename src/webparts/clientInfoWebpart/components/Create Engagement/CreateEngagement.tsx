@@ -939,7 +939,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         //this.spsetup();
         let PortalType = this.state.PortalTypeSelected;
         let Team = this.state.TeamSelected;
-        let hubWeb = Web(GlobalValues.ClientPortalURL);
+        let hubWeb = Web(GlobalValues.HubSiteURL);
         if (Isnextyear == true) {
             await hubWeb.lists.getByTitle(GlobalValues.EngagementPortalList).items.filter("EngagementNumberEndZero eq '" + this.state.EngagementNumberSelected + "'").getAll().then((data) => {
                 data = data.filter(e => e.PortalExist == true && e.ClientNumber == CRN && e.PortalType == PortalType && e.Team == Team);
@@ -1281,7 +1281,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             if (updatedworkyear == true) {
                // this.spsetup();
                 Isnextyear = false;
-                let hubWeb = Web(GlobalValues.ClientPortalURL);
+                let hubWeb = Web(GlobalValues.HubSiteURL);
                 hubWeb.lists.getByTitle(GlobalValues.EngagementPortalList).items.filter("EngagementNumberEndZero eq '" + this.state.EngagementNumberSelected + "'").getAll().then((data) => {
                     let data1 = data.filter(e => e.WorkYear == item.key && e.ClientNumber == CRN && e.PortalType == this.state.PortalTypeSelected && e.Team == this.state.TeamSelected);
                     let data2 = data.filter(e => e.WorkYear == parseInt(item.key) - 1 && e.ClientNumber == CRN && e.PortalType == this.state.PortalTypeSelected && e.Team == this.state.TeamSelected);
@@ -1382,7 +1382,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         let title = "Create Engagement Subportal " + this.state.titleText;
         let K1MaxDate = new Date(ExDate);
 
-        let HubSiteURL = GlobalValues.ClientPortalURL;
+        let HubSiteURL = GlobalValues.HubSiteURL;
         let K1ExcelTemplate = "/SiteAssets/K1ExcelTemplate.csv";
         let TagpickerDisable = true;
         if (this.state.TeamSelected != "" && this.state.PortalTypeSelected != "") {
@@ -2483,7 +2483,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     private save() {
-        let siteCollectionUrl = GlobalValues.ClientPortalURL;
+        let siteCollectionUrl = GlobalValues.HubSiteURL;
         let listname = GlobalValues.EngagementPortalList;
         this.SaveItem(siteCollectionUrl, listname)
             .then(() => {
@@ -2511,7 +2511,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         const caml: ICamlQuery = {
             ViewXml: "<View><Query><Where><Eq><FieldRef Name='PortalId'/><Value Type='Text'>" + _currPortalId + "</Value></Eq></Where></Query></View>",
         };
-        let hubWeb = Web(GlobalValues.ClientPortalURL);
+        let hubWeb = Web(GlobalValues.HubSiteURL);
         return await hubWeb.lists.getByTitle("Engagement Portal List").getItemsByCAMLQuery(caml).then((data) => {
             return data.length > 0 ? _isDuplicate = true : _isDuplicate = false;
         });

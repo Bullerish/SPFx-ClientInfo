@@ -369,7 +369,7 @@ const ManageAlerts = ({
 
     console.log("item details to be saved: ", listItem);
 
-    let hubWeb = Web(GlobalValues.ClientPortalURL);
+    let hubWeb = Web(GlobalValues.HubSiteURL);
     let itemResult = await hubWeb.lists
       .getByTitle(userAlertsList)
       .items.filter(`Title eq '${currentUserId.LoginName}'`)();
@@ -412,7 +412,7 @@ const ManageAlerts = ({
   // checks for UserAlertsList, if it doesn't exist it gets created then columns will be added
   const ensureAlertsListExists = async () => {
     // console.log(selectionDetails);
-    let hubWeb = Web(GlobalValues.ClientPortalURL);
+    let hubWeb = Web(GlobalValues.HubSiteURL);
     const alertsListEnsureResult = await hubWeb.lists.ensure(userAlertsList);
 
     if (alertsListEnsureResult.created) {
