@@ -33,8 +33,7 @@ export class AssuranceSplitRollover {
     sp.setup({
       sp: {
         baseUrl: GlobalValues.HubSiteURL,
-      },
-      ie11: true,
+      }
     });
     return sp;
 

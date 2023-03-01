@@ -33,8 +33,7 @@ export class GlobalValues {
     sp.setup({
       sp: {
         baseUrl: GlobalValues.SiteURL
-      },
-      ie11: true
+      }
     });
 
     return await sp.web.currentUser.groups().then((usergroups) => {
@@ -62,8 +61,7 @@ export class GlobalValues {
     sp.setup({
       sp: {
         baseUrl: GlobalValues.ClientPortalURL,
-      },
-      ie11: true,
+      }
     });
     return sp;
   }

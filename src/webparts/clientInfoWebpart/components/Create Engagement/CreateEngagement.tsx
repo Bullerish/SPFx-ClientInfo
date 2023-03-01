@@ -311,8 +311,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         sp.setup({
             sp: {
                 baseUrl: GlobalValues.HubSiteURL,
-            },
-            ie11: true,
+            }
         });
     }
 
@@ -520,9 +519,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             this.state.EngagementNumberSelected1.length = 0;
 
         } else {
-
-            this.spsetup();
-            await tagList.filter(item => {
+            // this.spsetup();
+            tagList.filter(item => {
                 this.setState({
                     EngagementNumberSelected: item.name
                 });
@@ -536,12 +534,11 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
                 Engagementdata.filter(async (e) => {
 
-                    if (e.Title == item.name) {
-                        ExDate = (6) + '-' + (1) + '-' + (parseInt(e.WorkYear) + 2);
+                    if (e.Title == item.name) {    
+                        ExDate = (6) + '-' + (1) + '-' + (parseInt(e.WorkYear) + 2);                     
                         let dt = new Date(ExDate);
                         const ExDate1: Date = dt;
-
-                        await this.setState({
+                        this.setState({
                             DateExtend: maxDate,
                             portalExpiration: maxDate,
                             K1Date: ExDate1,
@@ -737,7 +734,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             if (this.state.PortalChoiceSelected == 'Rollover') {
                 PortalRollOver = true;
                 RolloverUrl = GlobalValues.SiteURL + "/" + this.state.TeamURL + "-" + this.state.PortalTypeURL + "-" + this.state.RolloverURL;
-            }
+            }            
             return new Promise<number>((resolve, reject) => {
                 this.getListItemEntityTypeName(SPUrl, listname)
                     .then((listEntityName) => {
@@ -768,7 +765,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                             'PortalId': PortalId,
                             'WorkpaperPath': this.state.WorkpaperPath
                         };
-                        console.log('portalData',PortalData);
+                        console.log('portalData', PortalData);
                         this.getValues(SPUrl)
                             .then((requestDigest) => {
                                 if (this.state.TeamSelected == "Assurance" && this.state.PortalTypeSelected == "Workflow" && this.state.AsuranceSplitData.disabled == false) {
@@ -814,13 +811,12 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                     });
 
                                 }
-
                                 else {
                                     this.insertdata(SPUrl, listname, JSON.stringify(PortalData), requestDigest.d.GetContextWebInformation.FormDigestValue)
                                         .then((response) => {
                                             this.CheckIfEngCreated().then((engcrt) => {
 
-                                                if (response !== null && engcrt !== null) {
+                                                if ((response !== null) && (engcrt !== null)) {
                                                     this.SaveEngagementList();
                                                     resolve(response);
                                                     this.setState({ IsPortalEntryCreated: "Y" });
@@ -840,7 +836,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         }
     }
 
-   public UploadFile = (async (file, FinalEngNumber) => {
+    public UploadFile = (async (file, FinalEngNumber) => {
         this.spsetup();
         let filePrefix = "K1-" + FinalEngNumber + "-";
 
@@ -1056,8 +1052,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         });
     }
 
-    private _validateSiteOwner(items: any[]) {
-        // show error message if this is a guest user
+    private _validateSiteOwner(items: any[]) {        
+        // show error message if this is a guest user                     
         let userEmail = items[0].secondaryText.toLowerCase();
         if ((userEmail.indexOf('cohnreznick.com') == -1) && (userEmail.indexOf('cohnreznickdev') == -1)) {
             // this is a guest user, do not validate
@@ -1067,7 +1063,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         }
     }
 
-    private async _getUserItems(items: any[]) {
+    private async _getUserItems(items: any[]) {        
         let selectedCLuser = [];
         if (this.state.PortalChoiceSelected == "Create New") {
             this.state.FinalAccessUserList = "";
@@ -1095,6 +1091,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         }
         this.setState({ addusers1: selectedCLuser });
     }
+
     private getCLUserList() {
 
         if (this.state.PortalChoiceSelected == "Rollover") {
@@ -1111,8 +1108,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 }
             });
 
-        } else if (this.state.PortalChoiceSelected == "Create New") {
-            console.log(this.state.AccessUserList);
+        } else if (this.state.PortalChoiceSelected == "Create New") {            
             this.state.AccessUserList.forEach((e) => {
                 if (this.state.FinalAccessUserList.indexOf(e.name) <= -1) {
                     this.state.FinalAccessUserList += e.name + ";";
@@ -1139,7 +1135,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     private _onSelectDate2 = (date: Date | null | undefined): void => {
         this.setState({
            // DateExtend: date
-           portalExpiration: portalExpDate,
+           portalExpiration: portalExpDate,           
         });
     }
 
@@ -1152,9 +1148,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     private _onSelectDateFileExp = (date: Date | null | undefined): void => {
         portalExpDate = addMonths(date, 6); // set the portal expiration for 6 months after the file expiration
         this.setState({
-           // DateExtend: date
-           portalExpiration: portalExpDate,
-           fileExpiration: date // this is the date the user picked
+            // DateExtend: date
+            portalExpiration: portalExpDate,
+            fileExpiration: date // this is the date the user picked
         });
     }
 
@@ -1176,10 +1172,10 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         obj.GetUsersByGroup("CL-" + CRN
         ).then((results) => {
             results.forEach((e) => {
-              //  this.state.AccessUserList.push({ name: e.Email });
+                //  this.state.AccessUserList.push({ name: e.Email });
                 userlist += e.Email + ";";
             });
-          //  this.setState({ FinalAccessUserList: userlist });
+            //  this.setState({ FinalAccessUserList: userlist });
         });
     }
 
@@ -1465,26 +1461,26 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                         </div>}
                                     <div className={styles.engnumbername}>
                                         <div className={`${styles.engagementnames} ${styles.column1}`}>
-                                        <Label>Engagement Number<span className={styles.reqval}> *</span></Label>
-                                        <TooltipHost
-                                            content="Enter Engagement Number"
-                                        >
-                                            <TagPicker
-                                                defaultSelectedItems={EngagementNameTags}
-                                                removeButtonAriaLabel="Remove"
-                                                onResolveSuggestions={filterSuggestedTags1}
-                                                getTextFromItem={getTextFromItem1}
-                                                pickerSuggestionsProps={pickerSuggestionsProps}
-                                                itemLimit={1}
-                                                inputProps={inputProps}
-                                                onChange={this._onChangeEngagementNumber}
-                                                disabled={TagpickerDisable}
-                                                onItemSelected={this.onItemSelected}
-                                            />
-                                        </TooltipHost>
-                                        {(this.state.validate && this.state.EngagementNumberSelected == "") ?
-                                            <div className={styles.reqval}>Invalid Engagement Number. Please enter a correct Engagement Number and try again.
-                                            </div> : ''}
+                                            <Label>Engagement Number<span className={styles.reqval}> *</span></Label>
+                                            <TooltipHost
+                                                content="Enter Engagement Number"
+                                            >
+                                                <TagPicker
+                                                    defaultSelectedItems={EngagementNameTags}
+                                                    removeButtonAriaLabel="Remove"
+                                                    onResolveSuggestions={filterSuggestedTags1}
+                                                    getTextFromItem={getTextFromItem1}
+                                                    pickerSuggestionsProps={pickerSuggestionsProps}
+                                                    itemLimit={1}
+                                                    inputProps={inputProps}
+                                                    onChange={this._onChangeEngagementNumber}
+                                                    disabled={TagpickerDisable}
+                                                    onItemSelected={this.onItemSelected}
+                                                />
+                                            </TooltipHost>
+                                            {(this.state.validate && this.state.EngagementNumberSelected == "") ?
+                                                <div className={styles.reqval}>Invalid Engagement Number. Please enter a correct Engagement Number and try again.
+                                                </div> : ''}
                                         </div>
                                         <div className={`${styles.engagementnames} ${styles.column2}`}>
                                             <Label>Engagement Name</Label>
@@ -1525,7 +1521,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                 defaultSelectedUsers={this.state.addusers}
                                             />
                                             {(this.state.validate && this.state.addusers.length == 0) ?
-                                              <div className={styles.reqval}>Site Owner is mandatory and must be a CohnReznick employee.</div> : ''
+                                                <div className={styles.reqval}>Site Owner is mandatory and must be a CohnReznick employee.</div> : ''
                                             }
                                         </div>
                                     </div>
@@ -1844,7 +1840,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                 personSelectionLimit={100}
                                                 placeholder="Enter name or email"
                                                 defaultSelectedUsers={this.state.addusers1}
-                                                errorMessage="Only users already in Active Directory may be added."
                                             />
                                             <span className={styles.optional}>optional</span>
                                         </div>
@@ -2057,11 +2052,11 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     onSelectDate={this._onSelectDateFileExp}
                                                     formatDate={this._onFormatDate}
                                                     minDate={minDate}
-                                                    maxDate={maxDate} // 12 months
-                                                    value={maxDate} // now 12 months.  was this.state.DateExtend
+                                                    maxDate={maxDate} // 12 months                                                    
+                                                    value={maxDate} // now 12 months.  was this.state.DateExtend                                                    
                                                 />
                                                 <div className={styles.fileExpText}>
-                                                Files will be deleted from the portal on this date. The portal will available for rollover for an additional 6 months.
+                                                    Files will be deleted from the portal on this date. The portal will available for rollover for an additional 6 months.
                                                 </div>
                                                 {(this.state.validate && this.state.DateExtend == null) ?
                                                     <div className={styles.reqval}>File Expiration is mandatory.</div> : ''}
@@ -2242,7 +2237,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
     private submitDialog = async (e) => {
 
-        if (this.state.currentScreen == "screen1") {
+        if (this.state.currentScreen == "screen1") {            
             if (this.state.EngagementNumberSelected == "" || this.state.addusers.length == 0
                 || this.state.Year == null || this.state.PortalTypeSelected == ""
                 || (this.state.TeamSelected == "" && this.state.PortalTypeSelected == 'K1')
@@ -2300,7 +2295,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                     titleText: "- Template and Provisioning",
                 });
             }
-        } else if (this.state.currentScreen == "screen3") {
+        } else if (this.state.currentScreen == "screen3") {            
             if (this.state.PortalTypeSelected == "Workflow" && this.state.TeamSelected == "Advisory") {
 
                 if (this.state.addusers.length == 0 || this.state.AdvisoryTemplateSelected == "") {
@@ -2309,13 +2304,15 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                     });
                 }
                 else {
-                    this.setState({
-                        validate: false,
-                        currentScreen: "screen4",
-                        dialogbuttonname: "Create Portal",
-                        titleText: "- Confirmation",
-                    });
-                    this.getCLUserList();
+                    if (this.state.validate != true) {
+                        this.setState({
+                            validate: false,
+                            currentScreen: "screen4",
+                            dialogbuttonname: "Create Portal",
+                            titleText: "- Confirmation",
+                        });
+                        this.getCLUserList();
+                    }
                 }
             }
             else if (this.state.PortalTypeSelected == "Workflow" && this.state.TeamSelected == "Assurance") {
@@ -2326,27 +2323,28 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                             validate: true
                         });
                     } else {
-                        let txtval = true;
-                        this.state.AsuranceSplitData.txtValues.map(ev => {
-
-                            if (ev.Value == "") {
-                                txtval = false;
+                        if (this.state.validate != true) {
+                            let txtval = true;
+                            this.state.AsuranceSplitData.txtValues.map(ev => {
+                                if (ev.Value == "") {
+                                    txtval = false;
+                                }
+                            });
+                            if (this.state.AsuranceSplitData.disabled == false && txtval != true) {
+                                this.setState({
+                                    validate: true
+                                });
+                                let ErrorMessage = "Please enter correct Split data";
+                                this.setState({ Message: ErrorMessage, showMessageBar: true, MessageBarType: OfficeUI.MessageBarType.error, disableBtn: false });
+                            } else {
+                                this.setState({
+                                    validate: false,
+                                    currentScreen: "screen4",
+                                    dialogbuttonname: "Create Portal",
+                                    titleText: "- Confirmation",
+                                });
+                                this.getCLUserList();
                             }
-                        });
-                        if (this.state.AsuranceSplitData.disabled == false && txtval != true) {
-                            this.setState({
-                                validate: true
-                            });
-                            let ErrorMessage = "Please enter correct Split data";
-                            this.setState({ Message: ErrorMessage, showMessageBar: true, MessageBarType: OfficeUI.MessageBarType.error, disableBtn: false });
-                        } else {
-                            this.setState({
-                                validate: false,
-                                currentScreen: "screen4",
-                                dialogbuttonname: "Create Portal",
-                                titleText: "- Confirmation",
-                            });
-                            this.getCLUserList();
                         }
                     }
                 }
@@ -2407,13 +2405,15 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                     });
                 }
                 else {
-                    this.setState({
-                        validate: false,
-                        currentScreen: "screen4",
-                        dialogbuttonname: "Create Portal",
-                        titleText: "- Confirmation",
-                    });
-                    this.getCLUserList();
+                    if (this.state.validate != true) {
+                        this.setState({
+                            validate: false,
+                            currentScreen: "screen4",
+                            dialogbuttonname: "Create Portal",
+                            titleText: "- Confirmation",
+                        });
+                        this.getCLUserList();
+                    }
                 }
             }
         } else {
@@ -2518,8 +2518,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         sp.setup({
             sp: {
                 baseUrl: GlobalValues.HubSiteURL
-            },
-            ie11: true
+            }
         });
     }
 }

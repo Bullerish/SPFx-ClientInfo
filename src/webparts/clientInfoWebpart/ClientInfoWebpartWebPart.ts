@@ -23,7 +23,7 @@ export default class ClientInfoWebpartWebPart extends BaseClientSideWebPart<
       ClientInfoWebpart,
       {
         description: this.properties.description,
-        spContext: this.context,
+        spContext: this.context        
       }
     );
 

@@ -3,7 +3,7 @@ import { GlobalValues } from "../Dataprovider/GlobalValue";
 import styles from "../components/ClientInfoWebpart.module.scss";
 import { ClientInfoClass } from "../Dataprovider/ClientInfoClass";
 import { ClientInfoState } from "../Dataprovider/AppState";
-import { Text, Link } from "office-ui-fabric-react";
+import { Text, Link, DefaultButton } from "office-ui-fabric-react";
 import CreateEngagement from "../components/Create Engagement/CreateEngagement";
 import { ErrorDialog } from "./ErrorDialog";
 import ManageAlerts from "../components/ManageAlerts/ManageAlerts";
@@ -47,9 +47,11 @@ class App extends React.Component<IApp> {
   public OnModalHide = () => {
     this.ShowHideErrorDialog(false);
   }
+
   public ShowHideErrorDialog = (isVisible) => {
     this.setState({ isModalOpen: isVisible });
   }
+
   public LoadData = () => {
     let obj = new ClientInfoClass();
     obj.GetClientInfo().then((results) => {
@@ -193,4 +195,5 @@ class App extends React.Component<IApp> {
     }
   }
 }
+
 export default App;
