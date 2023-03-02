@@ -8,33 +8,11 @@ import "@pnp/sp/site-groups/web";
 import "@pnp/sp/site-users/web";
 
 export class ClientInfoClass {
- /*
-  public _SetupSP() {
-    sp.setup({
-      sp: {
-        baseUrl: GlobalValues.SiteURL,
-      }
-    });
-    return sp;
-  }
-
-  public HubSite_SetupSP() {
-    sp.setup({
-      sp: {
-        baseUrl: GlobalValues.HubSiteURL,
-      }
-    });
-    return sp;
-
-  }
-*/
 
   public GetClientInfo = async () => {
     let url = GlobalValues.SiteURL;
     url = url.substring(0, url.lastIndexOf("/"));
-    //this.HubSite_SetupSP();
-
-    let ClientInformationData = {
+      let ClientInformationData = {
       LinkTitle: "",
       ClientNumber: "",
     };
@@ -58,7 +36,6 @@ export class ClientInfoClass {
     let absoluteUrl = GlobalValues.SiteURL;
     let finalabsoluteUrl = absoluteUrl.split("/");
     let CRN = finalabsoluteUrl[finalabsoluteUrl.length - 1];
-    //this.HubSite_SetupSP();
     const hubWeb = Web(GlobalValues.HubSiteURL);
     const Engagementdata = await hubWeb.lists
       .getByTitle(GlobalValues.EngagementList)
@@ -71,7 +48,6 @@ export class ClientInfoClass {
   }
 
   public GetEngPortalListItemID = async (_currPortalId) => {
-    //this.HubSite_SetupSP();
     const caml: ICamlQuery = {
       ViewXml: "<View><Query><Where><Eq><FieldRef Name='PortalId'/><Value Type='Text'>" + _currPortalId + "</Value></Eq></Where></Query></View>",
     };
@@ -84,8 +60,6 @@ export class ClientInfoClass {
   public GetAdvisoryTemplates = async () => {
     let url = GlobalValues.SiteURL;
     url = url.substring(0, url.lastIndexOf("/"));
-
-    //this.HubSite_SetupSP();
     const hubWeb = Web(GlobalValues.HubSiteURL);
     const AdvisoryTemplatesdata = await hubWeb.lists
       .getByTitle(GlobalValues.AdvisoryTemplatesList)
@@ -100,7 +74,6 @@ export class ClientInfoClass {
   public GetIndustryTypes = async () => {
     let url = GlobalValues.SiteURL;
     url = url.substring(0, url.lastIndexOf("/"));
-    //this.HubSite_SetupSP();
     const hubWeb = Web(GlobalValues.HubSiteURL);
     const IndustryTypesdata = await hubWeb.lists
       .getByTitle(GlobalValues.IndustryTypesList)
@@ -114,7 +87,6 @@ export class ClientInfoClass {
   public GetSupplemental = async () => {
     let url = GlobalValues.SiteURL;
     url = url.substring(0, url.lastIndexOf("/"));
-    //this.HubSite_SetupSP();
     const hubWeb = Web(GlobalValues.HubSiteURL);
     const Supplementaldata = await hubWeb.lists
       .getByTitle(GlobalValues.AssuranceSupplementalList)
@@ -128,7 +100,6 @@ export class ClientInfoClass {
   public GetServiceTypes = async () => {
     let url = GlobalValues.SiteURL;
     url = url.substring(0, url.lastIndexOf("/"));
-    //this.HubSite_SetupSP();
     const hubWeb = Web(GlobalValues.HubSiteURL);
     const ServiceTypesdata = await hubWeb.lists
       .getByTitle(GlobalValues.ServiceTypesList)
@@ -148,7 +119,6 @@ export class ClientInfoClass {
   public SaveEngagementList = async (PortalsCreated, id) => {
     let url = GlobalValues.SiteURL;
     url = url.substring(0, url.lastIndexOf("/"));
-    //this.HubSite_SetupSP();
     let objToSave = {
       "Portals_x0020_Created": PortalsCreated,
     };
@@ -173,8 +143,6 @@ export class ClientInfoClass {
         else {
           return false;
         }
-
       });
-
   });
 }

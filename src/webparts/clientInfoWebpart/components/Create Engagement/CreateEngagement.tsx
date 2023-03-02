@@ -306,17 +306,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         updatedworkyear = false;
         Isnextyear = false;
     }
-/*
-    public spsetup() {
-        sp.setup({
-            sp: {
-                baseUrl: GlobalValues.HubSiteURL,
-            }
-        });
-    }
-*/
-    public openDialog(e) {
 
+    public openDialog(e) {
         this.ResetState();
         this.loadAssuranceSupplemental();
         e.preventDefault();
@@ -332,7 +323,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         let absoluteUrl = GlobalValues.SiteURL;
         let finalabsoluteUrl = absoluteUrl.split("/");
         CRN = finalabsoluteUrl[finalabsoluteUrl.length - 1];
-
     }
 
     public ShowHideProgressBar = (isVisible) => {
@@ -442,10 +432,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 if (!newArray.some(o => o.Title === e.Title)) {
                     newArray.push({ ...e });
                 }
-
             });
-
-
             newArray.forEach((element) => {
                 this.state.Supplemental.push({ key: element.Id.toString(), text: element.Title });
             });
@@ -454,7 +441,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     public checkEngagement = async () => {
-        if (await this.state.PortalsCreated != null) {
+        if (this.state.PortalsCreated != null) {
             let finalPortalTypeValue = this.state.PortalsCreated.split(",");
             let engagementExists = false;
             for (var i = 0; i < finalPortalTypeValue.length; i++) {
@@ -463,7 +450,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 }
             }
             if (engagementExists == false) {
-
                 this.setState({ PortalsCreatedFinal: this.state.PortalsCreated + "," + this.state.PortalTypeURL, Checkeng: true });
                 return true;
             }
@@ -507,8 +493,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             console.log("CheckIfEngCreated::error:", error);
         });
     });
-    public _onChangeEngagementNumber = async (tagList: { key: string, name: string }[]) => {
 
+    public _onChangeEngagementNumber = async (tagList: { key: string, name: string }[]) => {
         if (tagList.length == 0) {
             this.closeMessageBar();
             this.setState({
@@ -518,8 +504,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             });
             this.state.EngagementNumberSelected1.length = 0;
 
-        } else {
-            //this.spsetup();
+        } else {            
             tagList.filter(item => {
                 this.setState({
                     EngagementNumberSelected: item.name
@@ -557,7 +542,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     private newEngagementNumber() {
-
         if (updatedworkyear == true) {
             let updatedYear = this.state.Year.toString().slice(-2);
             let engNumber = this.state.EngagementNumberSelected.substring(0, this.state.EngagementNumberSelected.length - 2);
@@ -836,11 +820,10 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         }
     }
 
-    public UploadFile = (async (file, FinalEngNumber) => {
-        //this.spsetup();
+    public UploadFile = (async (file, FinalEngNumber) => {        
         let filePrefix = "K1-" + FinalEngNumber + "-";
-        let hubWeb = 
-        await sp.web.getFolderByServerRelativeUrl(GlobalValues.K1InvestorDocumentsURL).files.add(filePrefix + file.name, file, true).then(async (results) => {
+        let hubWeb = Web(GlobalValues.HubSiteURL);
+        await hubWeb.getFolderByServerRelativeUrl(GlobalValues.K1InvestorDocumentsURL).files.add(filePrefix + file.name, file, true).then(async (results) => {
             return await results.file.getItem().then(async (listItem) => {
                 listItem.update({
                     EngagementNumber3: FinalEngNumber
@@ -1037,8 +1020,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         this.setState({ showMessageBar: false });
     }
 
-    private _getPeoplePickerItems(items: any[]) {
-        //this.spsetup();
+    private _getPeoplePickerItems(items: any[]) {        
         let getSelectedUsers = [];
         let getusersEmails = [];
         for (let item in items) {
@@ -1278,8 +1260,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         if (item) {
             this.setState({ Year: item.key });
 
-            if (updatedworkyear == true) {
-               // this.spsetup();
+            if (updatedworkyear == true) {               
                 Isnextyear = false;
                 let hubWeb = Web(GlobalValues.HubSiteURL);
                 hubWeb.lists.getByTitle(GlobalValues.EngagementPortalList).items.filter("EngagementNumberEndZero eq '" + this.state.EngagementNumberSelected + "'").getAll().then((data) => {
@@ -2506,7 +2487,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     private CheckDuplicateAdvantagePortal = (async (_currPortalId) => {
-        //this._SetupSP();
         let _isDuplicate: boolean = false;
         const caml: ICamlQuery = {
             ViewXml: "<View><Query><Where><Eq><FieldRef Name='PortalId'/><Value Type='Text'>" + _currPortalId + "</Value></Eq></Where></Query></View>",
@@ -2516,15 +2496,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             return data.length > 0 ? _isDuplicate = true : _isDuplicate = false;
         });
     });
-/*
-    private _SetupSP() {
-        sp.setup({
-            sp: {
-                baseUrl: GlobalValues.HubSiteURL
-            }
-        });
-    }
-*/
+
 }
 
 export default CreateEngagement;

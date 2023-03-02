@@ -3,7 +3,7 @@ import { Web } from "@pnp/sp/webs";
 export class GlobalValues {
   public static SiteURL = "";
   public static PermissionPage = "/SitePages/ManageClientPermissions.aspx";
-  
+
   public static isCRADUser = false;
   public static isCRETUser = false;
   public static isCLUser = false;
@@ -28,13 +28,6 @@ export class GlobalValues {
     if (GlobalValues.serverRelativeUrl == "")
       GlobalValues.serverRelativeUrl =
         context.pageContext.web.serverRelativeUrl;
-/*
-    sp.setup({
-      sp: {
-        baseUrl: GlobalValues.SiteURL
-      }
-    });
-*/
     let alertWeb = Web(GlobalValues.SiteURL);
     return await alertWeb.currentUser.groups().then((usergroups) => {
       if (usergroups.filter(x => x.Title.indexOf("CRAD-AT") > -1
@@ -56,15 +49,5 @@ export class GlobalValues {
     });
 
   });
-
-  /*
-  public static _SetupSP() {
-    sp.setup({
-      sp: {
-        baseUrl: GlobalValues.ClientPortalURL,
-      }
-    });
-    return sp;
-  }*/
 
 }
