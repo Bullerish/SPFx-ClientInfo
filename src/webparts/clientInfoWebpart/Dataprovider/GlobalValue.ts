@@ -1,5 +1,5 @@
 import { sp } from "@pnp/sp";
-
+import { Web } from "@pnp/sp/webs";
 export class GlobalValues {
   public static SiteURL = "";
   public static PermissionPage = "/SitePages/ManageClientPermissions.aspx";
@@ -35,7 +35,8 @@ export class GlobalValues {
       }
     });
 */
-    return await sp.web.currentUser.groups().then((usergroups) => {
+    let alertWeb = Web(GlobalValues.SiteURL);
+    return await alertWeb.currentUser.groups().then((usergroups) => {
       if (usergroups.filter(x => x.Title.indexOf("CRAD-AT") > -1
         || x.Title.indexOf("CRAD-ADV") > -1).length > 0) {
         GlobalValues.isCRADUser = true;
