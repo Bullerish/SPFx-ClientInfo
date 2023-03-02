@@ -40,6 +40,7 @@ import { ISiteUserInfo } from "@pnp/sp/site-users/types";
 import styles from "../ClientInfoWebpart.module.scss";
 import StatusDialog from "./StatusDialog";
 import { GlobalValues } from "../../Dataprovider/GlobalValue";
+import { setBaseUrl } from "office-ui-fabric-react";
 
 // for subwebs call
 export interface ISubWeb {
@@ -104,6 +105,7 @@ const ManageAlerts = ({
 
   const hostUrl: string = window.location.host;
   const absoluteUrl: string = spContext.pageContext._web.absoluteUrl;
+  
   // const clientPortalWeb = Web(absoluteUrl);
 
   const userAlertsList = "UserAlertsList";
@@ -143,11 +145,14 @@ const ManageAlerts = ({
 
   let selection: Selection;
   let selectionForAlertsToAdd: Selection;
-
+  
+  
   // useEffect to get Subwebs
   //
   //
+  let alertWeb = Web(absoluteUrl);
   useEffect(() => {
+    
     let subPortalTypeName: string = "";
     let subPortalTypeFunc: string = "";
     let subPortalType: string = "";
@@ -162,7 +167,7 @@ const ManageAlerts = ({
     console.log("In getSubwebs useEffect");
     // get sub-portal information
     async function getSubwebs() {
-      const subWebs = await sp.web
+      const subWebs = await alertWeb
         .getSubwebsFilteredForCurrentUser()
         .select("Title", "ServerRelativeUrl", "Id")
         .orderBy("Title", true)();
@@ -216,7 +221,7 @@ const ManageAlerts = ({
     }
 
     async function getCurrentUserId() {      
-      const userId = await sp.web.currentUser();
+      const userId = await alertWeb.currentUser();
       setCurrentUserId(userId);
     }
 
