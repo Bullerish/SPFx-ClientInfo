@@ -504,7 +504,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             });
             this.state.EngagementNumberSelected1.length = 0;
 
-        } else {            
+        } else {
             tagList.filter(item => {
                 this.setState({
                     EngagementNumberSelected: item.name
@@ -519,8 +519,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
                 Engagementdata.filter(async (e) => {
 
-                    if (e.Title == item.name) {    
-                        ExDate = (6) + '-' + (1) + '-' + (parseInt(e.WorkYear) + 2);                     
+                    if (e.Title == item.name) {
+                        ExDate = (6) + '-' + (1) + '-' + (parseInt(e.WorkYear) + 2);
                         let dt = new Date(ExDate);
                         const ExDate1: Date = dt;
                         this.setState({
@@ -718,7 +718,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             if (this.state.PortalChoiceSelected == 'Rollover') {
                 PortalRollOver = true;
                 RolloverUrl = GlobalValues.SiteURL + "/" + this.state.TeamURL + "-" + this.state.PortalTypeURL + "-" + this.state.RolloverURL;
-            }            
+            }
             return new Promise<number>((resolve, reject) => {
                 this.getListItemEntityTypeName(SPUrl, listname)
                     .then((listEntityName) => {
@@ -820,7 +820,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         }
     }
 
-    public UploadFile = (async (file, FinalEngNumber) => {        
+    public UploadFile = (async (file, FinalEngNumber) => {
         let filePrefix = "K1-" + FinalEngNumber + "-";
         let hubWeb = Web(GlobalValues.HubSiteURL);
         await hubWeb.getFolderByServerRelativeUrl(GlobalValues.K1InvestorDocumentsURL).files.add(filePrefix + file.name, file, true).then(async (results) => {
@@ -1020,7 +1020,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         this.setState({ showMessageBar: false });
     }
 
-    private _getPeoplePickerItems(items: any[]) {        
+    private _getPeoplePickerItems(items: any[]) {
         let getSelectedUsers = [];
         let getusersEmails = [];
         for (let item in items) {
@@ -1035,8 +1035,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         });
     }
 
-    private _validateSiteOwner(items: any[]) {        
-        // show error message if this is a guest user                     
+    private _validateSiteOwner(items: any[]) {
+        // show error message if this is a guest user
         let userEmail = items[0].secondaryText.toLowerCase();
         if ((userEmail.indexOf('cohnreznick.com') == -1) && (userEmail.indexOf('cohnreznickdev') == -1)) {
             // this is a guest user, do not validate
@@ -1046,7 +1046,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         }
     }
 
-    private async _getUserItems(items: any[]) {        
+    private async _getUserItems(items: any[]) {
         let selectedCLuser = [];
         if (this.state.PortalChoiceSelected == "Create New") {
             this.state.FinalAccessUserList = "";
@@ -1091,7 +1091,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 }
             });
 
-        } else if (this.state.PortalChoiceSelected == "Create New") {            
+        } else if (this.state.PortalChoiceSelected == "Create New") {
             this.state.AccessUserList.forEach((e) => {
                 if (this.state.FinalAccessUserList.indexOf(e.name) <= -1) {
                     this.state.FinalAccessUserList += e.name + ";";
@@ -1118,7 +1118,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     private _onSelectDate2 = (date: Date | null | undefined): void => {
         this.setState({
            // DateExtend: date
-           portalExpiration: portalExpDate,           
+           portalExpiration: portalExpDate,
         });
     }
 
@@ -1260,7 +1260,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         if (item) {
             this.setState({ Year: item.key });
 
-            if (updatedworkyear == true) {               
+            if (updatedworkyear == true) {
                 Isnextyear = false;
                 let hubWeb = Web(GlobalValues.HubSiteURL);
                 hubWeb.lists.getByTitle(GlobalValues.EngagementPortalList).items.filter("EngagementNumberEndZero eq '" + this.state.EngagementNumberSelected + "'").getAll().then((data) => {
@@ -1737,6 +1737,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     }
                                                 </div>
                                                 : ""}
+                                                {/* TODO: UI implementation for alerts rollover should show here */}
                                             {this.state.PortalChoiceSelected == 'Rollover' ?
                                                 <div>
                                                     <div>
@@ -1761,7 +1762,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                                             <Checkbox label={element.email} checked={element.checked} onChange={(ev, value) => {
                                                                                 this.onChangeEmailCLList(value, element.email);
                                                                             }} />
-
                                                                         )
                                                                         }
                                                                     </div>
@@ -1770,7 +1770,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                             this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'Workflow' && this.state.AssuranceSplitRollover.length == 0 ?
                                                                 <div className={styles.userLists}>
                                                                     <div className={styles.usergroups}>
-                                                                        CRET-AUD-WF-{this.state.EngagementNumberSelected}
+                                                                        CRET-AUD-WF-{this.state.EngagementNumberSelected} testing hi UI?
                                                                         {this.state.CRUserList.filter(element => element.email !== "").map(element =>
                                                                             <Checkbox label={element.email} checked={element.checked} onChange={(ev, value) => {
                                                                                 this.onChangeEmailCRList(value, element.email);
@@ -2035,8 +2035,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     onSelectDate={this._onSelectDateFileExp}
                                                     formatDate={this._onFormatDate}
                                                     minDate={minDate}
-                                                    maxDate={maxDate} // 12 months                                                    
-                                                    value={maxDate} // now 12 months.  was this.state.DateExtend                                                    
+                                                    maxDate={maxDate} // 12 months
+                                                    value={maxDate} // now 12 months.  was this.state.DateExtend
                                                 />
                                                 <div className={styles.fileExpText}>
                                                     Files will be deleted from the portal on this date. The portal will available for rollover for an additional 6 months.
@@ -2220,7 +2220,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
     private submitDialog = async (e) => {
 
-        if (this.state.currentScreen == "screen1") {            
+        if (this.state.currentScreen == "screen1") {
             if (this.state.EngagementNumberSelected == "" || this.state.addusers.length == 0
                 || this.state.Year == null || this.state.PortalTypeSelected == ""
                 || (this.state.TeamSelected == "" && this.state.PortalTypeSelected == 'K1')
@@ -2278,7 +2278,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                     titleText: "- Template and Provisioning",
                 });
             }
-        } else if (this.state.currentScreen == "screen3") {            
+        } else if (this.state.currentScreen == "screen3") {
             if (this.state.PortalTypeSelected == "Workflow" && this.state.TeamSelected == "Advisory") {
 
                 if (this.state.addusers.length == 0 || this.state.AdvisoryTemplateSelected == "") {
