@@ -1215,13 +1215,12 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     // TODO: need to alter to push checked users to optional users to roll alerts
     public onChangeEmailCRList = (value, email) => {
         console.log('firing onChangeEmailCRList');
-        let checkedUsers = [];
         let CRList = this.state.CRUserList;
 
         CRList.forEach((e) => {
             if (e.email == email && value) {
                 e.checked = true;
-                checkedUsers.push(e);
+
             }
 
             if (e.email == email && !value) {
@@ -1230,12 +1229,11 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         });
         this.setState({ CRUserList: CRList });
         // this.setState({ PreExistingAlertUsers: checkedUsers });
-        this.formulatePreExistingAlertUsers(checkedUsers);
+        this.formulatePreExistingAlertUsers('CR');
     }
 
-
     public onChangeEmailCLList = (value, email) => {
-        let checkedUsers = [];
+
         let CLList = this.state.CLUserList;
 
         CLList.forEach((e) => {
@@ -1249,16 +1247,32 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             }
         });
         this.setState({ CLUserList: CLList });
-        // this.setState({ PreExistingAlertUsers: [...checkedUsers] });
+        this.formulatePreExistingAlertUsers('CL');
 
     }
 
     // TODO: create method to process and combine data into a single array to iterate over and show checkboxes
-    public formulatePreExistingAlertUsers = (arrOfUsers) => {
+    public formulatePreExistingAlertUsers = (CrOrCl: string) => {
+      const checkedCRUsers = [];
+      const checkedCLUsers = [];
+      let allCheckedUsers = [];
       const previousState = this.state.PreExistingAlertUsers;
 
-      this.setState({ PreExistingAlertUsers: [...previousState, ...arrOfUsers] });
+      this.state.CRUserList.forEach(e => {
+        if (e.checked) {
+          checkedCRUsers.push(e);
+        }
+      });
 
+      this.state.CLUserList.forEach(e => {
+        if (e.checked) {
+          checkedCLUsers.push(e);
+        }
+      });
+
+      allCheckedUsers = [...checkedCRUsers, ...checkedCLUsers];
+
+      this.setState({ PreExistingAlertUsers: allCheckedUsers });
     }
 
 
@@ -1841,8 +1855,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                                         }
                                                                     </div>
                                                                 </div>
-                                                            <Label>Select the users to rollover alerts for:</Label>
+                                                                { this.state.PreExistingAlertUsers.length > 0 &&
                                                               <div className={styles.userLists}>
+                                                                <Label>Select the users to rollover alerts for:</Label>
                                                               <div className={styles.usergroups}>
                                                                  {console.log('logging PreExistingAlertUsers: ', this.state.PreExistingAlertUsers)}
                                                                   {this.state.PreExistingAlertUsers.map(element =>
@@ -1853,6 +1868,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                                   {console.log('logging UsersToRollAlerts: ', this.state.UsersToRollAlerts)}
                                                                   </div>
                                                               </div>
+                                                        }
                                                             </> : ""}
                                                     </div>
                                                     {/* Do NOT DELETE THIS CODE */}
