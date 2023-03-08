@@ -1229,7 +1229,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         });
         this.setState({ CRUserList: CRList });
         // this.setState({ PreExistingAlertUsers: checkedUsers });
-        this.formulatePreExistingAlertUsers('CR');
+        this.formulatePreExistingAlertUsers();
     }
 
     public onChangeEmailCLList = (value, email) => {
@@ -1247,16 +1247,16 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             }
         });
         this.setState({ CLUserList: CLList });
-        this.formulatePreExistingAlertUsers('CL');
+        this.formulatePreExistingAlertUsers();
 
     }
 
     // TODO: create method to process and combine data into a single array to iterate over and show checkboxes
-    public formulatePreExistingAlertUsers = (CrOrCl: string) => {
+    public formulatePreExistingAlertUsers = () => {
+      const prevUsersToRollAlertsState = this.state.UsersToRollAlerts;
       const checkedCRUsers = [];
       const checkedCLUsers = [];
       let allCheckedUsers = [];
-      const previousState = this.state.PreExistingAlertUsers;
 
       this.state.CRUserList.forEach(e => {
         if (e.checked) {
@@ -1272,38 +1272,61 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
       allCheckedUsers = [...checkedCRUsers, ...checkedCLUsers];
 
+      const filteredObjs = prevUsersToRollAlertsState.filter(obj1 => {
+        return allCheckedUsers.some(obj2 => {
+          return obj1.email === obj2.email;
+        })
+      });
+
+
       this.setState({ PreExistingAlertUsers: allCheckedUsers });
+      this.setState({ UsersToRollAlerts: filteredObjs });
     }
 
 
     // TODO: create onRolloverAlertUsers method to push checked users to
     public onChangeUsersToRollAlerts = (val, email) => {
       console.log('onChangeUsersToRollAlerts firing:::');
-      let output;
+      let output = [];
+
       const prevInfoState = this.state.UsersToRollAlerts;
-      let tempUserArr = [];
-      console.log('logging value: ', val);
-      console.log('logging email: ', email);
+      const preExistingAlertUsersHolder = this.state.PreExistingAlertUsers;
+
+      const filteredObjs = prevInfoState.filter(obj1 => {
+        return preExistingAlertUsersHolder.some(obj2 => {
+          return obj1 !== obj2;
+        });
+      });
+
+
+      let tempUserArr1 = [];
+      let tempUserArr2 = [];
 
       if (val) {
-        tempUserArr.push(email);
-        this.setState({ UsersToRollAlerts: [...prevInfoState, ...tempUserArr] });
+        tempUserArr1.push({ email: email, checkedState: val });
+        tempUserArr2 = [...filteredObjs, ...tempUserArr1];
+        this.setState({ UsersToRollAlerts: tempUserArr2 });
       } else {
-        output = prevInfoState.filter(value => {
-          return value !== email;
+        output = filteredObjs.filter(value => {
+          return value.email !== email;
         });
-        this.setState({ UsersToRollAlerts: [...output] });
+        tempUserArr2 = output;
+        this.setState({ UsersToRollAlerts: tempUserArr2 });
       }
 
+      preExistingAlertUsersHolder.forEach((e) => {
+        if (e.email == email && val) {
+            e.checkedState = true;
+        }
 
-      console.log('logging output: ', output);
+        if (e.email == email && !val) {
+            e.checkedState = false;
+        }
+      });
 
-
-
+      this.setState({ PreExistingAlertUsers: preExistingAlertUsersHolder });
 
     }
-
-
 
 
     public GetYearOption = () => {
@@ -1809,6 +1832,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     <div>
                                                         <Label>The following users will automatically have access:</Label>
                                                         {this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'Workflow' ?
+                                                        <>
                                                             <div className={styles.userLists}>
                                                                 {
                                                                     <div className={styles.usergroups}>
@@ -1832,7 +1856,22 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                                         }
                                                                     </div>
                                                                 }
-                                                            </div> :
+                                                            </div>
+                                                            { this.state.PreExistingAlertUsers.length > 0 &&
+                                                              <div className={styles.userLists}>
+                                                                <Label>Select the users to rollover alerts for:</Label>
+                                                              <div className={styles.usergroups}>
+                                                                 {console.log('logging PreExistingAlertUsers: ', this.state.PreExistingAlertUsers)}
+                                                                  {this.state.PreExistingAlertUsers.map(element =>
+                                                                    <Checkbox label={element.email} onChange={(ev, value) => {
+                                                                      this.onChangeUsersToRollAlerts(value, element.email);
+                                                                  }} />
+                                                                  )}
+                                                                  {console.log('logging UsersToRollAlerts: ', this.state.UsersToRollAlerts)}
+                                                                  </div>
+                                                              </div>
+                                                            }
+                                                            </> :
                                                             this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'Workflow' && this.state.AssuranceSplitRollover.length == 0 ?
                                                             <>
                                                                 <div className={styles.userLists}>
@@ -1859,9 +1898,10 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                               <div className={styles.userLists}>
                                                                 <Label>Select the users to rollover alerts for:</Label>
                                                               <div className={styles.usergroups}>
-                                                                 {console.log('logging PreExistingAlertUsers: ', this.state.PreExistingAlertUsers)}
-                                                                  {this.state.PreExistingAlertUsers.map(element =>
-                                                                    <Checkbox label={element.email} onChange={(ev, value) => {
+                                                                {console.log('logging PreExistingAlertUsers: ', this.state.PreExistingAlertUsers)}
+                                                                {/* TODO: add third prop of 'checkedFrom' and set that value from CR and CL checked prop. Filter on checkedFrom === true and then display below checked state for checked prop below */}
+                                                                  {this.state.PreExistingAlertUsers.filter(e => e.checked === true).map(element =>
+                                                                    <Checkbox label={element.email} defaultChecked={false} checked={element.checkedState} onChange={(ev, value) => {
                                                                       this.onChangeUsersToRollAlerts(value, element.email);
                                                                   }} />
                                                                   )}
@@ -2024,6 +2064,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                         {this.state.PortalChoiceSelected == 'Rollover' ?
                                             <div>
                                                 {this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'Workflow' ?
+                                                  <>
                                                     <div className={styles.userLists}>
                                                         <div className={styles.usergroupscopy}>
                                                             <span>CRET-TAX-WF-{this.state.RolloverURL}</span>
@@ -2041,8 +2082,23 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                                 )
                                                             }
                                                         </div>
-                                                    </div> :
+                                                    </div>
+                                                    <div>
+                                                      {/* TODO: testing outputting info to summary screen */}
+                                                      { this.state.UsersToRollAlerts.length > 0 &&
+                                                        <div className={styles.usergroupscopy}>
+                                                            <Label>If the following users currently have alerts, they will be created to the new sub-portal:</Label>
+                                                            {
+                                                                this.state.UsersToRollAlerts.map(element =>
+                                                                    <div className={styles.usersemails}>{element.email}</div>
+                                                                )
+                                                            }
+                                                        </div>
+                                                        }
+                                                    </div>
+                                                  </> :
                                                     this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'Workflow' && this.state.AssuranceSplitRollover.length == 0 ?
+                                                      <>
                                                         <div className={styles.userLists}>
                                                             <div className={styles.usergroupscopy}>
                                                                 <span>CRET-AUD-WF-{this.state.RolloverURL}</span>
@@ -2060,7 +2116,21 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                                     )
                                                                 }
                                                             </div>
-                                                        </div> : ""}
+                                                        </div>
+                                                        <div>
+                                                          {/* TODO: testing outputting info to summary screen */}
+                                                          { this.state.UsersToRollAlerts.length > 0 &&
+                                                            <div className={styles.usergroupscopy}>
+                                                                <Label>If the following users currently have alerts, they will be created to the new sub-portal:</Label>
+                                                                {
+                                                                    this.state.UsersToRollAlerts.map(element =>
+                                                                        <div className={styles.usersemails}>{element.email}</div>
+                                                                    )
+                                                                }
+                                                            </div>
+                                                            }
+                                                        </div>
+                                                      </> : ""}
                                                 {this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Rollover' ?
                                                     <div>
                                                         {/* Do NOT DELETE THIS CODE */}
