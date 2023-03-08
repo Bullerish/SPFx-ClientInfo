@@ -720,11 +720,17 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             PortalId = this.state.TeamURL + "-" + this.state.PortalTypeURL + "-" + FinalEngNumber;
             let RolloverUrl = "";
             let PortalRollOver = false;
-            let UsersToRollAlerts = '';
+            let usersToRollAlerts = '';
+            let usersToRollAlertsArray = [];
+
             if (this.state.PortalChoiceSelected == 'Rollover') {
-                PortalRollOver = true;
-                RolloverUrl = GlobalValues.SiteURL + "/" + this.state.TeamURL + "-" + this.state.PortalTypeURL + "-" + this.state.RolloverURL;
-                UsersToRollAlerts = this.state.UsersToRollAlerts.toString().replace(/,/g, ';');
+              this.state.UsersToRollAlerts.forEach(e => {
+                usersToRollAlertsArray.push(e.email);
+              });
+
+              PortalRollOver = true;
+              RolloverUrl = GlobalValues.SiteURL + "/" + this.state.TeamURL + "-" + this.state.PortalTypeURL + "-" + this.state.RolloverURL;
+              usersToRollAlerts = usersToRollAlertsArray.toString().replace(/,/g, ';');
             }
             return new Promise<number>((resolve, reject) => {
                 this.getListItemEntityTypeName(SPUrl, listname)
@@ -755,7 +761,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                             'PortalExpiration': this.state.portalExpiration,//(this.state.DateExtend ? this.state.DateExtend : this.state.portalExpiration),
                             'PortalId': PortalId,
                             'WorkpaperPath': this.state.WorkpaperPath,
-                            'UsersToRollAlerts': UsersToRollAlerts
+                            'UsersToRollAlerts': usersToRollAlerts
                         };
                         console.log('portalData', PortalData);
                         this.getValues(SPUrl)
