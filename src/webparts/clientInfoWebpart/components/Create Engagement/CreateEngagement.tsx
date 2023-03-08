@@ -302,7 +302,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             AssuranceSplitRollover: [],
             peoplePickerTitle: "Add users for access to this subportal only:",
             showSpinner: false,
-            IsPortalEntryCreated: ""
+            IsPortalEntryCreated: "",
+            PreExistingAlertUsers: [],
+            UsersToRollAlerts: []
 
         });
 
@@ -718,9 +720,11 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             PortalId = this.state.TeamURL + "-" + this.state.PortalTypeURL + "-" + FinalEngNumber;
             let RolloverUrl = "";
             let PortalRollOver = false;
+            let UsersToRollAlerts = '';
             if (this.state.PortalChoiceSelected == 'Rollover') {
                 PortalRollOver = true;
                 RolloverUrl = GlobalValues.SiteURL + "/" + this.state.TeamURL + "-" + this.state.PortalTypeURL + "-" + this.state.RolloverURL;
+                UsersToRollAlerts = this.state.UsersToRollAlerts.toString().replace(/,/g, ';');
             }
             return new Promise<number>((resolve, reject) => {
                 this.getListItemEntityTypeName(SPUrl, listname)
@@ -750,7 +754,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                             'FileExpiration': this.state.fileExpiration,
                             'PortalExpiration': this.state.portalExpiration,//(this.state.DateExtend ? this.state.DateExtend : this.state.portalExpiration),
                             'PortalId': PortalId,
-                            'WorkpaperPath': this.state.WorkpaperPath
+                            'WorkpaperPath': this.state.WorkpaperPath,
+                            'UsersToRollAlerts': UsersToRollAlerts
                         };
                         console.log('portalData', PortalData);
                         this.getValues(SPUrl)
@@ -1459,7 +1464,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
         return (
             <div>
-
                 <Link className={styles.primarybutton} onClick={(e) => this.openDialog(e)}>Create Engagement Subportal</Link>
                 <Dialog
                     isOpen={this.state.isOpen}
