@@ -375,27 +375,7 @@ const ManageAlerts = ({
     console.log("item details to be saved: ", listItem);
 
     let hubWeb = Web(GlobalValues.HubSiteURL);
-    let itemResult = await hubWeb.lists
-      .getByTitle(userAlertsList)
-      .items.filter(`Title eq '${currentUserId.LoginName}'`)();
 
-    if (itemResult.length > 0) {
-      listItemId = itemResult[0].Id;
-
-      const updateResult = await hubWeb.lists
-        .getByTitle(userAlertsList)
-        .items.getById(listItemId)
-        .update(listItem);
-      console.log("existing item updated", updateResult);
-
-      if (updateResult.data !== (null || undefined)) {
-        setIsSubmissionSuccessful(true);
-        setStatusDialogHidden(false);
-      } else {
-        setIsSubmissionSuccessful(false);
-        setStatusDialogHidden(false);
-      }
-    } else {
       const itemAddResult: IItemAddResult = await hubWeb.lists
         .getByTitle(userAlertsList)
         .items.add(listItem);
@@ -409,7 +389,7 @@ const ManageAlerts = ({
       }
 
       console.log("item was newly created", itemAddResult);
-    }
+    // }
 
     // console.log("itemAddResult: ", itemAddResult);
   };
