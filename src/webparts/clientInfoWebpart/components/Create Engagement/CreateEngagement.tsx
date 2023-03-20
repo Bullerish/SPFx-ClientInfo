@@ -23,6 +23,7 @@ import { AssuranceSplit } from "../../Dataprovider/AssuranceSplit";
 import { AssuranceSplitRollover } from "../../Dataprovider/AssuranceSplitRollover";
 import { initializeIcons } from 'office-ui-fabric-react';
 import ProgressBar from "./ProgressBar";
+import { UserAction } from "../../Dataprovider/ActionEnums";
 initializeIcons();
 
 const Teamoptions: IChoiceGroupOption[] = [
@@ -556,7 +557,11 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     public insertdata(siteAbsoluteUrl: string, listname: string, requestdata, requestDigest): Promise<number> {
+        console.log('in insertdata func:::');
+        console.log('logging addusersID:: ', this.state.addusersID);
+        console.log('logging requestdata: ', requestdata);
         let url = `${siteAbsoluteUrl}/_api/web/lists/getbytitle('${listname}')/items`;
+        const currWeb = Web(siteAbsoluteUrl);
         return new Promise<number>((resolve, reject) => {
             try {
                 fetch(url,
@@ -564,7 +569,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                         method: "POST",
                         credentials: 'same-origin',
                         headers: {
-                            Accept: 'application/json',
+                            'Accept': 'application/json',
                             "Content-Type": "application/json;odata=verbose",
                             "X-RequestDigest": requestDigest
                         },
@@ -576,12 +581,37 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                     }).catch((error) => {
                         reject(error);
                     });
+
+                // currWeb.lists.getByTitle(listname).items.add({
+                //   Title: 'HOLLA TRYING TO IDENTIFY BUG'
+                // })
+                //   .then(response => {
+                //     console.log('in .then response of pnp add list item:::');
+                //     console.log(response);
+                //     return response;
+                //   })
+                //   .then(response => {
+                //     console.log('response id: ', response.data.ID);
+                //     resolve(response.data.ID);
+                //   })
+                //   .catch(error => {
+                //     reject(error);
+                //   });
+
             }
             catch (e) {
                 console.log("insertdata::error", e);
                 reject(e);
             }
         });
+
+
+
+
+
+
+
+
     }
 
     public getListItemEntityTypeName(siteAbsoluteUrl: string, listname: string): Promise<string> {
@@ -736,8 +766,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 this.getListItemEntityTypeName(SPUrl, listname)
                     .then((listEntityName) => {
                         let PortalData: any = {
-                            '__metadata': {
-                                'type': listEntityName
+                            __metadata: {
+                                type: listEntityName
                             },
                             'EngagementName': this.state.EngagementNameSelected,
                             'Title': FinalEngNumber,
@@ -749,8 +779,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                             'SiteOwnerId': this.state.addusersID,
                             'SiteUrl': { Url: site },
                             'EngagementMembers': this.state.CRUserSelected,
-                          'ClientMembers': this.state.PortalChoiceSelected == "Create New" ? this.state.FinalAccessUserList : this.state.CLUserSelected,
-                          'Rollover': PortalRollOver,
+                            'ClientMembers': this.state.PortalChoiceSelected == "Create New" ? this.state.FinalAccessUserList : this.state.CLUserSelected,
+                            'Rollover': PortalRollOver,
                             'RolloverUrl': { Url: RolloverUrl },
                             'IndustryType': this.state.IndustryTypeSelected,
                             'ServiceType': this.state.ServiceTypeSelected,
@@ -787,9 +817,11 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                         this.ShowHideProgressBar(false);
                                     });
                                 } else if (this.state.TeamSelected == "Assurance" && this.state.PortalTypeSelected == "Workflow" && this.state.AssuranceSplitRollover.length != 0 && this.state.AssuranceSplitRollover[0].NewSplitValue != null && this.state.PortalChoiceSelected == 'Rollover') {
+                                  console.log('in assurance, workflow, and rollover if:::');
                                     let SplitRolloverObj = new AssuranceSplitRollover();
                                     this.ShowHideProgressBar(true);
                                     SplitRolloverObj.SaveSplitEngagementRollover(PortalData, this.state.AssuranceSplitRollover).then(val => {
+                                      console.log('in assurance SplitRolloverObj:::');
                                         this.CheckIfEngCreated().then((engcrt) => {
 
                                             if (val == true && engcrt !== null) {
@@ -810,6 +842,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
                                 }
                                 else {
+                                  console.log('in else and about to invoke insertdata func:::');
                                     this.insertdata(SPUrl, listname, JSON.stringify(PortalData), requestDigest.d.GetContextWebInformation.FormDigestValue)
                                         .then((response) => {
                                             this.CheckIfEngCreated().then((engcrt) => {
@@ -1035,16 +1068,19 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     private _getPeoplePickerItems(items: any[]) {
+        const currSite = Web(GlobalValues.HubSiteURL);
+        console.log('logging currsite url: ', GlobalValues.HubSiteURL);
         let getSelectedUsers = [];
         let getusersEmails = [];
         for (let item in items) {
             getSelectedUsers.push(items[item].text);
             getusersEmails.push(items[item].secondaryText);
         }
-        this.setState({ addusers: getSelectedUsers, emailaddress: getusersEmails });
         items.forEach((e) => {
-            sp.web.siteUsers.getByLoginName(e.loginName).get().then((user) => {
-                this.setState({ addusersID: user.Id });
+          currSite.siteUsers.getByLoginName(e.loginName).get().then((user) => {
+            // console.log('logging user id:: ', typeof user.Id);
+            // this.setState({ addusersID: user.Id });
+            this.setState({ addusers: getSelectedUsers, addusersID: user.Id, emailaddress: getusersEmails });
             });
         });
     }
