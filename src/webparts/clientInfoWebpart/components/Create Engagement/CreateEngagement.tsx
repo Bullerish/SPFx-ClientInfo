@@ -446,9 +446,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         this.setState({ SupplementalSelected: "N/A", SupplementalSelectedKey: "N/A" });
     }
 
-    public checkEngagement = async () => {
-        if (this.state.PortalsCreated != null) {
-            let finalPortalTypeValue = this.state.PortalsCreated.split(",");
+    public checkEngagement = async (portalsCreated) => {        
+        if (portalsCreated != null) {
+            let finalPortalTypeValue = portalsCreated.split(",");
             let engagementExists = false;
             for (var i = 0; i < finalPortalTypeValue.length; i++) {
                 if (finalPortalTypeValue[i] == this.state.PortalTypeURL) {
@@ -456,7 +456,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 }
             }
             if (engagementExists == false) {
-                this.setState({ PortalsCreatedFinal: this.state.PortalsCreated + "," + this.state.PortalTypeURL, Checkeng: true });
+                this.setState({ PortalsCreatedFinal: portalsCreated + "," + this.state.PortalTypeURL, Checkeng: true });
                 return true;
             }
             else {
@@ -470,7 +470,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 }
             }
         }
-        else if (this.state.PortalsCreated == null) {
+        else if (portalsCreated == null) {
             this.setState({ PortalsCreatedFinal: this.state.PortalTypeURL, Checkeng: true });
             return true;
         }
@@ -500,7 +500,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         });
     });
 
-    public _onChangeEngagementNumber = async (tagList: { key: string, name: string }[]) => {
+    public _onChangeEngagementNumber = async (tagList: { key: string, name: string }[]) => {        
         if (tagList.length == 0) {
             this.closeMessageBar();
             this.setState({
@@ -521,11 +521,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 }
                 else {
                     updatedworkyear = false;
-                }
-
-                Engagementdata.filter(async (e) => {
-
-                    if (e.Title == item.name) {
+                }                
+                Engagementdata.filter(async (e) => {                    
+                    if (e.Title == item.name) {                        
                         ExDate = (6) + '-' + (1) + '-' + (parseInt(e.WorkYear) + 2);
                         let dt = new Date(ExDate);
                         const ExDate1: Date = dt;
@@ -539,12 +537,12 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                             PortalsCreated: e.Portals_x0020_Created,
                             PortalId: e.PortalId
                         });
+                        this.checkEngagement(e.Portals_x0020_Created);
                     }
                 });
             });
-            this.checkEngagement();
+            //this.checkEngagement();
         }
-
     }
 
     private newEngagementNumber() {
@@ -558,8 +556,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
     public insertdata(siteAbsoluteUrl: string, listname: string, requestdata, requestDigest): Promise<number> {
         console.log('in insertdata func:::');
-        console.log('logging addusersID:: ', this.state.addusersID);
-        console.log('logging requestdata: ', requestdata);
+        //console.log('logging addusersID:: ', this.state.addusersID);
+        //console.log('logging requestdata: ', requestdata);
         let url = `${siteAbsoluteUrl}/_api/web/lists/getbytitle('${listname}')/items`;
         const currWeb = Web(siteAbsoluteUrl);
         return new Promise<number>((resolve, reject) => {
@@ -581,37 +579,12 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                     }).catch((error) => {
                         reject(error);
                     });
-
-                // currWeb.lists.getByTitle(listname).items.add({
-                //   Title: 'HOLLA TRYING TO IDENTIFY BUG'
-                // })
-                //   .then(response => {
-                //     console.log('in .then response of pnp add list item:::');
-                //     console.log(response);
-                //     return response;
-                //   })
-                //   .then(response => {
-                //     console.log('response id: ', response.data.ID);
-                //     resolve(response.data.ID);
-                //   })
-                //   .catch(error => {
-                //     reject(error);
-                //   });
-
             }
             catch (e) {
                 console.log("insertdata::error", e);
                 reject(e);
             }
         });
-
-
-
-
-
-
-
-
     }
 
     public getListItemEntityTypeName(siteAbsoluteUrl: string, listname: string): Promise<string> {
@@ -732,11 +705,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                 this.SaveEngagementList();
                                                 resolve(response);
                                                 this.setState({ IsPortalEntryCreated: "Y" });
-
                                             }
                                             else {
                                                 this.setState({ IsPortalEntryCreated: "N" });
-
                                                 reject();
                                             }
                                         });
@@ -829,7 +800,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                 this.ShowHideProgressBar(false);
                                                 resolve(1);
                                                 this.setState({ IsPortalEntryCreated: "Y" });
-
                                             }
                                             else {
                                                 reject();
@@ -846,7 +816,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                     this.insertdata(SPUrl, listname, JSON.stringify(PortalData), requestDigest.d.GetContextWebInformation.FormDigestValue)
                                         .then((response) => {
                                             this.CheckIfEngCreated().then((engcrt) => {
-
                                                 if ((response !== null) && (engcrt !== null)) {
                                                     this.SaveEngagementList();
                                                     resolve(response);
@@ -1004,7 +973,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             });
         }
         else {
-
             let eng = this.state.EngagementNumberSelected.slice(-2);
             let e1 = parseInt(eng) - 1;
             let str1 = this.state.EngagementNumberSelected.slice(0, -2) + e1.toString();
@@ -1025,14 +993,12 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                         });
 
                         this.state.CRUserList.forEach((e) => {
-
                             if (data[0].EngagementMembers.indexOf(e.email) > -1) {
                                 e.checked = true;
                             }
                         });
 
                         this.state.CLUserList.forEach((e) => {
-
                             if (data[0].ClientMembers.indexOf(e.email) > -1) {
                                 e.checked = true;
                             }
@@ -1054,7 +1020,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     public _onChangePortalChoice = (event: React.FormEvent<HTMLDivElement>, option: IChoiceGroupOption) => {
-
         this._getUserListCreatedon();
         this.setState({ PortalChoiceSelected: option.text });
         let ErrorMessage = "";
@@ -1077,9 +1042,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             getusersEmails.push(items[item].secondaryText);
         }
         items.forEach((e) => {
-          currSite.siteUsers.getByLoginName(e.loginName).get().then((user) => {
-            // console.log('logging user id:: ', typeof user.Id);
-            // this.setState({ addusersID: user.Id });
+          currSite.siteUsers.getByLoginName(e.loginName).get().then((user) => {            
             this.setState({ addusers: getSelectedUsers, addusersID: user.Id, emailaddress: getusersEmails });
             });
         });
@@ -1097,13 +1060,13 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     private async _getUserItems(items: any[]) {
+        console.log('_getUserItems');
         let selectedCLuser = [];
         if (this.state.PortalChoiceSelected == "Create New") {
             this.state.FinalAccessUserList = "";
             items.forEach((e) => {
                 this.state.FinalAccessUserList += e.secondaryText + ";";
                 selectedCLuser.push(e.text);
-
             });
             if (this.state.PortalTypeSelected == "Workflow" && this.state.TeamSelected == "Advisory") {
                 let userList = "";
@@ -1120,43 +1083,55 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 userList += e.secondaryText + ";";
                 selectedCLuser.push(e.text);
             });
+            console.log('selected CL user',selectedCLuser,userList);
             this.setState({ CLUserSelected: userList });
         }
         this.setState({ addusers1: selectedCLuser });
     }
 
     private getCLUserList() {
-
+        console.log('get CL User List');
+        let CLUserSelected = '';
+        let CRUserSelected = '';
+        let FinalAccessUserList = '';
+        console.log(this.state.CRUserList,this.state.CLUserList,this.state.FinalAccessUserList);
         if (this.state.PortalChoiceSelected == "Rollover") {
-
             this.state.CLUserList.forEach((e) => {
                 if (e.checked) {
-                    this.state.CLUserSelected += e.email + ";";
+                    //this.state.CLUserSelected += e.email + ";";
+                    CLUserSelected += e.email + ";";
                 }
             });
 
             this.state.CRUserList.forEach((e) => {
                 if (e.checked) {
-                    this.state.CRUserSelected += e.email + ";";
+                    //this.state.CRUserSelected += e.email + ";";
+                    CRUserSelected += e.email + ";";
                 }
             });
 
         } else if (this.state.PortalChoiceSelected == "Create New") {
             this.state.AccessUserList.forEach((e) => {
                 if (this.state.FinalAccessUserList.indexOf(e.name) <= -1) {
-                    this.state.FinalAccessUserList += e.name + ";";
+                    //this.state.FinalAccessUserList += e.name + ";";
+                    FinalAccessUserList += e.name + ";";
                 }
-
             });
             if (this.state.PortalTypeSelected == "Workflow" && this.state.TeamSelected == "Advisory") {
                 this.state.CLUserList.forEach((e) => {
                     if (e.checked) {
-                        this.state.CLUserSelected += e.email + ";";
+                        //this.state.CLUserSelected += e.email + ";";
+                        CLUserSelected += e.email + ";";
                     }
                 });
 
             }
         }
+        this.setState({
+            CLUserSelected: CLUserSelected,
+            CRUserSelected: CRUserSelected,
+            FinalAccessUserList: FinalAccessUserList
+        })
     }
 
     private _onSelectDate = (date: Date | null | undefined): void => {
@@ -1199,7 +1174,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     private _getUserListCreatedon() {
-
         let obj = new ClientInfoClass();
         let userlist = "";
         obj.GetUsersByGroup("CL-" + CRN
@@ -1221,7 +1195,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         });
     }
 
-    private async _getUserList() {
+    private async _getUserList() {        
         try {
             let obj = new ClientInfoClass();
             if (this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'Workflow') {
@@ -1280,9 +1254,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     public onChangeEmailCLList = (value, email) => {
-
         let CLList = this.state.CLUserList;
-
         CLList.forEach((e) => {
             if (e.email == email && value) {
                 e.checked = true;
@@ -1322,9 +1294,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
       const filteredObjs = prevUsersToRollAlertsState.filter(obj1 => {
         return allCheckedUsers.some(obj2 => {
           return obj1.email === obj2.email;
-        })
+        });
       });
-
 
       this.setState({ PreExistingAlertUsers: allCheckedUsers });
       this.setState({ UsersToRollAlerts: filteredObjs });
@@ -1578,9 +1549,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                     <div className={styles.engnumbername}>
                                         <div className={`${styles.engagementnames} ${styles.column1}`}>
                                             <Label>Engagement Number<span className={styles.reqval}> *</span></Label>
-                                            <TooltipHost
-                                                content="Enter Engagement Number"
-                                            >
+                                            <TooltipHost content="Enter Engagement Number">
                                                 <TagPicker
                                                     defaultSelectedItems={EngagementNameTags}
                                                     removeButtonAriaLabel="Remove"
@@ -2427,10 +2396,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 });
 
             } else {
-                this.checkEngagement();
+                this.checkEngagement(this.state.PortalsCreated);
                 this.newEngagementNumber();
                 if (this.state.PortalTypeSelected == 'K1' && this.state.Checkeng == true) {
-
                     this.setState({
                         validate: false,
                         currentScreen: "screen5",
