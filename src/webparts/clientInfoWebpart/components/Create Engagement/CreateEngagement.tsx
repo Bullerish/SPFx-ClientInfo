@@ -1721,7 +1721,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                             {this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Rollover' ?
                                                 <div>
                                                     <div className={styles.engagementnames}>
-                                                        <Label>Service Type</Label>
+                                                        <Label>Template Type</Label>
                                                         <Text className={styles.engagementPrint}>{this.state.ServiceTypeSelected}</Text>
                                                     </div>
                                                     <div className={styles.engagementnames}>
@@ -1748,7 +1748,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     selectedKey={this.state.ServiceTypeSelectedKey}
                                                 />
                                                 {(this.state.validate && this.state.ServiceTypeSelected == "") ?
-                                                    <div className={styles.reqval}>Service Type is required </div> : ''}
+                                                    <div className={styles.reqval}>Template Type is required </div> : ''}
                                                 <Dropdown
                                                     placeholder="Industry Type"
                                                     label="Industry Type"
@@ -2001,7 +2001,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                             {this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'Workflow' ?
                                                 <div>
                                                     <div className={styles.engagementnames}>
-                                                        <Label>Service Type</Label>
+                                                        <Label>Template Type</Label>
                                                         <Text className={styles.engagementPrint}>{this.state.ServiceTypeSelected}</Text>
                                                     </div>
                                                     <div className={styles.engagementnames}>
