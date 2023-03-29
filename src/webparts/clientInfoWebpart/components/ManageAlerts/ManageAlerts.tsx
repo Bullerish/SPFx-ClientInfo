@@ -105,7 +105,7 @@ const ManageAlerts = ({
 
   const hostUrl: string = window.location.host;
   const absoluteUrl: string = spContext.pageContext._web.absoluteUrl;
-  
+
   // const clientPortalWeb = Web(absoluteUrl);
 
   const userAlertsList = "UserAlertsList";
@@ -145,14 +145,14 @@ const ManageAlerts = ({
 
   let selection: Selection;
   let selectionForAlertsToAdd: Selection;
-  
-  
+
+
   // useEffect to get Subwebs
   //
   //
   let alertWeb = Web(absoluteUrl);
   useEffect(() => {
-    
+
     let subPortalTypeName: string = "";
     let subPortalTypeFunc: string = "";
     let subPortalType: string = "";
@@ -220,7 +220,7 @@ const ManageAlerts = ({
       setItems(subWebsWithKey);
     }
 
-    async function getCurrentUserId() {      
+    async function getCurrentUserId() {
       const userId = await alertWeb.currentUser();
       setCurrentUserId(userId);
     }
@@ -375,27 +375,7 @@ const ManageAlerts = ({
     console.log("item details to be saved: ", listItem);
 
     let hubWeb = Web(GlobalValues.HubSiteURL);
-    let itemResult = await hubWeb.lists
-      .getByTitle(userAlertsList)
-      .items.filter(`Title eq '${currentUserId.LoginName}'`)();
 
-    if (itemResult.length > 0) {
-      listItemId = itemResult[0].Id;
-
-      const updateResult = await hubWeb.lists
-        .getByTitle(userAlertsList)
-        .items.getById(listItemId)
-        .update(listItem);
-      console.log("existing item updated", updateResult);
-
-      if (updateResult.data !== (null || undefined)) {
-        setIsSubmissionSuccessful(true);
-        setStatusDialogHidden(false);
-      } else {
-        setIsSubmissionSuccessful(false);
-        setStatusDialogHidden(false);
-      }
-    } else {
       const itemAddResult: IItemAddResult = await hubWeb.lists
         .getByTitle(userAlertsList)
         .items.add(listItem);
@@ -409,7 +389,7 @@ const ManageAlerts = ({
       }
 
       console.log("item was newly created", itemAddResult);
-    }
+    // }
 
     // console.log("itemAddResult: ", itemAddResult);
   };
@@ -493,58 +473,6 @@ const ManageAlerts = ({
     setIsSubmissionSuccessful(null);
   };
 
-  // // TODO: testing functionality
-  // const updateItemsToBeAddedForAlerts = async () => {
-  //   console.log("in updateItemsToBeAddedForAlerts::::");
-
-  //   console.log("logging activeItemArr::: ", activeItemArr);
-
-  //   // const output: any[] = itemsToBeAddedForAlerts.filter((obj1) => {
-  //   //   return !activeItemArr.some((obj2) => {
-  //   //     return obj1.key === obj2.key;
-  //   //   });
-  //   // });
-
-  //   // const output = itemsToBeAddedForAlerts.filter(obj => {
-  //   //   return activeItemArr.indexOf(obj) === -1;
-  //   // });
-
-  //   // console.log("logging output from updateItemsToBeAddedForAlerts: ", newItems);
-  // };
-
-  // EVENT HANDLERS BELOW
-  // // TODO: finish working with transfer state from staged alerts to be set
-  // const onActiveItemChanged = (
-  //   item: ISubWeb[],
-  //   index: number,
-  //   ev: React.FocusEvent<HTMLElement>
-  // ) => {
-  //   ev.stopPropagation();
-  //   console.log("ON ACTIVE ITEM CHANGED FIRING");
-  //   // activeItemArr = [];
-  //   // activeItemArr.push(item);
-  //   // const selectionGetItems = selectionForAlertsToAdd.getItems();
-  //   console.log("logging activeItemArr: ", activeItemArr);
-
-  //   const output: any[] = itemsToBeAddedForAlerts.filter((obj) => {
-  //     return activeItemArr.indexOf(obj as any) === -1;
-  //   });
-
-  //   // const output: any[] = items.filter((obj1) => {
-  //   //   return !itemsToBeAddedForAlerts.some((obj2) => {
-  //   //     return obj1.key === obj2.key;
-  //   //   });
-  //   // });
-
-  //   // console.log("logging output from onActiveItemChanged: ", output);
-  //   // setAlertsFactored(output);
-  //   // setItemsToBeAddedForAlerts(output);
-  //   // updateItemsToBeAddedForAlerts(output);
-
-  //   setItems((prevState) => [...prevState, item as any]);
-  //   // selectionForAlertsToAdd.setItems(output, false);
-  //   // setItemsToBeAddedForAlerts(output);
-  // };
 
   // function that runs when the user enters text into the Filter text box
   const onChangeFilterText = (

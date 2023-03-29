@@ -23,6 +23,7 @@ import { AssuranceSplit } from "../../Dataprovider/AssuranceSplit";
 import { AssuranceSplitRollover } from "../../Dataprovider/AssuranceSplitRollover";
 import { initializeIcons } from 'office-ui-fabric-react';
 import ProgressBar from "./ProgressBar";
+import { UserAction } from "../../Dataprovider/ActionEnums";
 initializeIcons();
 
 const Teamoptions: IChoiceGroupOption[] = [
@@ -187,7 +188,10 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         WorkpaperPath: "",
         peoplePickerTitle: "Add users for access to this subportal only:",
         showSpinner: false,
-        IsPortalEntryCreated: ""
+        IsPortalEntryCreated: "",
+        // TODO: setting state for pre-existing selected users to roll alerts over
+        PreExistingAlertUsers: [],
+        UsersToRollAlerts: []
     };
 
     /**
@@ -299,7 +303,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             AssuranceSplitRollover: [],
             peoplePickerTitle: "Add users for access to this subportal only:",
             showSpinner: false,
-            IsPortalEntryCreated: ""
+            IsPortalEntryCreated: "",
+            PreExistingAlertUsers: [],
+            UsersToRollAlerts: []
 
         });
 
@@ -440,9 +446,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         this.setState({ SupplementalSelected: "N/A", SupplementalSelectedKey: "N/A" });
     }
 
-    public checkEngagement = async () => {
-        if (this.state.PortalsCreated != null) {
-            let finalPortalTypeValue = this.state.PortalsCreated.split(",");
+    public checkEngagement = async (portalsCreated) => {        
+        if (portalsCreated != null) {
+            let finalPortalTypeValue = portalsCreated.split(",");
             let engagementExists = false;
             for (var i = 0; i < finalPortalTypeValue.length; i++) {
                 if (finalPortalTypeValue[i] == this.state.PortalTypeURL) {
@@ -450,7 +456,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 }
             }
             if (engagementExists == false) {
-                this.setState({ PortalsCreatedFinal: this.state.PortalsCreated + "," + this.state.PortalTypeURL, Checkeng: true });
+                this.setState({ PortalsCreatedFinal: portalsCreated + "," + this.state.PortalTypeURL, Checkeng: true });
                 return true;
             }
             else {
@@ -464,7 +470,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 }
             }
         }
-        else if (this.state.PortalsCreated == null) {
+        else if (portalsCreated == null) {
             this.setState({ PortalsCreatedFinal: this.state.PortalTypeURL, Checkeng: true });
             return true;
         }
@@ -494,7 +500,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         });
     });
 
-    public _onChangeEngagementNumber = async (tagList: { key: string, name: string }[]) => {
+    public _onChangeEngagementNumber = async (tagList: { key: string, name: string }[]) => {        
         if (tagList.length == 0) {
             this.closeMessageBar();
             this.setState({
@@ -504,7 +510,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             });
             this.state.EngagementNumberSelected1.length = 0;
 
-        } else {            
+        } else {
             tagList.filter(item => {
                 this.setState({
                     EngagementNumberSelected: item.name
@@ -515,30 +521,30 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 }
                 else {
                     updatedworkyear = false;
-                }
-
-                Engagementdata.filter(async (e) => {
-
-                    if (e.Title == item.name) {    
-                        ExDate = (6) + '-' + (1) + '-' + (parseInt(e.WorkYear) + 2);                     
+                }                
+                Engagementdata.filter(async (e) => {                    
+                    if (e.Title == item.name) {                        
+                        ExDate = (6) + '-' + (1) + '-' + (parseInt(e.WorkYear) + 2);
                         let dt = new Date(ExDate);
                         const ExDate1: Date = dt;
                         this.setState({
+                            /*
                             DateExtend: maxDate,
-                            portalExpiration: maxDate,
-                            K1Date: ExDate1,
+                            fileExpiration: maxDate,
+                            portalExpiration: maxDate,*/
+                            K1Date: ExDate1,                            
                             EngagementNameSelected: e.EngagementName,
                             Year: e.WorkYear,
                             EngID: e.Id,
                             PortalsCreated: e.Portals_x0020_Created,
                             PortalId: e.PortalId
                         });
+                        this.checkEngagement(e.Portals_x0020_Created);
                     }
                 });
             });
-            this.checkEngagement();
+            //this.checkEngagement();
         }
-
     }
 
     private newEngagementNumber() {
@@ -551,7 +557,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     public insertdata(siteAbsoluteUrl: string, listname: string, requestdata, requestDigest): Promise<number> {
+        console.log('in insertdata func:::');
         let url = `${siteAbsoluteUrl}/_api/web/lists/getbytitle('${listname}')/items`;
+        const currWeb = Web(siteAbsoluteUrl);
         return new Promise<number>((resolve, reject) => {
             try {
                 fetch(url,
@@ -559,7 +567,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                         method: "POST",
                         credentials: 'same-origin',
                         headers: {
-                            Accept: 'application/json',
+                            'Accept': 'application/json',
                             "Content-Type": "application/json;odata=verbose",
                             "X-RequestDigest": requestDigest
                         },
@@ -614,6 +622,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         let PortalId = "";
         let FinalEngNumber = updatedworkyear == true ? this.state.UpdatedEngagementNumberSelected : this.state.EngagementNumberSelected;
         let FinalEngNumberEndZero = updatedworkyear == true ? this.state.EngagementNumberSelected : "";
+
+        // combining the rollover users and new users for rollover portals
+        let finalCRUsers = this.state.FinalAccessUserList + this.state.CRUserSelected;        
 
         if (this.state.PortalTypeSelected == "K1") {
             site = GlobalValues.SiteURL + "/TAX-" + this.state.PortalTypeURL + "-" + FinalEngNumber;
@@ -684,7 +695,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                             'ClientMembers': this.state.CLUserSelected,
                             'TemplateType': this.state.AdvisoryTemplateSelected,
                             'isNotificationEmail': this.state.emailNotification,
-                            'PortalExpiration': (this.state.portalExpiration ? this.state.portalExpiration : this.state.DateExtend),
+                            'PortalExpiration': (this.state.portalExpiration ? this.state.portalExpiration : advMax),
                             'PortalId': PortalId
                         };
                         this.getValues(SPUrl)
@@ -697,11 +708,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                 this.SaveEngagementList();
                                                 resolve(response);
                                                 this.setState({ IsPortalEntryCreated: "Y" });
-
                                             }
                                             else {
                                                 this.setState({ IsPortalEntryCreated: "N" });
-
                                                 reject();
                                             }
                                         });
@@ -715,16 +724,32 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             PortalId = this.state.TeamURL + "-" + this.state.PortalTypeURL + "-" + FinalEngNumber;
             let RolloverUrl = "";
             let PortalRollOver = false;
+            let usersToRollAlerts = '';
+            let usersToRollAlertsArray = [];
+
             if (this.state.PortalChoiceSelected == 'Rollover') {
-                PortalRollOver = true;
-                RolloverUrl = GlobalValues.SiteURL + "/" + this.state.TeamURL + "-" + this.state.PortalTypeURL + "-" + this.state.RolloverURL;
-            }            
+              this.state.UsersToRollAlerts.forEach(e => {
+                usersToRollAlertsArray.push(e.email);
+              });
+
+              PortalRollOver = true;
+              RolloverUrl = GlobalValues.SiteURL + "/" + this.state.TeamURL + "-" + this.state.PortalTypeURL + "-" + this.state.RolloverURL;
+              usersToRollAlerts = usersToRollAlertsArray.toString().replace(/,/g, ';');
+            }
+
+            // ensuring default expiration dates are set:
+            let defaultPortalExpDate = maxDate; // 12 months
+            if (this.state.TeamSelected == "Advisory") { defaultPortalExpDate = advMax;} // 36 months
+            if (this.state.TeamSelected != "Advisory" && this.state.PortalTypeSelected == "Workflow") { defaultPortalExpDate = portalExpDate;} // 18 months
+            let defaultFileExpDate = null;
+            if (this.state.TeamSelected != "Advisory" && this.state.PortalTypeSelected == "Workflow") { defaultFileExpDate = maxDate;} // 12 months                 
+
             return new Promise<number>((resolve, reject) => {
                 this.getListItemEntityTypeName(SPUrl, listname)
                     .then((listEntityName) => {
                         let PortalData: any = {
-                            '__metadata': {
-                                'type': listEntityName
+                            __metadata: {
+                                type: listEntityName
                             },
                             'EngagementName': this.state.EngagementNameSelected,
                             'Title': FinalEngNumber,
@@ -735,19 +760,22 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                             'WorkYear': this.state.Year.toString(),
                             'SiteOwnerId': this.state.addusersID,
                             'SiteUrl': { Url: site },
-                            'EngagementMembers': this.state.CRUserSelected,
-                          'ClientMembers': this.state.PortalChoiceSelected == "Create New" ? this.state.FinalAccessUserList : this.state.CLUserSelected,
-                          'Rollover': PortalRollOver,
+                            // Engagement Members will be a combination of rollover users (if rollover and new users)
+                            'EngagementMembers': finalCRUsers,// was: this.state.CRUserSelected,
+                            // Client Members will only happen in rollover since non CR users are not add-able during portal creation
+                            'ClientMembers': this.state.CLUserSelected, // was: this.state.PortalChoiceSelected == "Create New" ? this.state.FinalAccessUserList : this.state.CLUserSelected,
+                            'Rollover': PortalRollOver,
                             'RolloverUrl': { Url: RolloverUrl },
                             'IndustryType': this.state.IndustryTypeSelected,
                             'ServiceType': this.state.ServiceTypeSelected,
                             'Supplemental': this.state.SupplementalSelected,
-                            'TemplateType': this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Create New' ? this.state.ServiceTypeSelected : this.state.AdvisoryTemplateSelected,
+                            'TemplateType': this.state.TeamSelected == 'Tax' ? this.state.ServiceTypeSelected : this.state.AdvisoryTemplateSelected,
                             'isNotificationEmail': this.state.emailNotification,
-                            'FileExpiration': this.state.fileExpiration,
-                            'PortalExpiration': this.state.portalExpiration,//(this.state.DateExtend ? this.state.DateExtend : this.state.portalExpiration),
+                            'FileExpiration': this.state.fileExpiration ? this.state.fileExpiration : defaultFileExpDate,
+                            'PortalExpiration': this.state.portalExpiration ? this.state.portalExpiration : defaultPortalExpDate,
                             'PortalId': PortalId,
-                            'WorkpaperPath': this.state.WorkpaperPath
+                            'WorkpaperPath': this.state.WorkpaperPath,
+                            'UsersToRollAlerts': usersToRollAlerts
                         };
                         console.log('portalData', PortalData);
                         this.getValues(SPUrl)
@@ -773,9 +801,11 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                         this.ShowHideProgressBar(false);
                                     });
                                 } else if (this.state.TeamSelected == "Assurance" && this.state.PortalTypeSelected == "Workflow" && this.state.AssuranceSplitRollover.length != 0 && this.state.AssuranceSplitRollover[0].NewSplitValue != null && this.state.PortalChoiceSelected == 'Rollover') {
+                                  console.log('in assurance, workflow, and rollover if:::');
                                     let SplitRolloverObj = new AssuranceSplitRollover();
                                     this.ShowHideProgressBar(true);
                                     SplitRolloverObj.SaveSplitEngagementRollover(PortalData, this.state.AssuranceSplitRollover).then(val => {
+                                      console.log('in assurance SplitRolloverObj:::');
                                         this.CheckIfEngCreated().then((engcrt) => {
 
                                             if (val == true && engcrt !== null) {
@@ -783,7 +813,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                 this.ShowHideProgressBar(false);
                                                 resolve(1);
                                                 this.setState({ IsPortalEntryCreated: "Y" });
-
                                             }
                                             else {
                                                 reject();
@@ -796,10 +825,10 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
                                 }
                                 else {
+                                  console.log('in else and about to invoke insertdata func:::');
                                     this.insertdata(SPUrl, listname, JSON.stringify(PortalData), requestDigest.d.GetContextWebInformation.FormDigestValue)
                                         .then((response) => {
                                             this.CheckIfEngCreated().then((engcrt) => {
-
                                                 if ((response !== null) && (engcrt !== null)) {
                                                     this.SaveEngagementList();
                                                     resolve(response);
@@ -820,7 +849,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         }
     }
 
-    public UploadFile = (async (file, FinalEngNumber) => {        
+    public UploadFile = (async (file, FinalEngNumber) => {
         let filePrefix = "K1-" + FinalEngNumber + "-";
         let hubWeb = Web(GlobalValues.HubSiteURL);
         await hubWeb.getFolderByServerRelativeUrl(GlobalValues.K1InvestorDocumentsURL).files.add(filePrefix + file.name, file, true).then(async (results) => {
@@ -918,21 +947,19 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         });
     }
 
-    public Rollover = async () => {
-        //this.spsetup();
+    public Rollover = async () => {        
         let PortalType = this.state.PortalTypeSelected;
         let Team = this.state.TeamSelected;
         let hubWeb = Web(GlobalValues.HubSiteURL);
-        if (Isnextyear == true) {
+        if (Isnextyear == true) {            
             await hubWeb.lists.getByTitle(GlobalValues.EngagementPortalList).items.filter("EngagementNumberEndZero eq '" + this.state.EngagementNumberSelected + "'").getAll().then((data) => {
                 data = data.filter(e => e.PortalExist == true && e.ClientNumber == CRN && e.PortalType == PortalType && e.Team == Team);
                 let eng = this.state.UpdatedEngagementNumberSelected.slice(-2);
                 let e1 = parseInt(eng) - 1;
                 let str1 = this.state.UpdatedEngagementNumberSelected.slice(0, -2) + e1.toString();
-
                 this.setState({
                     Rollover: true,
-                    ServiceTypeSelected: data[0].ServiceType,
+                    ServiceTypeSelected: data[0].TemplateType,
                     IndustryTypeSelected: data[0].IndustryType,
                     SupplementalSelected: data[0].Supplemental,
                     RolloverURL: str1
@@ -957,35 +984,31 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             });
         }
         else {
-
             let eng = this.state.EngagementNumberSelected.slice(-2);
             let e1 = parseInt(eng) - 1;
             let str1 = this.state.EngagementNumberSelected.slice(0, -2) + e1.toString();
 
             await hubWeb.lists.getByTitle(GlobalValues.EngagementPortalList).items.filter("Title eq '" + str1 + "'").getAll().then((data) => {
                 data = data.filter(e => e.PortalExist == true && e.ClientNumber == CRN && e.PortalType == PortalType && e.Team == Team);
-                if (data.length != 0) {
+                if (data.length != 0) {                    
                     let WorkYear = parseInt(data[0].WorkYear);
                     let Year = parseInt(this.state.Year);
                     if (Year == WorkYear + 1) {
-
                         this.setState({
                             Rollover: true,
-                            ServiceTypeSelected: data[0].ServiceType,
+                            ServiceTypeSelected: data[0].TemplateType, 
                             IndustryTypeSelected: data[0].IndustryType,
                             SupplementalSelected: data[0].Supplemental,
                             RolloverURL: str1
                         });
 
                         this.state.CRUserList.forEach((e) => {
-
                             if (data[0].EngagementMembers.indexOf(e.email) > -1) {
                                 e.checked = true;
                             }
                         });
 
                         this.state.CLUserList.forEach((e) => {
-
                             if (data[0].ClientMembers.indexOf(e.email) > -1) {
                                 e.checked = true;
                             }
@@ -1007,7 +1030,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     public _onChangePortalChoice = (event: React.FormEvent<HTMLDivElement>, option: IChoiceGroupOption) => {
-
         this._getUserListCreatedon();
         this.setState({ PortalChoiceSelected: option.text });
         let ErrorMessage = "";
@@ -1020,23 +1042,23 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         this.setState({ showMessageBar: false });
     }
 
-    private _getPeoplePickerItems(items: any[]) {        
+    private _getPeoplePickerItems(items: any[]) {
+        const currSite = Web(GlobalValues.HubSiteURL);        
         let getSelectedUsers = [];
         let getusersEmails = [];
         for (let item in items) {
             getSelectedUsers.push(items[item].text);
             getusersEmails.push(items[item].secondaryText);
         }
-        this.setState({ addusers: getSelectedUsers, emailaddress: getusersEmails });
         items.forEach((e) => {
-            sp.web.siteUsers.getByLoginName(e.loginName).get().then((user) => {
-                this.setState({ addusersID: user.Id });
+          currSite.siteUsers.getByLoginName(e.loginName).get().then((user) => {            
+            this.setState({ addusers: getSelectedUsers, addusersID: user.Id, emailaddress: getusersEmails });
             });
         });
     }
 
-    private _validateSiteOwner(items: any[]) {        
-        // show error message if this is a guest user                     
+    private _validateSiteOwner(items: any[]) {
+        // show error message if this is a guest user
         let userEmail = items[0].secondaryText.toLowerCase();
         if ((userEmail.indexOf('cohnreznick.com') == -1) && (userEmail.indexOf('cohnreznickdev') == -1)) {
             // this is a guest user, do not validate
@@ -1046,67 +1068,62 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         }
     }
 
-    private async _getUserItems(items: any[]) {        
-        let selectedCLuser = [];
-        if (this.state.PortalChoiceSelected == "Create New") {
-            this.state.FinalAccessUserList = "";
-            items.forEach((e) => {
-                this.state.FinalAccessUserList += e.secondaryText + ";";
-                selectedCLuser.push(e.text);
-
-            });
-            if (this.state.PortalTypeSelected == "Workflow" && this.state.TeamSelected == "Advisory") {
-                let userList = "";
-                items.forEach((e) => {
-                    userList += e.secondaryText + ";";
-                    selectedCLuser.push(e.text);
-                });
-                this.setState({ CLUserSelected: userList });
-            }
+    // validate the user is a CR user:
+    private _validateEngagementMembers(items: any[]) {
+        this.setState({validate: false});
+        let validateEmails = true;
+        // show error message if this is a guest user
+        items.forEach((e) => {
+            let userEmail = e.secondaryText.toLowerCase();
+            if ((userEmail.indexOf('cohnreznick.com') == -1) && (userEmail.indexOf('cohnreznickdev') == -1)) {
+                validateEmails = false;
+                console.log('show error');
+            }         
+        });
+        if (validateEmails == true) {            
+            this._getUserItems(items);            
         }
-        else if (this.state.PortalChoiceSelected == "Rollover") {
-            let userList = "";
-            items.forEach((e) => {
-                userList += e.secondaryText + ";";
-                selectedCLuser.push(e.text);
-            });
-            this.setState({ CLUserSelected: userList });
+        else {
+            this.setState({validate: true});
         }
-        this.setState({ addusers1: selectedCLuser });
     }
 
-    private getCLUserList() {
+     // NEW People Picker for adding users.  Per Converge team, only CR users can be added at this time
+     private async _getUserItems(items: any[]) {        
+        let selectedUsers = [];
+        let accessUserList = [];        
+        items.forEach((e) => {            
+            accessUserList.push(e.secondaryText);
+            selectedUsers.push(e.text);
+        });
+        this.setState({AccessUserList: accessUserList, addusers1: selectedUsers});        
+    }   
 
-        if (this.state.PortalChoiceSelected == "Rollover") {
-
-            this.state.CLUserList.forEach((e) => {
-                if (e.checked) {
-                    this.state.CLUserSelected += e.email + ";";
-                }
-            });
-
-            this.state.CRUserList.forEach((e) => {
-                if (e.checked) {
-                    this.state.CRUserSelected += e.email + ";";
-                }
-            });
-
-        } else if (this.state.PortalChoiceSelected == "Create New") {            
-            this.state.AccessUserList.forEach((e) => {
-                if (this.state.FinalAccessUserList.indexOf(e.name) <= -1) {
-                    this.state.FinalAccessUserList += e.name + ";";
-                }
-
-            });
-            if (this.state.PortalTypeSelected == "Workflow" && this.state.TeamSelected == "Advisory") {
-                this.state.CLUserList.forEach((e) => {
-                    if (e.checked) {
-                        this.state.CLUserSelected += e.email + ";";
-                    }
-                });
-
+    private getCLUserList() {        
+        let CLUserSelected = '';
+        let CRUserSelected = '';
+        let FinalAccessUserList = '';
+        this.state.CLUserList.forEach((e) => {
+            if (e.checked) {
+                CLUserSelected += e.email + ";";
             }
-        }
+        });
+
+        this.state.CRUserList.forEach((e) => {
+            if (e.checked) {
+                CRUserSelected += e.email + ";";
+            }
+        });
+
+        this.state.AccessUserList.forEach((e) => {
+            FinalAccessUserList += e + ";";
+        });
+
+        this.setState({
+            CLUserSelected: CLUserSelected,
+            CRUserSelected: CRUserSelected,
+            FinalAccessUserList: FinalAccessUserList
+        });
     }
 
     private _onSelectDate = (date: Date | null | undefined): void => {
@@ -1118,7 +1135,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     private _onSelectDate2 = (date: Date | null | undefined): void => {
         this.setState({
            // DateExtend: date
-           portalExpiration: portalExpDate,           
+           portalExpiration: portalExpDate,
         });
     }
 
@@ -1149,16 +1166,18 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     private _getUserListCreatedon() {
-
         let obj = new ClientInfoClass();
-        let userlist = "";
+        //let userlist = "";
+        let userlist = [];
         obj.GetUsersByGroup("CL-" + CRN
         ).then((results) => {
             results.forEach((e) => {
-                //  this.state.AccessUserList.push({ name: e.Email });
-                userlist += e.Email + ";";
+                //this.state.AccessUserList.push({ name: e.Email });
+                userlist.push({ name: e.Email });
+                //userlist += e.Email + ";";
             });
-            //  this.setState({ FinalAccessUserList: userlist });
+            //this.setState({ FinalAccessUserList: userlist });
+            this.setState({ AccessUserList: userlist });
         });
     }
 
@@ -1171,7 +1190,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         });
     }
 
-    private async _getUserList() {
+    private async _getUserList() {        
         try {
             let obj = new ClientInfoClass();
             if (this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'Workflow') {
@@ -1208,13 +1227,16 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         }
 
     }
-    public onChangeEmailCRList = (value, email) => {
 
+    // TODO: need to alter to push checked users to optional users to roll alerts
+    public onChangeEmailCRList = (value, email) => {
+        console.log('firing onChangeEmailCRList');
         let CRList = this.state.CRUserList;
 
         CRList.forEach((e) => {
             if (e.email == email && value) {
                 e.checked = true;
+
             }
 
             if (e.email == email && !value) {
@@ -1222,16 +1244,16 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             }
         });
         this.setState({ CRUserList: CRList });
+        // this.setState({ PreExistingAlertUsers: checkedUsers });
+        this.formulatePreExistingAlertUsers();
     }
 
-
     public onChangeEmailCLList = (value, email) => {
-
         let CLList = this.state.CLUserList;
-
         CLList.forEach((e) => {
             if (e.email == email && value) {
                 e.checked = true;
+                // checkedUsers.push(e);
             }
 
             if (e.email == email && !value) {
@@ -1239,6 +1261,84 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             }
         });
         this.setState({ CLUserList: CLList });
+        this.formulatePreExistingAlertUsers();
+
+    }
+
+    // TODO: create method to process and combine data into a single array to iterate over and show checkboxes
+    public formulatePreExistingAlertUsers = () => {
+      const prevUsersToRollAlertsState = this.state.UsersToRollAlerts;
+      const checkedCRUsers = [];
+      const checkedCLUsers = [];
+      let allCheckedUsers = [];
+
+      this.state.CRUserList.forEach(e => {
+        if (e.checked) {
+          checkedCRUsers.push(e);
+        }
+      });
+
+      this.state.CLUserList.forEach(e => {
+        if (e.checked) {
+          checkedCLUsers.push(e);
+        }
+      });
+
+      allCheckedUsers = [...checkedCRUsers, ...checkedCLUsers];
+
+      const filteredObjs = prevUsersToRollAlertsState.filter(obj1 => {
+        return allCheckedUsers.some(obj2 => {
+          return obj1.email === obj2.email;
+        });
+      });
+
+      this.setState({ PreExistingAlertUsers: allCheckedUsers });
+      this.setState({ UsersToRollAlerts: filteredObjs });
+    }
+
+
+    // TODO: create onRolloverAlertUsers method to push checked users to
+    public onChangeUsersToRollAlerts = (val, email) => {
+      console.log('onChangeUsersToRollAlerts firing:::');
+      let output = [];
+
+      const prevInfoState = this.state.UsersToRollAlerts;
+      const preExistingAlertUsersHolder = this.state.PreExistingAlertUsers;
+
+      const filteredObjs = prevInfoState.filter(obj1 => {
+        return preExistingAlertUsersHolder.some(obj2 => {
+          return obj1 !== obj2;
+        });
+      });
+
+
+      let tempUserArr1 = [];
+      let tempUserArr2 = [];
+
+      if (val) {
+        tempUserArr1.push({ email: email, checkedState: val });
+        tempUserArr2 = [...filteredObjs, ...tempUserArr1];
+        this.setState({ UsersToRollAlerts: tempUserArr2 });
+      } else {
+        output = filteredObjs.filter(value => {
+          return value.email !== email;
+        });
+        tempUserArr2 = output;
+        this.setState({ UsersToRollAlerts: tempUserArr2 });
+      }
+
+      preExistingAlertUsersHolder.forEach((e) => {
+        if (e.email == email && val) {
+            e.checkedState = true;
+        }
+
+        if (e.email == email && !val) {
+            e.checkedState = false;
+        }
+      });
+
+      this.setState({ PreExistingAlertUsers: preExistingAlertUsersHolder });
+
     }
 
 
@@ -1260,7 +1360,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         if (item) {
             this.setState({ Year: item.key });
 
-            if (updatedworkyear == true) {               
+            if (updatedworkyear == true) {
                 Isnextyear = false;
                 let hubWeb = Web(GlobalValues.HubSiteURL);
                 hubWeb.lists.getByTitle(GlobalValues.EngagementPortalList).items.filter("EngagementNumberEndZero eq '" + this.state.EngagementNumberSelected + "'").getAll().then((data) => {
@@ -1372,7 +1472,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
         return (
             <div>
-
                 <Link className={styles.primarybutton} onClick={(e) => this.openDialog(e)}>Create Engagement Subportal</Link>
                 <Dialog
                     isOpen={this.state.isOpen}
@@ -1445,9 +1544,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                     <div className={styles.engnumbername}>
                                         <div className={`${styles.engagementnames} ${styles.column1}`}>
                                             <Label>Engagement Number<span className={styles.reqval}> *</span></Label>
-                                            <TooltipHost
-                                                content="Enter Engagement Number"
-                                            >
+                                            <TooltipHost content="Enter Engagement Number">
                                                 <TagPicker
                                                     defaultSelectedItems={EngagementNameTags}
                                                     removeButtonAriaLabel="Remove"
@@ -1563,7 +1660,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                     <div className={styles.engagementnames}>
                                         <Label>{this.state.PortalChoiceSelected} Portal<span className={styles.reqval}> *</span></Label>
                                         {this.state.PortalChoiceSelected == 'Rollover' ?
-                                            <Text className={styles.engagementPrint}>All requests from previous year’s portal will be rolled over to this portal on creation.</Text> :
+                                            <Text className={styles.engagementPrint}>All requests from previous year's portal will be rolled over to this portal on creation.</Text> :
                                             <Text className={styles.engagementPrint}>A portal will be set up with new template and requests.</Text>
                                         }
                                     </div>
@@ -1578,7 +1675,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                     </Stack>
                                     <div className={styles.innerChoiceDesc}>
                                         <div className={styles.choiceDes}>
-                                            <text>This option will rollover all requests from the previous year’s portal.</text>
+                                            <text>This option will rollover all requests from the previous year's portal.</text>
                                         </div>
                                         <div className={styles.choiceDes}>
                                             <text>This option will allow you to choose a new template and start with an empty portal.</text>
@@ -1624,7 +1721,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                             {this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Rollover' ?
                                                 <div>
                                                     <div className={styles.engagementnames}>
-                                                        <Label>Service Type</Label>
+                                                        <Label>Template Type</Label>
                                                         <Text className={styles.engagementPrint}>{this.state.ServiceTypeSelected}</Text>
                                                     </div>
                                                     <div className={styles.engagementnames}>
@@ -1651,7 +1748,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     selectedKey={this.state.ServiceTypeSelectedKey}
                                                 />
                                                 {(this.state.validate && this.state.ServiceTypeSelected == "") ?
-                                                    <div className={styles.reqval}>Service Type is required </div> : ''}
+                                                    <div className={styles.reqval}>Template Type is required </div> : ''}
                                                 <Dropdown
                                                     placeholder="Industry Type"
                                                     label="Industry Type"
@@ -1664,12 +1761,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     <div className={styles.reqval}>Industry Type is required </div> : ''}
                                             </div> : ""}
                                         {this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Create New' ?
-
-
                                             <div className={styles.assuranceType}>
-
-                                                <Label>Selecting an Industry Type will generate a fully populated set of industry-specific request items. If you’d prefer a blank template, please select "N/A".</Label>
-
+                                                <Label>Selecting an Industry Type will generate a fully populated set of industry-specific request items. If you'd prefer a blank template, please select "N/A".</Label>
                                                 <div className={styles.Supplemental}>
                                                     <Dropdown
                                                         placeholder="Industry Type"
@@ -1737,11 +1830,15 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     }
                                                 </div>
                                                 : ""}
+                                                {/* TODO: UI implementation for alerts rollover should show here */}
+                                                {/* */}
+                                                {/*  */}
                                             {this.state.PortalChoiceSelected == 'Rollover' ?
                                                 <div>
-                                                    <div>
+                                                    <div>                                                        
                                                         <Label>The following users will automatically have access:</Label>
                                                         {this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'Workflow' ?
+                                                        <>
                                                             <div className={styles.userLists}>
                                                                 {
                                                                     <div className={styles.usergroups}>
@@ -1761,13 +1858,28 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                                             <Checkbox label={element.email} checked={element.checked} onChange={(ev, value) => {
                                                                                 this.onChangeEmailCLList(value, element.email);
                                                                             }} />
-
                                                                         )
                                                                         }
                                                                     </div>
                                                                 }
-                                                            </div> :
+                                                            </div>
+                                                            { this.state.PreExistingAlertUsers.length > 0 &&
+                                                              <div className={styles.userLists}>
+                                                                <Label>Select the users to rollover alerts for:</Label>
+                                                              <div className={styles.usergroups}>
+                                                                 {console.log('logging PreExistingAlertUsers: ', this.state.PreExistingAlertUsers)}
+                                                                  {this.state.PreExistingAlertUsers.filter(e => e.checked === true).map(element =>
+                                                                    <Checkbox label={element.email} checked={element.checkedState} onChange={(ev, value) => {
+                                                                      this.onChangeUsersToRollAlerts(value, element.email);
+                                                                  }} />
+                                                                  )}
+                                                                  {console.log('logging UsersToRollAlerts: ', this.state.UsersToRollAlerts)}
+                                                                  </div>
+                                                              </div>
+                                                            }
+                                                            </> :
                                                             this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'Workflow' && this.state.AssuranceSplitRollover.length == 0 ?
+                                                            <>
                                                                 <div className={styles.userLists}>
                                                                     <div className={styles.usergroups}>
                                                                         CRET-AUD-WF-{this.state.EngagementNumberSelected}
@@ -1784,11 +1896,26 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                                             <Checkbox label={element.email} checked={element.checked} onChange={(ev, value) => {
                                                                                 this.onChangeEmailCLList(value, element.email);
                                                                             }} />
-
                                                                         )
                                                                         }
                                                                     </div>
-                                                                </div> : ""}
+                                                                </div>
+                                                                { this.state.PreExistingAlertUsers.length > 0 &&
+                                                              <div className={styles.userLists}>
+                                                                <Label>Select the users to rollover alerts for:</Label>
+                                                              <div className={styles.usergroups}>
+                                                                {console.log('logging PreExistingAlertUsers: ', this.state.PreExistingAlertUsers)}
+                                                                {/* TODO: add third prop of 'checkedFrom' and set that value from CR and CL checked prop. Filter on checkedFrom === true and then display below checked state for checked prop below */}
+                                                                  {this.state.PreExistingAlertUsers.filter(e => e.checked === true).map(element =>
+                                                                    <Checkbox label={element.email} checked={element.checkedState} onChange={(ev, value) => {
+                                                                      this.onChangeUsersToRollAlerts(value, element.email);
+                                                                  }} />
+                                                                  )}
+                                                                  {console.log('logging UsersToRollAlerts: ', this.state.UsersToRollAlerts)}
+                                                                  </div>
+                                                              </div>
+                                                        }
+                                                            </> : ""}
                                                     </div>
                                                     {/* Do NOT DELETE THIS CODE */}
                                                     {/* Do NOT DELETE THIS CODE */}
@@ -1816,7 +1943,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                 showtooltip={false}
                                                 required={false}
                                                 disabled={false}
-                                                onChange={(items) => this._getUserItems(items)}
+                                                onChange={(items) => this._validateEngagementMembers(items)}
                                                 showHiddenInUI={false}
                                                 principalTypes={[PrincipalType.User]}
                                                 ensureUser={true}
@@ -1825,6 +1952,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                 defaultSelectedUsers={this.state.addusers1}
                                             />
                                             <span className={styles.optional}>optional</span>
+                                             {this.state.validate ?
+                                                <div className={styles.reqval}>Users added here must be CohnReznick employees.</div> : ''
+                                            }
                                         </div>
                                     </div>
                                     {this.state.showMessageBar && <OfficeUI.MessageBar
@@ -1871,7 +2001,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                             {this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'Workflow' ?
                                                 <div>
                                                     <div className={styles.engagementnames}>
-                                                        <Label>Service Type</Label>
+                                                        <Label>Template Type</Label>
                                                         <Text className={styles.engagementPrint}>{this.state.ServiceTypeSelected}</Text>
                                                     </div>
                                                     <div className={styles.engagementnames}>
@@ -1918,11 +2048,12 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                 : ""}
                                         </div>
                                     </div>
-                                    <div className={styles.formcontrols}>
+                                    <div className={styles.formcontrols}>                                                                                
                                         <Label>The following users will automatically have access:</Label>
                                         <div className={styles.usersemail}>{this.state.emailaddress}</div>
+
                                         {this.state.PortalChoiceSelected == 'Create New' ?
-                                            <div>
+                                            <div>                                                
                                                 {this.state.TeamSelected == 'Advisory' && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Create New' ?
                                                     <div className={styles.usergroupscopy}>
                                                         {
@@ -1931,18 +2062,18 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                             )
                                                         }
                                                     </div> :
-                                                    <div className={styles.userList}>
-                                                        {
-                                                            this.state.FinalAccessUserList.split(";").map(element =>
-                                                                <div className={styles.usersemail}>{element}</div>
-                                                            )
-                                                        }
-                                                    </div>}
+                                                    <div className={styles.userList}>                                                        
+                                                        {this.state.FinalAccessUserList.split(";").map(element =>
+                                                            <div className={styles.usersemail}>{element}</div>
+                                                        )}
+                                                    </div>
+                                                }
                                             </div>
                                             : ""}
                                         {this.state.PortalChoiceSelected == 'Rollover' ?
                                             <div>
                                                 {this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'Workflow' ?
+                                                  <>
                                                     <div className={styles.userLists}>
                                                         <div className={styles.usergroupscopy}>
                                                             <span>CRET-TAX-WF-{this.state.RolloverURL}</span>
@@ -1960,8 +2091,34 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                                 )
                                                             }
                                                         </div>
-                                                    </div> :
+                                                    </div>
+                                                    <div>
+                                                    <div className={styles.usergroupscopy}>
+                                                            {/* This is the lower section of the permissions for adding users who were not part of the rollover: 
+                                                                NOTE: this should only be CR users as CL users should be added after the portal is created. 
+                                                            */}
+                                                            {this.state.FinalAccessUserList.length != 0 ? <Label>The following new users will automatically have access:</Label> : ""}
+                                                            {
+                                                                this.state.FinalAccessUserList.split(";").map(element =>
+                                                                    <div className={styles.usersemails}>{element}</div>
+                                                                )
+                                                            }
+                                                        </div>                                                      
+                                                      {/* TODO: testing outputting info to summary screen */}
+                                                      { this.state.UsersToRollAlerts.length > 0 &&
+                                                        <div className={`${styles.usergroupscopy} ${styles.topdivider}`}>
+                                                            <Label>If the following users currently have alerts, they will be created to the new sub-portal:</Label>
+                                                            {
+                                                                this.state.UsersToRollAlerts.map(element =>
+                                                                    <div className={styles.usersemails}>{element.email}</div>
+                                                                )
+                                                            }
+                                                        </div>
+                                                        }
+                                                    </div>
+                                                  </> :
                                                     this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'Workflow' && this.state.AssuranceSplitRollover.length == 0 ?
+                                                      <>
                                                         <div className={styles.userLists}>
                                                             <div className={styles.usergroupscopy}>
                                                                 <span>CRET-AUD-WF-{this.state.RolloverURL}</span>
@@ -1979,7 +2136,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                                     )
                                                                 }
                                                             </div>
-                                                        </div> : ""}
+                                                        </div>
+                                                      </> : ""}
                                                 {this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Rollover' ?
                                                     <div>
                                                         {/* Do NOT DELETE THIS CODE */}
@@ -1987,11 +2145,27 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                         {/* Do NOT DELETE THIS CODE */}
                                                         {/* <AssuranceEngSplitRolloverDisplayUsers spContext={this.props.spContext} Data={this.state.AssuranceSplitRollover} Control={this.SetAssuranceSplitDataRollOver}></AssuranceEngSplitRolloverDisplayUsers> */}
                                                         <div className={styles.usergroupscopy}>
-                                                            {this.state.CLUserSelected.length != 0 ? <Label>The following users will automatically have access:</Label> : ""}
+                                                            {/* This is the lower section of the permissions for adding users who were not part of the rollover: 
+                                                                NOTE: this should only be CR users as CL users should be added after the portal is created. 
+                                                            */}
+                                                            {this.state.FinalAccessUserList.length != 0 ? <Label>The following new users will automatically have access:</Label> : ""}
                                                             {
-                                                                this.state.CLUserSelected.split(";").map(element =>
+                                                                this.state.FinalAccessUserList.split(";").map(element =>
                                                                     <div className={styles.usersemails}>{element}</div>
                                                                 )
+                                                            }
+                                                        </div>                                                        
+                                                        <div>                                                            
+                                                          {/* TODO: testing outputting info to summary screen */}
+                                                          { this.state.UsersToRollAlerts.length > 0 &&                                                            
+                                                            <div className={`${styles.usergroupscopy} ${styles.topdivider}`}>
+                                                              <Label>If the following users currently have alerts, they will be created in the new sub-portal:</Label>
+                                                              {
+                                                                this.state.UsersToRollAlerts.map(element =>
+                                                                    <div className={styles.usersemails}>{element.email}</div>
+                                                                )
+                                                              }
+                                                            </div>
                                                             }
                                                         </div>
                                                     </div>
@@ -2035,8 +2209,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     onSelectDate={this._onSelectDateFileExp}
                                                     formatDate={this._onFormatDate}
                                                     minDate={minDate}
-                                                    maxDate={maxDate} // 12 months                                                    
-                                                    value={maxDate} // now 12 months.  was this.state.DateExtend                                                    
+                                                    maxDate={maxDate} // 12 months
+                                                    value={maxDate} // now 12 months.  was this.state.DateExtend
                                                 />
                                                 <div className={styles.fileExpText}>
                                                     Files will be deleted from the portal on this date. The portal will available for rollover for an additional 6 months.
@@ -2060,7 +2234,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     maxDate={maxDate} // 12 months
                                                     value={maxDate} // now 12 months.  was this.state.DateExtend
                                                 />
-                                                {(this.state.validate && this.state.DateExtend == null) ?
+                                                {(this.state.validate && this.state.portalExpiration == null) ?
                                                     <div className={styles.reqval}>Portal Expiration is mandatory.</div> : ''}
                                             </div>
                                         }
@@ -2220,7 +2394,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
     private submitDialog = async (e) => {
 
-        if (this.state.currentScreen == "screen1") {            
+        if (this.state.currentScreen == "screen1") {
             if (this.state.EngagementNumberSelected == "" || this.state.addusers.length == 0
                 || this.state.Year == null || this.state.PortalTypeSelected == ""
                 || (this.state.TeamSelected == "" && this.state.PortalTypeSelected == 'K1')
@@ -2230,10 +2404,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 });
 
             } else {
-                this.checkEngagement();
+                this.checkEngagement(this.state.PortalsCreated);
                 this.newEngagementNumber();
                 if (this.state.PortalTypeSelected == 'K1' && this.state.Checkeng == true) {
-
                     this.setState({
                         validate: false,
                         currentScreen: "screen5",
@@ -2248,7 +2421,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                         }
                         else if (this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'Workflow') {
                             this.Rollover();
-                            this.CheckSplitRollover();
+                            //this.CheckSplitRollover();
                         }
                         else {
                             this.setState({ isRollover: true });
@@ -2278,7 +2451,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                     titleText: "- Template and Provisioning",
                 });
             }
-        } else if (this.state.currentScreen == "screen3") {            
+        } else if (this.state.currentScreen == "screen3") {
             if (this.state.PortalTypeSelected == "Workflow" && this.state.TeamSelected == "Advisory") {
 
                 if (this.state.addusers.length == 0 || this.state.AdvisoryTemplateSelected == "") {
@@ -2357,7 +2530,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                             titleText: "- Confirmation",
                         });
                     }
-                    if (this.state.AssuranceSplitRollover.length == 0) {
+                    if (this.state.AssuranceSplitRollover.length == 0) {                        
                         this.getCLUserList();
 
                     }
@@ -2441,13 +2614,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                     }
                 }
             }
-            else {
-                if (this.state.DateExtend == null) {
-                    this.setState({
-                        validate: true
-                    });
-                }
-                else {
+            else {                
                     PortalId = this.state.TeamURL + "-" + this.state.PortalTypeURL + "-" + FinalEngNumber;
                     let _isDuplicatePortal = await this.CheckDuplicateAdvantagePortal(PortalId);
                     if (!_isDuplicatePortal) {
@@ -2457,8 +2624,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                         this.setState({
                             IsDuplicate: true,
                         });
-                    }
-                }
+                    }                
             }
         }
     }

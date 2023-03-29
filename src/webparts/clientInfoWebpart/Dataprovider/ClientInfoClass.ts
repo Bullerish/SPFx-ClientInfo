@@ -19,14 +19,17 @@ export class ClientInfoClass {
 
     let absoluteUrl = GlobalValues.SiteURL;
     let finalabsoluteUrl = absoluteUrl.split("/");
-    let CRN = finalabsoluteUrl[finalabsoluteUrl.length - 1];    
+    let CRN = finalabsoluteUrl[finalabsoluteUrl.length - 1];
+
+
+
     const hubWeb = Web(GlobalValues.HubSiteURL);
     await hubWeb.lists
       .getByTitle(GlobalValues.ClientList)
       .items.filter("ClientNumber eq '" + CRN + "'").getAll()
-      .then((results) => {   
+      .then((results) => {
         ClientInformationData.ClientNumber = results[0].ClientNumber;
-        ClientInformationData.LinkTitle = results[0].Title;        
+        ClientInformationData.LinkTitle = results[0].Title;
       });
 
     return ClientInformationData;
@@ -44,6 +47,7 @@ export class ClientInfoClass {
         results = results.filter(e => !e.PortalExists && (e.PortalProgress != "In Progress" && e.PortalProgress != "Completed"));
         return results;
       });
+    console.log('get eng info',Engagementdata);
     return Engagementdata;
   }
 
@@ -111,8 +115,9 @@ export class ClientInfoClass {
   }
 
 
-  public GetUsersByGroup = (async (groupName) => {    
-    const users = await sp.web.siteGroups.getByName(groupName).users();
+  public GetUsersByGroup = (async (groupName) => {
+    const clientWeb = Web(GlobalValues.SiteURL);
+    const users = await clientWeb.siteGroups.getByName(groupName).users();
     return users;
   });
 
