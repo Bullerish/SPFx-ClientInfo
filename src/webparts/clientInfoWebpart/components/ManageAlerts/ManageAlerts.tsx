@@ -26,12 +26,11 @@ import {
 } from "office-ui-fabric-react/lib/Dropdown";
 import { TextField } from "office-ui-fabric-react/lib/TextField";
 import { Text } from "office-ui-fabric-react/lib/Text";
-// import { GlobalValues } from "../../Dataprovider/GlobalValue";
 import { mergeStyles } from "office-ui-fabric-react/lib/Styling";
 import { sp } from "@pnp/sp";
 import { IFieldAddResult } from "@pnp/sp/fields/types";
 import "@pnp/sp/site-users";
-import "@pnp/sp/webs";
+import {Web } from "@pnp/sp/webs";
 import "@pnp/sp/lists";
 import "@pnp/sp/fields";
 import "@pnp/sp/items";
@@ -40,6 +39,8 @@ import { ISiteUser } from "@pnp/sp/site-users";
 import { ISiteUserInfo } from "@pnp/sp/site-users/types";
 import styles from "../ClientInfoWebpart.module.scss";
 import StatusDialog from "./StatusDialog";
+import { GlobalValues } from "../../Dataprovider/GlobalValue";
+import { setBaseUrl } from "office-ui-fabric-react";
 
 // for subwebs call
 export interface ISubWeb {
@@ -104,6 +105,7 @@ const ManageAlerts = ({
 
   const hostUrl: string = window.location.host;
   const absoluteUrl: string = spContext.pageContext._web.absoluteUrl;
+
   // const clientPortalWeb = Web(absoluteUrl);
 
   const userAlertsList = "UserAlertsList";
@@ -144,10 +146,13 @@ const ManageAlerts = ({
   let selection: Selection;
   let selectionForAlertsToAdd: Selection;
 
+
   // useEffect to get Subwebs
   //
   //
+  let alertWeb = Web(absoluteUrl);
   useEffect(() => {
+
     let subPortalTypeName: string = "";
     let subPortalTypeFunc: string = "";
     let subPortalType: string = "";
@@ -162,7 +167,7 @@ const ManageAlerts = ({
     console.log("In getSubwebs useEffect");
     // get sub-portal information
     async function getSubwebs() {
-      const subWebs = await sp.web
+      const subWebs = await alertWeb
         .getSubwebsFilteredForCurrentUser()
         .select("Title", "ServerRelativeUrl", "Id")
         .orderBy("Title", true)();
@@ -211,13 +216,12 @@ const ManageAlerts = ({
 
       // console.log(subWebsWithKey);
       setSubWebInfo(subWebsWithKey);
-      console.log("refetch of subwebs occured::::");
+      //console.log("refetch of subwebs occured::::");
       setItems(subWebsWithKey);
     }
 
     async function getCurrentUserId() {
-      // const userId = await sp.web.currentUser();
-      const userId = await sp.web.currentUser();
+      const userId = await alertWeb.currentUser();
       setCurrentUserId(userId);
     }
 
@@ -370,28 +374,9 @@ const ManageAlerts = ({
 
     console.log("item details to be saved: ", listItem);
 
-    let itemResult = await sp.web.lists
-      .getByTitle(userAlertsList)
-      .items.filter(`Title eq '${currentUserId.LoginName}'`)();
+    let hubWeb = Web(GlobalValues.HubSiteURL);
 
-    if (itemResult.length > 0) {
-      listItemId = itemResult[0].Id;
-
-      const updateResult = await sp.web.lists
-        .getByTitle(userAlertsList)
-        .items.getById(listItemId)
-        .update(listItem);
-      console.log("existing item updated", updateResult);
-
-      if (updateResult.data !== (null || undefined)) {
-        setIsSubmissionSuccessful(true);
-        setStatusDialogHidden(false);
-      } else {
-        setIsSubmissionSuccessful(false);
-        setStatusDialogHidden(false);
-      }
-    } else {
-      const itemAddResult: IItemAddResult = await sp.web.lists
+      const itemAddResult: IItemAddResult = await hubWeb.lists
         .getByTitle(userAlertsList)
         .items.add(listItem);
 
@@ -404,7 +389,7 @@ const ManageAlerts = ({
       }
 
       console.log("item was newly created", itemAddResult);
-    }
+    // }
 
     // console.log("itemAddResult: ", itemAddResult);
   };
@@ -412,34 +397,35 @@ const ManageAlerts = ({
   // checks for UserAlertsList, if it doesn't exist it gets created then columns will be added
   const ensureAlertsListExists = async () => {
     // console.log(selectionDetails);
-    const alertsListEnsureResult = await sp.web.lists.ensure(userAlertsList);
+    let hubWeb = Web(GlobalValues.HubSiteURL);
+    const alertsListEnsureResult = await hubWeb.lists.ensure(userAlertsList);
 
     if (alertsListEnsureResult.created) {
       console.log("list was created somewhere!!!!!");
 
       // since list was newly created, need to add all the relevant columns/fields
-      const alertsToAddField: IFieldAddResult = await sp.web.lists
+      const alertsToAddField: IFieldAddResult = await hubWeb.lists
         .getByTitle(userAlertsList)
         .fields.addMultilineText("AlertsToAdd", 6, true, false, false, true);
-      const alertsToDeleteField: IFieldAddResult = await sp.web.lists
+      const alertsToDeleteField: IFieldAddResult = await hubWeb.lists
         .getByTitle(userAlertsList)
         .fields.addMultilineText("AlertsToDelete", 6, true, false, false, true);
-      const UserPrincipalNameField: IFieldAddResult = await sp.web.lists
+      const UserPrincipalNameField: IFieldAddResult = await hubWeb.lists
         .getByTitle(userAlertsList)
         .fields.addText("UserPrincipalName", 255);
-      const absoluteURLField: IFieldAddResult = await sp.web.lists
+      const absoluteURLField: IFieldAddResult = await hubWeb.lists
         .getByTitle(userAlertsList)
         .fields.addText("AbsoluteUrl", 255);
-      const alertTypeField: IFieldAddResult = await sp.web.lists
+      const alertTypeField: IFieldAddResult = await hubWeb.lists
         .getByTitle(userAlertsList)
         .fields.addText("AlertType", 255);
-      const alertFrequencyField: IFieldAddResult = await sp.web.lists
+      const alertFrequencyField: IFieldAddResult = await hubWeb.lists
         .getByTitle(userAlertsList)
         .fields.addText("AlertFrequency", 255);
-      const timeDayField: IFieldAddResult = await sp.web.lists
+      const timeDayField: IFieldAddResult = await hubWeb.lists
         .getByTitle(userAlertsList)
         .fields.addText("TimeDay", 255);
-      const timeTimeField: IFieldAddResult = await sp.web.lists
+      const timeTimeField: IFieldAddResult = await hubWeb.lists
         .getByTitle(userAlertsList)
         .fields.addText("TimeTime", 255);
 
@@ -487,58 +473,6 @@ const ManageAlerts = ({
     setIsSubmissionSuccessful(null);
   };
 
-  // // TODO: testing functionality
-  // const updateItemsToBeAddedForAlerts = async () => {
-  //   console.log("in updateItemsToBeAddedForAlerts::::");
-
-  //   console.log("logging activeItemArr::: ", activeItemArr);
-
-  //   // const output: any[] = itemsToBeAddedForAlerts.filter((obj1) => {
-  //   //   return !activeItemArr.some((obj2) => {
-  //   //     return obj1.key === obj2.key;
-  //   //   });
-  //   // });
-
-  //   // const output = itemsToBeAddedForAlerts.filter(obj => {
-  //   //   return activeItemArr.indexOf(obj) === -1;
-  //   // });
-
-  //   // console.log("logging output from updateItemsToBeAddedForAlerts: ", newItems);
-  // };
-
-  // EVENT HANDLERS BELOW
-  // // TODO: finish working with transfer state from staged alerts to be set
-  // const onActiveItemChanged = (
-  //   item: ISubWeb[],
-  //   index: number,
-  //   ev: React.FocusEvent<HTMLElement>
-  // ) => {
-  //   ev.stopPropagation();
-  //   console.log("ON ACTIVE ITEM CHANGED FIRING");
-  //   // activeItemArr = [];
-  //   // activeItemArr.push(item);
-  //   // const selectionGetItems = selectionForAlertsToAdd.getItems();
-  //   console.log("logging activeItemArr: ", activeItemArr);
-
-  //   const output: any[] = itemsToBeAddedForAlerts.filter((obj) => {
-  //     return activeItemArr.indexOf(obj as any) === -1;
-  //   });
-
-  //   // const output: any[] = items.filter((obj1) => {
-  //   //   return !itemsToBeAddedForAlerts.some((obj2) => {
-  //   //     return obj1.key === obj2.key;
-  //   //   });
-  //   // });
-
-  //   // console.log("logging output from onActiveItemChanged: ", output);
-  //   // setAlertsFactored(output);
-  //   // setItemsToBeAddedForAlerts(output);
-  //   // updateItemsToBeAddedForAlerts(output);
-
-  //   setItems((prevState) => [...prevState, item as any]);
-  //   // selectionForAlertsToAdd.setItems(output, false);
-  //   // setItemsToBeAddedForAlerts(output);
-  // };
 
   // function that runs when the user enters text into the Filter text box
   const onChangeFilterText = (

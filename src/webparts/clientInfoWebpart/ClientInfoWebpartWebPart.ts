@@ -6,7 +6,7 @@ import {
   IPropertyPaneConfiguration,
   PropertyPaneTextField,
 } from "@microsoft/sp-webpart-base";
-
+import { sp } from "@pnp/sp/presets/all";
 import * as strings from "ClientInfoWebpartWebPartStrings";
 import ClientInfoWebpart from "./components/ClientInfoWebpart";
 import { IClientInfoWebpartProps } from "./components/IClientInfoWebpartProps";
@@ -18,7 +18,18 @@ export interface IClientInfoWebpartWebPartProps {
 export default class ClientInfoWebpartWebPart extends BaseClientSideWebPart<
   IClientInfoWebpartWebPartProps
 > {
+
+  protected onInit(): Promise<void> {
+    return super.onInit().then(_ => {
+      sp.setup({
+        spfxContext: this.context,
+       
+      });
+    });
+  }
+
   public render(): void {
+    console.log('version is 1.0.1');
     const element: React.ReactElement<IClientInfoWebpartProps> = React.createElement(
       ClientInfoWebpart,
       {
