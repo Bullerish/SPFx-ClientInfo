@@ -742,7 +742,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             if (this.state.TeamSelected == "Advisory") { defaultPortalExpDate = advMax;} // 36 months
             if (this.state.TeamSelected != "Advisory" && this.state.PortalTypeSelected == "Workflow") { defaultPortalExpDate = portalExpDate;} // 18 months
             let defaultFileExpDate = null;
-            if (this.state.TeamSelected != "Advisory" && this.state.PortalTypeSelected == "Workflow") { defaultFileExpDate = maxDate;} // 12 months                        
+            if (this.state.TeamSelected != "Advisory" && this.state.PortalTypeSelected == "Workflow") { defaultFileExpDate = maxDate;} // 12 months                 
 
             return new Promise<number>((resolve, reject) => {
                 this.getListItemEntityTypeName(SPUrl, listname)
@@ -769,7 +769,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                             'IndustryType': this.state.IndustryTypeSelected,
                             'ServiceType': this.state.ServiceTypeSelected,
                             'Supplemental': this.state.SupplementalSelected,
-                            'TemplateType': this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Create New' ? this.state.ServiceTypeSelected : this.state.AdvisoryTemplateSelected,
+                            'TemplateType': this.state.TeamSelected == 'Tax' ? this.state.ServiceTypeSelected : this.state.AdvisoryTemplateSelected,
                             'isNotificationEmail': this.state.emailNotification,
                             'FileExpiration': this.state.fileExpiration ? this.state.fileExpiration : defaultFileExpDate,
                             'PortalExpiration': this.state.portalExpiration ? this.state.portalExpiration : defaultPortalExpDate,
