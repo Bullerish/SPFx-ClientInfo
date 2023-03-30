@@ -375,11 +375,13 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
     public loadAdvisoryTemplates = () => {
         let obj = new ClientInfoClass();
+        let advisoryTemplatesHolder = [];
         obj.GetAdvisoryTemplates().then((results) => {
             results.forEach((element) => {
-                this.state.AdvisoryTemplate.push({ key: element.Id.toString(), text: element.Title });
+                advisoryTemplatesHolder.push({ key: element.Id.toString(), text: element.Title });
             });
         });
+        this.setState({ AdvisoryTemplate: advisoryTemplatesHolder });
     }
 
 
@@ -387,10 +389,14 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         let obj = new ClientInfoClass();
         let _ServiceType = [];
         obj.GetServiceTypes().then((results) => {
+          console.log('logging getservicetypes before sort: ', results);
             results = results
                 .slice(0)
                 .sort((a, b) =>
                     (false ? a["TemplateTypeOrder"] < b["TemplateTypeOrder"] : a["TemplateTypeOrder"] > b["TemplateTypeOrder"]) ? 1 : -1);
+
+                console.log('logging getservicetypes after sort: ', results);
+
             results.forEach((element) => {
                 if ((element.Title).toLowerCase() == (this.state.TeamSelected).toLowerCase()) {
                     _ServiceType.push({ key: element.Id.toString(), text: element.ServiceType });
@@ -402,14 +408,13 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     public loadIndustryTypes = () => {
-
         let _IndustryType = [];
         let obj = new ClientInfoClass();
         obj.GetIndustryTypes().then((results) => {
-            results = results
-                .slice(0)
-                .sort((a, b) =>
-                    (false ? a["WorkYear"] < b["WorkYear"] : a["IndustryType"] > b["IndustryType"]) ? 1 : -1);
+            // results = results
+            //     .slice(0)
+            //     .sort((a, b) =>
+            //         (false ? a["WorkYear"] < b["WorkYear"] : a["IndustryType"] > b["IndustryType"]) ? 1 : -1);
             if (this.state.TeamSelected == "Assurance") {
                 _IndustryType.push({ key: "N/A", text: "N/A" });
             }
@@ -2455,6 +2460,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     private submitDialog = async (e) => {
+      console.log('logging this.state.AdvisoryTemplate', this.state.AdvisoryTemplate);
 
         if (this.state.currentScreen == "screen1") {
             if (this.state.EngagementNumberSelected == "" || this.state.addusers.length == 0
@@ -2504,9 +2510,15 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                     validate: true
                 });
             } else {
-                this.loadIndustryTypes();
-                this.loadServiceTypes();
-                this.loadAdvisoryTemplates();
+                if (!this.state.IndustryType.length) {
+                  this.loadIndustryTypes();
+                }
+                if (!this.state.ServiceType.length) {
+                  this.loadServiceTypes();
+                }
+                if (!this.state.AdvisoryTemplate.length) {
+                  this.loadAdvisoryTemplates();
+                }
                 this.setState({
                     validate: false,
                     currentScreen: "screen3",
