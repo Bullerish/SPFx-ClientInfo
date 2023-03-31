@@ -1321,7 +1321,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
         if (userAlertData.d.results.length) {
           // usersWithAlerts.push(user);
-          user.hasAlert = true
+          user.hasAlert = true;
         } else {
           user.hasAlert = false;
         }
@@ -1951,7 +1951,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                                 {/* {console.log('logging PreExistingAlertUsers: ', this.state.PreExistingAlertUsers)} */}
                                                                   {this.state.PreExistingAlertUsers.filter(e => e.hasAlert === true).map(element =>
                                                                       <Checkbox label={element.email} checked={element.checkedState} onChange={(ev, value) => {
-                                                                        this.onChangeUsersToRollAlerts(value, element.email)
+                                                                        this.onChangeUsersToRollAlerts(value, element.email);
                                                                       }} />
                                                                   )}
                                                                   {/* {console.log('logging UsersToRollAlerts: ', this.state.UsersToRollAlerts)} */}
