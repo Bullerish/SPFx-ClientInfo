@@ -41,7 +41,7 @@ const TeamoptionsK1: IChoiceGroupOption[] = [
 
 const TeamoptionsFileExchange: IChoiceGroupOption[] = [
     { key: 'Assurance', text: 'Assurance' },
-    { key: 'Tax', text: 'Tax', disabled: true },
+    { key: 'Tax', text: 'Tax' }, // original had prop disabled: true
     { key: 'Advisory', text: 'Advisory' },
 ];
 
@@ -54,7 +54,7 @@ const PortalTypeOptions: IChoiceGroupOption[] = [
 
 const PortalTypeOptionsForTax: IChoiceGroupOption[] = [
     { key: 'Workflow', text: 'Workflow' },
-    { key: 'File Exchange', text: 'File Exchange', disabled: true },
+    { key: 'File Exchange', text: 'File Exchange'}, // original had prop disabled: true
     { key: 'K1', text: 'K1' },
 
 ];
@@ -909,9 +909,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         }
         if (option.text == "File Exchange") {
             this.setState({ PortalTypeURL: "FE" });
-            if (this.state.TeamSelected == "Tax") {
-                await this.setState({ TeamSelected: "", TeamURL: "" });
-            }
+            // if (this.state.TeamSelected == "Tax") {
+            //     await this.setState({ TeamSelected: "", TeamURL: "" });
+            // }
         }
         if (option.text == "K1") {
             this.setState({ PortalTypeURL: "K1", TeamSelected: "Tax" });
