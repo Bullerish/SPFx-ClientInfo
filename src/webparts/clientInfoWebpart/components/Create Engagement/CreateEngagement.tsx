@@ -190,7 +190,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         peoplePickerTitle: "Add users for access to this subportal only:",
         showSpinner: false,
         IsPortalEntryCreated: "",
-        // TODO: setting state for pre-existing selected users to roll alerts over
         PreExistingAlertUsers: [],
         UsersToRollAlerts: []
     };
@@ -1265,7 +1264,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
     }
 
-    // TODO: need to alter to push checked users to optional users to roll alerts
+
     public onChangeEmailCRList = (value, email) => {
         console.log('firing onChangeEmailCRList');
         // console.log('logging user email: ', email);
@@ -1306,7 +1305,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
     }
 
-    // TODO: create method to process and combine data into a single array to iterate over and show checkboxes
+
     public formulatePreExistingAlertUsers = async () => {
       console.log('formulatePreExistingAlertUsers firing::');
       const prevUsersToRollAlertsState = this.state.UsersToRollAlerts;
@@ -1375,7 +1374,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
 
 
-    // TODO: create onRolloverAlertUsers method to push checked users to
+
     public onChangeUsersToRollAlerts = (val, email) => {
       console.log('onChangeUsersToRollAlerts firing:::');
       let output = [];
@@ -1914,7 +1913,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     }
                                                 </div>
                                                 : ""}
-                                                {/* TODO: UI implementation for alerts rollover should show here */}
+
                                                 {/* */}
                                                 {/*  */}
                                             {this.state.PortalChoiceSelected == 'Rollover' ?
@@ -1989,7 +1988,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                                 <Label>Select the users to rollover alerts for:</Label>
                                                               <div className={styles.usergroups}>
                                                                 {/* {console.log('logging PreExistingAlertUsers: ', this.state.PreExistingAlertUsers)} */}
-                                                                {/* TODO: add third prop of 'checkedFrom' and set that value from CR and CL checked prop. Filter on checkedFrom === true and then display below checked state for checked prop below */}
                                                                   {this.state.PreExistingAlertUsers.filter(e => e.hasAlert === true).map(element =>
                                                                       <Checkbox label={element.email} checked={element.checkedState} onChange={(ev, value) => {
                                                                         this.onChangeUsersToRollAlerts(value, element.email)
@@ -2174,7 +2172,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                         </div>
                                                     </div>
                                                     <div>
-                                                      {/* TODO: testing outputting info to summary screen */}
                                                       { this.state.UsersToRollAlerts.length > 0 &&
                                                         <div className={styles.usergroupscopy}>
                                                             <Label>The following user alerts will be created in the new sub-portal and a confirmation email will be sent to the user:</Label>
@@ -2223,7 +2220,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                             }
                                                         </div>
                                                         <div>
-                                                          {/* TODO: testing outputting info to summary screen */}
                                                           { this.state.UsersToRollAlerts.length > 0 &&
                                                             <div className={styles.usergroupscopy}>
                                                               <Label>The following user alerts will be created in the new sub-portal and a confirmation email will be sent to the user:</Label>
