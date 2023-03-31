@@ -47,6 +47,7 @@ export class ClientInfoClass {
         results = results.filter(e => !e.PortalExists && (e.PortalProgress != "In Progress" && e.PortalProgress != "Completed"));
         return results;
       });
+    console.log('get eng info',Engagementdata);
     return Engagementdata;
   }
 
