@@ -2244,7 +2244,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                         }} />
                                     </div>
                                     <div className={styles.formcontrol}>
-                                        {this.state.TeamSelected == 'Advisory' && // && this.state.PortalTypeSelected == 'Workflow' ?
+                                        {this.state.TeamSelected == 'Advisory' &&
                                             <div className={styles.labelprint}>
                                                 <DatePicker
                                                     label="Portal Expiration"
