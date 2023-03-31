@@ -81,7 +81,7 @@ export class ClientInfoClass {
     const hubWeb = Web(GlobalValues.HubSiteURL);
     const IndustryTypesdata = await hubWeb.lists
       .getByTitle(GlobalValues.IndustryTypesList)
-      .items.orderBy('Title', true).getAll()
+      .items.orderBy('IndustryType', true).getAll()
       .then((results) => {
         return results;
       });
