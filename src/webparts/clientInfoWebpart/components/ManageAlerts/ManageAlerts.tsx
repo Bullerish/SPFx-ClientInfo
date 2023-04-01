@@ -30,7 +30,7 @@ import { mergeStyles } from "office-ui-fabric-react/lib/Styling";
 import { sp } from "@pnp/sp";
 import { IFieldAddResult } from "@pnp/sp/fields/types";
 import "@pnp/sp/site-users";
-import {Web } from "@pnp/sp/webs";
+import { Web } from "@pnp/sp/webs";
 import "@pnp/sp/lists";
 import "@pnp/sp/fields";
 import "@pnp/sp/items";
@@ -143,16 +143,41 @@ const ManageAlerts = ({
     },
   ];
 
+  let columnsAlt: IColumn[] = [
+    {
+      key: "column1",
+      name: "Sub-Portal Name",
+      fieldName: "Title",
+      minWidth: 100,
+      maxWidth: 200,
+      isResizable: true,
+    },
+    {
+      key: "column2",
+      name: "Matter Number",
+      fieldName: "matterNumber",
+      minWidth: 100,
+      maxWidth: 200,
+      isResizable: true,
+    },
+    {
+      key: "column3",
+      name: "Portal Type",
+      fieldName: "typeOfSubPortal",
+      minWidth: 100,
+      maxWidth: 210,
+      isResizable: true,
+    },
+  ];
+
   let selection: Selection;
   let selectionForAlertsToAdd: Selection;
-
 
   // useEffect to get Subwebs
   //
   //
   let alertWeb = Web(absoluteUrl);
   useEffect(() => {
-
     let subPortalTypeName: string = "";
     let subPortalTypeFunc: string = "";
     let subPortalType: string = "";
@@ -330,6 +355,15 @@ const ManageAlerts = ({
     }
   }, [isAlertModalOpen]);
 
+  // useEffect(() => {
+  //   if (!itemsToBeAddedForAlerts.length) {
+  //     selectionForAlertsToAdd = new Selection({
+  //       onSelectionChanged: () => transferToMainDetailsList(),
+  //       getKey: (item: any) => item.key,
+  //     });
+  //   }
+  // }, [itemsToBeAddedForAlerts]);
+
   // adds listItem either by updating the record or adding a new one if it doesn't already exist for the user
   const addUserAlertsListItem = async () => {
     let listItem: object = {};
@@ -376,19 +410,19 @@ const ManageAlerts = ({
 
     let hubWeb = Web(GlobalValues.HubSiteURL);
 
-      const itemAddResult: IItemAddResult = await hubWeb.lists
-        .getByTitle(userAlertsList)
-        .items.add(listItem);
+    const itemAddResult: IItemAddResult = await hubWeb.lists
+      .getByTitle(userAlertsList)
+      .items.add(listItem);
 
-      if (itemAddResult.data) {
-        setIsSubmissionSuccessful(true);
-        setStatusDialogHidden(false);
-      } else {
-        setIsSubmissionSuccessful(false);
-        setStatusDialogHidden(false);
-      }
+    if (itemAddResult.data) {
+      setIsSubmissionSuccessful(true);
+      setStatusDialogHidden(false);
+    } else {
+      setIsSubmissionSuccessful(false);
+      setStatusDialogHidden(false);
+    }
 
-      console.log("item was newly created", itemAddResult);
+    console.log("item was newly created", itemAddResult);
     // }
 
     // console.log("itemAddResult: ", itemAddResult);
@@ -472,7 +506,6 @@ const ManageAlerts = ({
     setTimeTime({ key: "0", text: "12:00 AM" });
     setIsSubmissionSuccessful(null);
   };
-
 
   // function that runs when the user enters text into the Filter text box
   const onChangeFilterText = (
@@ -609,26 +642,30 @@ const ManageAlerts = ({
           <Text variant="mediumPlus">
             Sub-Portals staged for alert creation:
           </Text>
+          {itemsToBeAddedForAlerts.length !== 0 &&
           <MarqueeSelection selection={selectionForAlertsToAdd}>
             <DetailsList
               items={itemsToBeAddedForAlerts}
               columns={columns}
               checkboxVisibility={CheckboxVisibility.onHover}
               setKey="set"
+              // onDidUpdate={handleNoItemsChecked}
               // onActiveItemChanged={onActiveItemChanged}
               onShouldVirtualize={() => false}
+              // selectionMode={!itemsToBeAddedForAlerts.length ? SelectionMode.single: SelectionMode.multiple}
               selectionMode={SelectionMode.multiple}
               // styles={{ root: { height: "500px" } }}
               layoutMode={DetailsListLayoutMode.justified}
               constrainMode={1}
               selection={selectionForAlertsToAdd}
-              selectionPreservedOnEmptyClick={true}
+              selectionPreservedOnEmptyClick={false}
               ariaLabelForSelectionColumn="Toggle selection"
               ariaLabelForSelectAllCheckbox="Toggle selection for all items"
               checkButtonAriaLabel="Row checkbox"
               // onItemInvoked={onItemInvoked}
             />
           </MarqueeSelection>
+          }
         </div>
         <TextField
           label="Filter by Sub-Portal Name:"
@@ -639,6 +676,7 @@ const ManageAlerts = ({
           Select Sub-Portals below to stage for alerts:
         </Text>
         <div className={styles.detailsListContainerStyles}>
+        {items.length !== 0 &&
           <MarqueeSelection selection={selection}>
             <DetailsList
               items={items}
@@ -658,6 +696,7 @@ const ManageAlerts = ({
               // onItemInvoked={onItemInvoked}
             />
           </MarqueeSelection>
+          }
         </div>
         <div className={styles.alertSettingsContainerStyles}>
           <Dropdown
@@ -769,32 +808,32 @@ const ManageAlerts = ({
         }}
         // styles={{ root: { maxHeight: 700 } }}
       >
-        { itemsToBeAddedForAlerts.length > 0 &&
-        <div className={styles.confirmationContainerStyles}>
-          <Text variant="large" block nowrap>
-            Alerts will be added for:
-          </Text>
-          {/* confirmation DetailsList for itemsToBeAdded */}
-          <DetailsList
-            items={itemsToBeAddedForAlerts}
-            columns={columns}
-            checkboxVisibility={CheckboxVisibility.hidden}
-            setKey="set"
-            compact={true}
-            onShouldVirtualize={() => false}
-            selectionMode={SelectionMode.none}
-            // styles={{ root: { height: "500px" } }}
-            layoutMode={DetailsListLayoutMode.justified}
-            constrainMode={1}
-            // selection={selection}
-            selectionPreservedOnEmptyClick={true}
-            ariaLabelForSelectionColumn="Toggle selection"
-            ariaLabelForSelectAllCheckbox="Toggle selection for all items"
-            // checkButtonAriaLabel="Row checkbox"
-            // onItemInvoked={onItemInvoked}
-          />
-        </div>
-}
+        {itemsToBeAddedForAlerts.length > 0 && (
+          <div className={styles.confirmationContainerStyles}>
+            <Text variant="large" block nowrap>
+              Alerts will be added for:
+            </Text>
+            {/* confirmation DetailsList for itemsToBeAdded */}
+            <DetailsList
+              items={itemsToBeAddedForAlerts}
+              columns={columns}
+              checkboxVisibility={CheckboxVisibility.hidden}
+              setKey="set"
+              compact={true}
+              onShouldVirtualize={() => false}
+              selectionMode={SelectionMode.none}
+              // styles={{ root: { height: "500px" } }}
+              layoutMode={DetailsListLayoutMode.justified}
+              constrainMode={1}
+              // selection={selection}
+              selectionPreservedOnEmptyClick={true}
+              ariaLabelForSelectionColumn="Toggle selection"
+              ariaLabelForSelectAllCheckbox="Toggle selection for all items"
+              // checkButtonAriaLabel="Row checkbox"
+              // onItemInvoked={onItemInvoked}
+            />
+          </div>
+        )}
         {alertsToDelete.length > 0 && (
           <div className={styles.confirmationContainerStyles}>
             <Text variant="large" block nowrap>
