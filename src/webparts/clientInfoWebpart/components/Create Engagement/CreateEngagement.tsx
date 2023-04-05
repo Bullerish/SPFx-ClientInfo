@@ -452,6 +452,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     public checkEngagement = async (portalsCreated) => {
+      console.log('checkEngagement fired::');
+      console.log('logging PortalTypeURL state::', this.state.PortalTypeURL);
         if (portalsCreated != null) {
             let finalPortalTypeValue = portalsCreated.split(",");
             let engagementExists = false;
@@ -506,6 +508,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     });
 
     public _onChangeEngagementNumber = async (tagList: { key: string, name: string }[]) => {
+      console.log('onChangeEngagementNumber fired');
+
         if (tagList.length == 0) {
             this.closeMessageBar();
             this.setState({
@@ -1466,6 +1470,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
 
     public onItemSelected = (item: ITag): ITag | null => {
+      console.log('onItemSelected fired::');
+
         if (item && item.name) {
             EngagementNameTags = [{ key: item.key.toString(), name: item.name }];
         }
@@ -1709,6 +1715,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                         }
                                     </div>
                                     <Stack horizontal gap={20} className="portalChoice">
+                                        {console.log('this.state.isRollover logging:: ', this.state.isRollover)}
                                         <ChoiceGroup
                                             className={styles.innerChoice}
                                             options={this.state.isRollover ? PortalChoiceOptions1 : PortalChoiceOptions}
@@ -2114,6 +2121,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                             </div>
                                             : ""}
                                         {this.state.PortalChoiceSelected == 'Rollover' ?
+                                        // TODO: might need to add another ternary for Advisory && and Workflow
                                             <div>
                                                 {this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'Workflow' ?
                                                   <>
@@ -2466,6 +2474,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                         else if (this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'Workflow') {
                             this.Rollover();
                             //this.CheckSplitRollover();
+                        }
+                        else if (this.state.TeamSelected == 'Advisory' && this.state.PortalTypeSelected == 'Workflow') {
+                          this.Rollover();
                         }
                         else {
                             this.setState({ isRollover: true });
