@@ -957,10 +957,12 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     public Rollover = async () => {
+      console.log('in Rollover func::');
         let PortalType = this.state.PortalTypeSelected;
         let Team = this.state.TeamSelected;
         let hubWeb = Web(GlobalValues.HubSiteURL);
         if (Isnextyear == true) {
+          console.log('in Isnextyear condition in Rollover func::');
             await hubWeb.lists.getByTitle(GlobalValues.EngagementPortalList).items.filter("EngagementNumberEndZero eq '" + this.state.EngagementNumberSelected + "'").getAll().then((data) => {
                 data = data.filter(e => e.PortalExist == true && e.ClientNumber == CRN && e.PortalType == PortalType && e.Team == Team);
                 let eng = this.state.UpdatedEngagementNumberSelected.slice(-2);
@@ -993,6 +995,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             });
         }
         else {
+          console.log('in else block of Rollover func::');
             let eng = this.state.EngagementNumberSelected.slice(-2);
             let e1 = parseInt(eng) - 1;
             let str1 = this.state.EngagementNumberSelected.slice(0, -2) + e1.toString();
@@ -1067,6 +1070,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     private _validateSiteOwner(items: any[]) {
+      console.log('in validateSiteOwner func::');
         // show error message if this is a guest user
         let userEmail = items[0].secondaryText.toLowerCase();
         if ((userEmail.indexOf('cohnreznick.com') == -1) && (userEmail.indexOf('cohnreznickdev') == -1)) {
@@ -1079,6 +1083,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
     // validate the user is a CR user:
     private _validateEngagementMembers(items: any[]) {
+      console.log('in _validateEngagementMembers func::');
+
         this.setState({validate: false});
         let validateEmails = true;
         // show error message if this is a guest user
@@ -1191,12 +1197,19 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     private async _getUserListAdvisory() {
+      console.log('in _getUserListAdvisory func::');
+      console.log('logging CRN:: ', CRN);
         let obj = new ClientInfoClass();
         await obj.GetUsersByGroup("CRAD-ADV-" + CRN).then((res) => {
             res.forEach((e) => {
                 this.state.CLUserList.push({ email: e.Email, checked: false });
             });
         });
+        await obj.GetUsersByGroup("CRET-ADV-WF-" + this.state.RolloverURL).then((res) => {
+          res.forEach((e) => {
+              this.state.CRUserList.push({ email: e.Email, checked: false });
+          });
+      });
     }
 
     private async _getUserList() {
@@ -1888,6 +1901,33 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                 <div>
                                                     <div>
                                                         <Label>The following users will automatically have access:</Label>
+                                                        {/* TODO: add in CRET and CL Security group user people */}
+                                                        {this.state.TeamSelected === 'Advisory' && this.state.PortalTypeSelected === 'Workflow' &&
+                                                            <div className={styles.userLists}>
+                                                                {
+                                                                    <div className={styles.usergroups}>
+                                                                        CRET-ADV-WF-{this.state.EngagementNumberSelected}
+                                                                        {this.state.CRUserList.filter(element => element.email !== "").map(element =>
+                                                                            <Checkbox label={element.email} checked={element.checked} onChange={(ev, value) => {
+                                                                                this.onChangeEmailCRList(value, element.email);
+                                                                            }} />
+                                                                        )
+                                                                        }
+                                                                    </div>
+                                                                }
+                                                                {
+                                                                    <div className={styles.usergroups}>
+                                                                        CL-ADV-WF-{this.state.EngagementNumberSelected}
+                                                                        {this.state.CLUserList.filter(element => element.email !== "").map(element =>
+                                                                            <Checkbox label={element.email} checked={element.checked} onChange={(ev, value) => {
+                                                                                this.onChangeEmailCLList(value, element.email);
+                                                                            }} />
+                                                                        )
+                                                                        }
+                                                                    </div>
+                                                                }
+                                                            </div>
+                                                        }
                                                         {this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'Workflow' ?
                                                         <>
                                                             <div className={styles.userLists}>
@@ -2444,7 +2484,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     private submitDialog = async (e) => {
-      console.log('logging this.state.AdvisoryTemplate', this.state.AdvisoryTemplate);
+      console.log('in submitDialog logging this.state.AdvisoryTemplate', this.state.AdvisoryTemplate);
+
+
 
         if (this.state.currentScreen == "screen1") {
             if (this.state.EngagementNumberSelected == "" || this.state.addusers.length == 0
@@ -2491,6 +2533,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 }
             }
         } else if (this.state.currentScreen == "screen2") {
+          console.log('in submitDialog screen2 ::');
+          console.log('logging  this.state.addusers ::', this.state.addusers);
+          console.log('logging  this.state.PortalChoiceSelected ::', this.state.PortalChoiceSelected);
             if (this.state.addusers.length == 0 || this.state.PortalChoiceSelected == "") {
                 this.setState({
                     validate: true
@@ -2513,14 +2558,21 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 });
             }
         } else if (this.state.currentScreen == "screen3") {
+          // TODO: figure out why validation fails on screen3
+          console.log('in submitDialog screen3 condition::');
+          console.log('in submitDialog screen3 logging this.state.addusers::', this.state.addusers);
+          console.log('in submitDialog screen3 logging this.state.AdvisoryTemplateSelected::', this.state.AdvisoryTemplateSelected);
+          console.log('in submitDialog screen3 logging this.state.validate::', this.state.validate);
             if (this.state.PortalTypeSelected == "Workflow" && this.state.TeamSelected == "Advisory") {
-
+              console.log('in workflow and advisory condition 1 ::');
                 if (this.state.addusers.length == 0 || this.state.AdvisoryTemplateSelected == "") {
+                  console.log('setting validate state to true::');
                     this.setState({
                         validate: true
                     });
                 }
                 else {
+                  console.log('setting validate to false::');
                     if (this.state.validate != true) {
                         this.setState({
                             validate: false,
@@ -2566,6 +2618,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                     }
                 }
                 else if (this.state.PortalChoiceSelected == "Rollover") {
+                  console.log('in submitDialog in else if for Rollover::');
                     let txtval = true;
 
                     this.state.AssuranceSplitRollover.map(ev => {
@@ -2638,6 +2691,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             let FinalEngNumber = updatedworkyear == true ? this.state.UpdatedEngagementNumberSelected : this.state.EngagementNumberSelected;
 
             if (this.state.PortalTypeSelected == "Workflow" && this.state.TeamSelected == "Advisory") {
+              console.log('in submitDialog in workflow and advisory condition::');
                 if (this.state.portalExpiration == null) {
                     this.setState({
                         validate: true
