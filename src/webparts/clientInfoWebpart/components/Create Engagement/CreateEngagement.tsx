@@ -60,7 +60,7 @@ const PortalTypeOptionsForTax: IChoiceGroupOption[] = [
 ];
 
 const PortalChoiceOptions: IChoiceGroupOption[] = [
-    { key: 'Rollover', text: 'Rollover' },
+    { key: 'Rollover', text: 'Rollover', },
     { key: 'Create New', text: 'Create New' },
 ];
 
@@ -148,6 +148,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         subportaladdusersID: [],
         subportaladdusers: [],
         subportalemailaddress: [],
+        // new user group for CRAD permissions list
+        CRADUserList: [],
+        CRADUserSelected: "",
         CRUserList: [],
         CRUserSelected: "",
         CLUserList: [],
@@ -256,6 +259,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             subportaladdusersID: [],
             subportaladdusers: [],
             subportalemailaddress: [],
+            // new user group for CRAD permissions list
+            CRADUserList: [],
+            CRADUserSelected: "",
             CRUserList: [],
             CRUserSelected: "",
             CLUserList: [],
@@ -633,7 +639,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         let FinalEngNumberEndZero = updatedworkyear == true ? this.state.EngagementNumberSelected : "";
 
         // combining the rollover users and new users for rollover portals
-        let finalCRUsers = this.state.FinalAccessUserList + this.state.CRUserSelected;
+        let finalCRUsers = this.state.FinalAccessUserList + this.state.CRUserSelected + this.state.CRADUserSelected;
 
         if (this.state.PortalTypeSelected == "K1") {
             site = GlobalValues.SiteURL + "/TAX-" + this.state.PortalTypeURL + "-" + FinalEngNumber;
@@ -682,7 +688,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             });
 
         }
-        else if (this.state.PortalTypeSelected == "Workflow" && this.state.TeamSelected == "Advisory") {
+        else if (this.state.PortalTypeSelected == "Workflow" && this.state.TeamSelected == "Advisory" && this.state.PortalChoiceSelected !== 'Rollover') {
             site = GlobalValues.SiteURL + "/" + this.state.TeamURL + "-" + this.state.PortalTypeURL + "-" + FinalEngNumber;
             PortalId = this.state.TeamURL + "-" + this.state.PortalTypeURL + "-" + FinalEngNumber;
             return new Promise<number>((resolve, reject) => {
@@ -753,6 +759,12 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             let defaultFileExpDate = null;
             if (this.state.TeamSelected != "Advisory" && this.state.PortalTypeSelected == "Workflow") { defaultFileExpDate = maxDate;} // 12 months
 
+
+            console.log('logging at save this.state.TeamSelected:: ', this.state.TeamSelected);
+            console.log('logging at save this.state.PortalTypeSelected:: ', this.state.PortalTypeSelected);
+            console.log('logging at save this.state.PortalChoiceSelected:: ', this.state.PortalChoiceSelected);
+            console.log('logging at save this.state.ServiceTypeSelected:: ', this.state.ServiceTypeSelected);
+
             return new Promise<number>((resolve, reject) => {
                 this.getListItemEntityTypeName(SPUrl, listname)
                     .then((listEntityName) => {
@@ -778,7 +790,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                             'IndustryType': this.state.IndustryTypeSelected,
                             'ServiceType': this.state.ServiceTypeSelected,
                             'Supplemental': this.state.SupplementalSelected,
-                            'TemplateType': this.state.TeamSelected == 'Tax' ? this.state.ServiceTypeSelected : this.state.AdvisoryTemplateSelected,
+                            'TemplateType': (this.state.TeamSelected == 'Tax') || (this.state.TeamSelected === 'Advisory' && this.state.PortalTypeSelected === 'Workflow' && this.state.PortalChoiceSelected === 'Rollover') ? this.state.ServiceTypeSelected : this.state.AdvisoryTemplateSelected,
                             'isNotificationEmail': this.state.emailNotification,
                             'FileExpiration': this.state.fileExpiration ? this.state.fileExpiration : defaultFileExpDate,
                             'PortalExpiration': this.state.portalExpiration ? this.state.portalExpiration : defaultPortalExpDate,
@@ -1117,7 +1129,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     private getCLUserList() {
         let CLUserSelected = '';
         let CRUserSelected = '';
+        let CRADUserSelected = '';
         let FinalAccessUserList = '';
+
         this.state.CLUserList.forEach((e) => {
             if (e.checked) {
                 CLUserSelected += e.email + ";";
@@ -1130,6 +1144,12 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             }
         });
 
+        this.state.CRADUserList.forEach((e) => {
+          if (e.checked) {
+              CRADUserSelected += e.email + ";";
+          }
+        });
+
         this.state.AccessUserList.forEach((e) => {
             FinalAccessUserList += e + ";";
         });
@@ -1137,6 +1157,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         this.setState({
             CLUserSelected: CLUserSelected,
             CRUserSelected: CRUserSelected,
+            CRADUserSelected: CRADUserSelected,
             FinalAccessUserList: FinalAccessUserList
         });
     }
@@ -1200,16 +1221,28 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
       console.log('in _getUserListAdvisory func::');
       console.log('logging CRN:: ', CRN);
         let obj = new ClientInfoClass();
+
+        // call to client site CRAD group (does not exist at subportal level)
         await obj.GetUsersByGroup("CRAD-ADV-" + CRN).then((res) => {
             res.forEach((e) => {
-                this.state.CLUserList.push({ email: e.Email, checked: false });
+                this.state.CRADUserList.push({ email: e.Email, checked: false });
             });
         });
+
+        // call to CRET permissions group at subportal level
         await obj.GetUsersByGroup("CRET-ADV-WF-" + this.state.RolloverURL).then((res) => {
           res.forEach((e) => {
               this.state.CRUserList.push({ email: e.Email, checked: false });
           });
-      });
+        });
+
+        // call to CL permissions group at subportal level
+        await obj.GetUsersByGroup("CL-ADV-WF-" + this.state.RolloverURL).then((res) => {
+          res.forEach((e) => {
+              this.state.CLUserList.push({ email: e.Email, checked: false });
+          });
+        });
+
     }
 
     private async _getUserList() {
@@ -1289,6 +1322,24 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
     }
 
+    // new onChange function for new CRAD group
+    public onChangeEmailCRADList = (value, email) => {
+      let CRADList = this.state.CRADUserList;
+
+      CRADList.forEach((e) => {
+          if (e.email == email && value) {
+              e.checked = true;
+              // checkedUsers.push(e);
+          }
+
+          if (e.email == email && !value) {
+              e.checked = false;
+          }
+      });
+      this.setState({ CRADUserList: CRADList });
+      // this.formulatePreExistingAlertUsers();
+  }
+
 
     public formulatePreExistingAlertUsers = async () => {
       console.log('formulatePreExistingAlertUsers firing::');
@@ -1354,8 +1405,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
       this.setState({ PreExistingAlertUsers: allCheckedUsers });
       this.setState({ UsersToRollAlerts: filteredObjs });
     }
-
-
 
 
 
@@ -1680,7 +1729,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
                             {this.state.currentScreen == 'screen2' ?
                                 <div className={styles.screenTwo}>
-
+                                    {console.log('logging serviceTypeSelected state:: ', this.state.ServiceTypeSelected)}
                                     {this.state.showMessageBar && <OfficeUI.MessageBar
                                         messageBarType={this.state.MessageBarType}
                                         isMultiline={false}
@@ -1728,14 +1777,21 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                         }
                                     </div>
                                     <Stack horizontal gap={20} className="portalChoice">
-                                        {console.log('this.state.isRollover logging:: ', this.state.isRollover)}
+                                        {/* TODO: disable Rollover option if serviceTypeSelected !== starts with Request List */}
+                                        {(this.state.TeamSelected === 'Advisory' && this.state.PortalTypeSelected === 'Workflow') && !(this.state.ServiceTypeSelected === 'Request List - ASR' || this.state.ServiceTypeSelected === 'Request List - ICS' || this.state.ServiceTypeSelected === 'Request List - Proposal' || this.state.ServiceTypeSelected === 'Request List - SF 1408') ?
+                                        <ChoiceGroup
+                                            className={styles.innerChoice}
+                                            options={PortalChoiceOptions1}
+                                            onChange={this._onChangePortalChoice}
+                                            selectedKey={this.state.PortalChoiceSelected}
+                                        /> :
                                         <ChoiceGroup
                                             className={styles.innerChoice}
                                             options={this.state.isRollover ? PortalChoiceOptions1 : PortalChoiceOptions}
                                             onChange={this._onChangePortalChoice}
                                             selectedKey={this.state.PortalChoiceSelected}
                                         />
-
+                                      }
                                     </Stack>
                                     <div className={styles.innerChoiceDesc}>
                                         <div className={styles.choiceDes}>
@@ -1751,6 +1807,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
                             {this.state.currentScreen == 'screen3' ?
                                 <div className={styles.screenThree}>
+                                  {console.log('logging validate state on screen 3 render:: ', this.state.validate)}
                                     <div className={styles.freshRollover}>
                                         <div className={styles.engnumbername}>
                                             <div className={styles.engagementnames}>
@@ -1797,6 +1854,17 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                         <Text className={styles.engagementPrint}>.</Text>
                                                     </div>
                                                 </div> : ""}
+                                            {this.state.TeamSelected == 'Advisory' && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Rollover' ?
+                                            <div>
+                                                <div className={styles.engagementnames}>
+                                                    <Label>Template Type</Label>
+                                                    <Text className={styles.engagementPrint}>{this.state.ServiceTypeSelected}</Text>
+                                                </div>
+                                                <div className={styles.visualhidden}>
+                                                    <Label>.</Label>
+                                                    <Text className={styles.engagementPrint}>.</Text>
+                                                </div>
+                                            </div> : ""}
                                         </div>
                                     </div>
                                     <div className={styles.divider}></div>
@@ -1904,7 +1972,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                         {/* TODO: add in CRET and CL Security group user people */}
                                                         {this.state.TeamSelected === 'Advisory' && this.state.PortalTypeSelected === 'Workflow' &&
                                                             <div className={styles.userLists}>
-                                                                {
                                                                     <div className={styles.usergroups}>
                                                                         CRET-ADV-WF-{this.state.EngagementNumberSelected}
                                                                         {this.state.CRUserList.filter(element => element.email !== "").map(element =>
@@ -1914,8 +1981,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                                         )
                                                                         }
                                                                     </div>
-                                                                }
-                                                                {
+
                                                                     <div className={styles.usergroups}>
                                                                         CL-ADV-WF-{this.state.EngagementNumberSelected}
                                                                         {this.state.CLUserList.filter(element => element.email !== "").map(element =>
@@ -1925,7 +1991,20 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                                         )
                                                                         }
                                                                     </div>
-                                                                }
+
+                                                                    <div>
+                                                                  <div className={styles.userLists}>
+                                                                    <div className={styles.usergroups}>
+                                                                      <Label>Please select which users should have access to this portal:</Label>
+                                                                      {this.state.CRADUserList.filter(element => element.email !== "").map(element =>
+                                                                          <Checkbox label={element.email} checked={element.checked} onChange={(ev, value) => {
+                                                                              this.onChangeEmailCRADList(value, element.email);
+                                                                          }} />
+                                                                      )
+                                                                      }
+                                                                      </div>
+                                                                  </div>
+                                                        </div>
                                                             </div>
                                                         }
                                                         {this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'Workflow' ?
@@ -2057,6 +2136,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                 </div> : ""}
                             {this.state.currentScreen == 'screen4' ?
                                 <div className={styles.screenFour}>
+                                  {console.log('logging screen4 this.state.CRUserList:: ', this.state.CRUserList)}
+                                  {console.log('logging screen4 this.state.CRUserSelected:: ', this.state.CRUserSelected)}
                                     <div className={styles.freshRollover}>
                                         <div className={styles.engnumbername}>
                                             <div className={styles.engagementnames}>
@@ -2136,6 +2217,23 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                     </div>
                                                 </div>
                                                 : ""}
+
+                                            {this.state.TeamSelected == 'Advisory' && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Rollover' &&
+                                                <div>
+                                                    <div className={styles.engagementnames}>
+                                                        <Label>Template Type</Label>
+                                                        <Text className={styles.engagementPrint}>{this.state.ServiceTypeSelected}</Text>
+                                                    </div>
+                                                    <div className={styles.visualhidden}>
+                                                        <Label>.</Label>
+                                                        <Text className={styles.engagementPrint}>.</Text>
+                                                    </div>
+                                                    <div className={styles.visualhidden}>
+                                                        <Label>.</Label>
+                                                        <Text className={styles.engagementPrint}>.</Text>
+                                                    </div>
+                                                </div>
+                                                }
                                         </div>
                                     </div>
                                     <div className={styles.formcontrols}>
@@ -2195,7 +2293,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                                 )
                                                             }
                                                         </div>
-                                                      {/* TODO: testing outputting info to summary screen */}
                                                       { this.state.UsersToRollAlerts.length > 0 &&
                                                         <div className={`${styles.usergroupscopy} ${styles.topdivider}`}>
                                                             <Label>If the following users currently have alerts, they will be created to the new sub-portal:</Label>
@@ -2247,7 +2344,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                             }
                                                         </div>
                                                         <div>
-                                                          {/* TODO: testing outputting info to summary screen */}
                                                           { this.state.UsersToRollAlerts.length > 0 &&
                                                             <div className={`${styles.usergroupscopy} ${styles.topdivider}`}>
                                                               <Label>If the following users currently have alerts, they will be created in the new sub-portal:</Label>
@@ -2261,10 +2357,46 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                         </div>
                                                     </div>
                                                     : ""}
+
+                                                {this.state.TeamSelected === 'Advisory' && this.state.PortalTypeSelected === 'Workflow' && this.state.PortalChoiceSelected === 'Rollover' &&
+                                                  <>
+                                                    <div className={styles.userLists}>
+                                                        <div className={styles.usergroupscopy}>
+                                                            <span>CRET-ADV-WF-{this.state.RolloverURL}</span>
+                                                            {
+                                                              this.state.CRUserSelected.split(";").map(element =>
+                                                                  <div className={styles.usersemails}>{element}</div>
+                                                              )
+                                                            }
+                                                        </div>
+                                                        <div className={styles.usergroupscopy}>
+                                                            <span>CL-ADV-WF-{this.state.RolloverURL}</span>
+                                                            {
+                                                              this.state.CLUserSelected.split(";").map(element =>
+                                                                  <div className={styles.usersemails}>{element}</div>
+                                                              )
+                                                            }
+                                                        </div>
+                                                        {/* TODO: screen 4 summary formatting */}
+                                                        <div className={styles.userList}>
+                                                          <div className={styles.usergroupscopy}>
+                                                            <span>Additional users who will have access to this portal:</span>
+                                                            {
+                                                              this.state.CRADUserSelected.split(";").map(element =>
+                                                                  <div className={styles.usersemails}>{element}</div>
+                                                              )
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                    </div>
+
+                                                  </>
+                                                }
+
                                             </div>
                                             : ""}
                                     </div>
-                                    <div className={styles.divider}></div>
+                                    <div className={styles.divideralt}></div>
                                     <div className={styles.formcontrols}>
                                         <Label>Notifications</Label>
                                         <Checkbox label="Email the above users once subportal has been created." checked={this.state.emailNotification} onChange={(ev, value) => {
@@ -2565,6 +2697,10 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
           console.log('in submitDialog screen3 logging this.state.validate::', this.state.validate);
             if (this.state.PortalTypeSelected == "Workflow" && this.state.TeamSelected == "Advisory") {
               console.log('in workflow and advisory condition 1 ::');
+
+              // TODO: testing if else statements for logic on create new vs. rollover portal
+              if (this.state.PortalChoiceSelected === 'Create New') {
+
                 if (this.state.addusers.length == 0 || this.state.AdvisoryTemplateSelected == "") {
                   console.log('setting validate state to true::');
                     this.setState({
@@ -2583,6 +2719,16 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                         this.getCLUserList();
                     }
                 }
+
+              } else if (this.state.PortalChoiceSelected === 'Rollover') {
+                this.setState({
+                  validate: true,
+                  currentScreen: "screen4",
+                  dialogbuttonname: "Create Portal",
+                  titleText: "- Confirmation",
+                });
+                this.getCLUserList();
+              }
             }
             else if (this.state.PortalTypeSelected == "Workflow" && this.state.TeamSelected == "Assurance") {
 
