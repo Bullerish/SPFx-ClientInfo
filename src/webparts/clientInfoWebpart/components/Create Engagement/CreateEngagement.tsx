@@ -1145,7 +1145,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         this.setState({
             CLUserSelected: CLUserSelected,
             CRUserSelected: CRUserSelected,
-            CRADUserSelected: CRADUserSelected,
+            CRADUserSelected: CRADUserSelected + this.state.AccessUserList.toString().replace(',', ';'),
             FinalAccessUserList: FinalAccessUserList
         });
     }
@@ -2094,6 +2094,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                 </div> : ""}
                                         </div>
                                         <div className={styles.pnppicker}>
+                                            {console.log('logging addusers1 state:: ', this.state.addusers1)}
+                                            {console.log('logging AccessUserList state:: ', this.state.AccessUserList)}
                                             <PeoplePicker
                                                 context={this.props.spContext}
                                                 titleText={this.state.peoplePickerTitle}
@@ -2606,8 +2608,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     private submitDialog = async (e) => {
       console.log('in submitDialog logging this.state.AdvisoryTemplate', this.state.AdvisoryTemplate);
 
-
-
         if (this.state.currentScreen == "screen1") {
             if (this.state.EngagementNumberSelected == "" || this.state.addusers.length == 0
                 || this.state.Year == null || this.state.PortalTypeSelected == ""
@@ -2690,11 +2690,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 });
             }
         } else if (this.state.currentScreen == "screen3") {
-          // TODO: figure out why validation fails on screen3
-          console.log('in submitDialog screen3 condition::');
-          console.log('in submitDialog screen3 logging this.state.addusers::', this.state.addusers);
-          console.log('in submitDialog screen3 logging this.state.AdvisoryTemplateSelected::', this.state.AdvisoryTemplateSelected);
-          console.log('in submitDialog screen3 logging this.state.validate::', this.state.validate);
+
             if (this.state.PortalTypeSelected == "Workflow" && this.state.TeamSelected == "Advisory") {
               console.log('in workflow and advisory condition 1 ::');
 
