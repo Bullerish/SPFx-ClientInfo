@@ -752,18 +752,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
               usersToRollAlerts = usersToRollAlertsArray.toString().replace(/,/g, ';');
             }
 
-            // ensuring default expiration dates are set:
-            let defaultPortalExpDate = maxDate; // 12 months
-            if (this.state.TeamSelected == "Advisory") { defaultPortalExpDate = advMax;} // 36 months
-            if (this.state.TeamSelected != "Advisory" && this.state.PortalTypeSelected == "Workflow") { defaultPortalExpDate = portalExpDate;} // 18 months
-            let defaultFileExpDate = null;
-            if (this.state.TeamSelected != "Advisory" && this.state.PortalTypeSelected == "Workflow") { defaultFileExpDate = maxDate;} // 12 months
-
-
-            console.log('logging at save this.state.TeamSelected:: ', this.state.TeamSelected);
-            console.log('logging at save this.state.PortalTypeSelected:: ', this.state.PortalTypeSelected);
-            console.log('logging at save this.state.PortalChoiceSelected:: ', this.state.PortalChoiceSelected);
-            console.log('logging at save this.state.ServiceTypeSelected:: ', this.state.ServiceTypeSelected);
 
             return new Promise<number>((resolve, reject) => {
                 this.getListItemEntityTypeName(SPUrl, listname)
@@ -792,8 +780,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                             'Supplemental': this.state.SupplementalSelected,
                             'TemplateType': (this.state.TeamSelected == 'Tax') || (this.state.TeamSelected === 'Advisory' && this.state.PortalTypeSelected === 'Workflow' && this.state.PortalChoiceSelected === 'Rollover') ? this.state.ServiceTypeSelected : this.state.AdvisoryTemplateSelected,
                             'isNotificationEmail': this.state.emailNotification,
-                            'FileExpiration': this.state.fileExpiration ? this.state.fileExpiration : defaultFileExpDate,
-                            'PortalExpiration': this.state.portalExpiration ? this.state.portalExpiration : defaultPortalExpDate,
+                            'FileExpiration': this.state.fileExpiration,
+                            'PortalExpiration': this.state.portalExpiration,
                             'PortalId': PortalId,
                             'WorkpaperPath': this.state.WorkpaperPath,
                             'UsersToRollAlerts': usersToRollAlerts
@@ -2642,6 +2630,16 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 }
                 else {
                     if (this.state.Checkeng == true) {
+                        // set default expiration dates:
+                        let defaultPortalExpDate = maxDate; // 12 months
+                        let defaultFileExpDate = null;
+                        if (this.state.TeamSelected == "Advisory") {
+                            defaultPortalExpDate = advMax;} // 36 months
+                        if (this.state.TeamSelected != "Advisory" && this.state.PortalTypeSelected == "Workflow") {
+                            defaultPortalExpDate = portalExpDate;} // 18 months
+                        if (this.state.TeamSelected != "Advisory" && this.state.PortalTypeSelected == "Workflow") {
+                            defaultFileExpDate = maxDate;} // 12 months
+
                         if (this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'Workflow') {
                             this.Rollover();
                         }
@@ -2659,6 +2657,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                             validate: false,
                             currentScreen: "screen2",
                             dialogbuttonname: "Next",
+                            fileExpiration: defaultFileExpDate,
+                            portalExpiration: defaultPortalExpDate,
                             titleText: "- Rollover - Create New",
                         });
                     }
