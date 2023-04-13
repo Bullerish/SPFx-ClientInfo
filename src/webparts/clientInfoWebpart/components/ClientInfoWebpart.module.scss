@@ -161,7 +161,12 @@
         margin-bottom: 15px;
         margin-top   : 15px;
       }
-      
+
+      .divideralt {
+        margin-bottom: 15px;
+        margin-top   : 15px;
+      }
+
       .topdivider {
         border-top: 1px solid #ccc;
         margin-top: 10px;
@@ -861,6 +866,22 @@
         }
 
         .divider+.formcontrols {
+          margin-bottom: 20px;
+
+          [class*="ms-Checkbox"] {
+            max-width: 100%;
+
+            [class*="ms-Checkbox-label"] {
+              margin-top: 6px;
+
+              [class*="ms-Checkbox-checkbox"] {
+                width: 20px;
+              }
+            }
+          }
+        }
+
+        .divideralt+.formcontrols {
           margin-bottom: 20px;
 
           [class*="ms-Checkbox"] {
