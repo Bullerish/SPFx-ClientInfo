@@ -976,6 +976,16 @@
       }
     }
   }
+
+  // global styles inside of ClientInfoWebPart
+  .primaryButton {
+    background-color: #0078d4;
+  }
+
+  .defaultButton {
+    background-color: #f4f4f4;
+  }
+
 }
 
 // Manage Alerts SCSS here

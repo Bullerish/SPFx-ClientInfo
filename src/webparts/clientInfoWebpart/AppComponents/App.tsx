@@ -7,6 +7,7 @@ import { Text, Link, DefaultButton } from "office-ui-fabric-react";
 import CreateEngagement from "../components/Create Engagement/CreateEngagement";
 import { ErrorDialog } from "./ErrorDialog";
 import ManageAlerts from "../components/ManageAlerts/ManageAlerts";
+import ClientProfileInfo from "../components/ClientProfileInfo/ClientProfileInfo";
 import { sp } from "@pnp/sp";
 import "@pnp/sp/webs";
 import "@pnp/sp/site-groups/web";
@@ -21,7 +22,8 @@ class App extends React.Component<IApp> {
   public state = {
     ClientInfoState: new ClientInfoState(),
     isModalOpen: false,
-    isAlertModalOpen: false
+    isAlertModalOpen: false,
+    isClientProfileInfoModalOpen: false,
   };
 
   public componentDidMount() {
@@ -33,6 +35,16 @@ class App extends React.Component<IApp> {
         console.log("componentDidMount:: error: ", error);
         this.ShowHideErrorDialog(true);
       });
+  }
+
+  // event handlers to show hide Client Profile Information
+  public onClientProfileInfoModalHide = () => {
+    this.showHideClientProfileInfoModal(false);
+  }
+
+  // show/hide Client Profile Information Modal
+  public showHideClientProfileInfoModal = (isVisible: boolean) => {
+    this.setState({ isClientProfileInfoModalOpen: isVisible });
   }
 
   public onAlertModalHide = () => {
@@ -84,6 +96,16 @@ class App extends React.Component<IApp> {
               <div className={styles.manageSubportal}>
                 {IsPermissionPage == false ? (
                   <div className={styles.flexinncontainer}>
+                    <div>
+                      <Link
+                        href={"#"}
+                        onClick={() =>
+                          this.setState({ isClientProfileInfoModalOpen: true })
+                        }
+                      >
+                        My Profile Information
+                      </Link>
+                    </div>
                     <div>
                       <Link
                         href={"#"}
@@ -140,6 +162,7 @@ class App extends React.Component<IApp> {
         </div>
         {/* Manage Alerts component */}
         <ManageAlerts spContext={this.props.spContext} isAlertModalOpen={this.state.isAlertModalOpen} onAlertModalHide={this.onAlertModalHide} />
+        <ClientProfileInfo spContext={this.props.spContext} isClientProfileInfoModalOpen={this.state.isClientProfileInfoModalOpen} onClientProfileInfoModalHide={this.onClientProfileInfoModalHide} />
         <ErrorDialog
           OnModalHide={this.OnModalHide}
           isModalOpen={this.state.isModalOpen}
