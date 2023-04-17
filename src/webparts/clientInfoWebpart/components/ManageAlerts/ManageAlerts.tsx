@@ -263,7 +263,7 @@ const ManageAlerts = ({
     // let alertsToSet: string[] = [];
 
     if (subWebInfo.length > 0 && currentUserId) {
-      console.log("In Alerts useEffect");
+      // console.log("In Alerts useEffect");
       // get current alerts set for user
       subWebInfo.forEach((item) => {
         fetch(
@@ -286,7 +286,7 @@ const ManageAlerts = ({
                 item.ServerRelativeUrl.split("/")[3].split("-")[1];
               subPortalType = subPortalTypeName + "-" + subPortalTypeFunc;
 
-              console.log("existing alert data: ", alert.d.results);
+              // console.log("existing alert data: ", alert.d.results);
 
               if (
                 (subPortalType === "AUD-WF" || subPortalType === "TAX-WF") &&
@@ -332,7 +332,7 @@ const ManageAlerts = ({
             throw new Error("There has been an error fetching Alerts Data");
           });
       });
-      console.log("logging existingAlerts arr: ", existingAlerts);
+      // console.log("logging existingAlerts arr: ", existingAlerts);
     }
   }, [subWebInfo, currentUserId]);
 

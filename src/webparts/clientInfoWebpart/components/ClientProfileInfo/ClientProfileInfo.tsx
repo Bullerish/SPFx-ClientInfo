@@ -19,7 +19,7 @@ import { TextField } from "office-ui-fabric-react/lib/TextField";
 import { Text } from "office-ui-fabric-react/lib/Text";
 import { sp } from "@pnp/sp";
 import "@pnp/sp/site-users";
-import { Web } from "@pnp/sp/webs";
+import { IWeb, Web } from "@pnp/sp/webs";
 import "@pnp/sp/lists";
 import "@pnp/sp/fields";
 import "@pnp/sp/items";
@@ -33,17 +33,17 @@ import { Pivot, PivotItem } from "office-ui-fabric-react/lib/Pivot";
 import { Stack, IStackProps } from "office-ui-fabric-react/lib/Stack";
 import { Checkbox } from "office-ui-fabric-react/lib/Checkbox";
 
-
+// interface for event handler for dropdowns
 interface IDropdownControlledState {
   jobFunctionItem?: { key: string | number | undefined };
   jobRoleItem?: { key: string | number | undefined };
 }
-
+// interface for all checkbox options: services, sectors, other interests
 interface IServices {
   text: string;
   checked: boolean;
 }
-
+// set options for job function dropdown
 const jobFunctionOptions = [
   { key: "Accounting", text: "Accounting" },
   { key: "Administration", text: "Administration" },
@@ -60,7 +60,7 @@ const jobFunctionOptions = [
   { key: "Tax", text: "Tax" },
   { key: "Other", text: "Other" },
 ];
-
+// set options for job role dropdown
 const jobRoleOptions = [
   { key: "Board Member", text: "Board Member" },
   { key: "Csuite", text: "Csuite" },
@@ -70,7 +70,7 @@ const jobRoleOptions = [
   { key: "Student", text: "Student" },
   { key: "Other", text: "Other" },
 ];
-
+// column props for
 const columnProps: Partial<IStackProps> = {
   tokens: { childrenGap: 15 },
   styles: { root: { width: 300 } },
@@ -84,16 +84,32 @@ const textAreasProps: Partial<IStackProps> = {
   styles: { root: { width: 650 } },
 };
 
-const ClientProfileInfo = ({
-  spContext,
-  isClientProfileInfoModalOpen,
-  onClientProfileInfoModalHide,
-}): React.ReactElement => {
+const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientProfileInfoModalHide,}): React.ReactElement => {
+  // state for currentUser and Webs instances
+  const [currentUser, setCurrentUser] = useState<ISiteUserInfo>(null);
+  const [userItemData, setUserItemData] = useState([]);
+
+  // flags for "!" icon and reminder toast
+  const [isComplete, setIsComplete] = useState<boolean>(null);
+  const [reminder, setReminder] = useState<boolean>(null);
+
+  // Profile form tab states for inputs
+  const [fullName, setFullName] = useState<string>('');
+  const [title, setTitle] = useState<string>('');
+  const [jobRoleItem, setJobRoleItem] = useState({
+    key: undefined,
+    text: "",
+  });
   const [jobFunctionItem, setJobFunctionItem] = useState({
     key: undefined,
     text: "",
   });
+  const [mailingAddress, setMailingAddress] = useState<string>('');
+  const [esgInterests, setEsgInterests] = useState<string>('');
+  const [boardPositions, setBoardPositions] = useState<string>('');
+  const [passions, setPassions] = useState<string>('');
 
+  // states for "Subscriptions" tab
   // for services checkboxes
   const [services, setServices] = useState<IServices[]>([
     { text: "Accounting/Assurance", checked: false },
@@ -102,7 +118,6 @@ const ClientProfileInfo = ({
     { text: "Solutions for C-Suite Executives", checked: false },
     { text: "Tax", checked: false },
   ]);
-
   // for sectors checkboxes
   const [sectors, setSectors] = useState<IServices[]>([
     { text: "Affordable Housing", checked: false },
@@ -122,7 +137,6 @@ const ClientProfileInfo = ({
     { text: "Government - Compliance and Monitoring", checked: false },
     { text: "Government - Emergency Management", checked: false },
   ]);
-
   // for other interests checkboxes
   const [otherInterests, setOtherInterests] = useState<IServices[]>([
     { text: "Alumni Events", checked: false },
@@ -130,10 +144,52 @@ const ClientProfileInfo = ({
     { text: "Executive Women's Forum Events", checked: false },
   ]);
 
+  // state for "Contacts" tab
+  const [contacts, setContacts] = useState<string>('');
+
+  // list name of the Client Profile List to save/retrieve user item data in /sites/clientportal
+  const clientProfileListName = 'ClientProfileList';
+
+  // this useEffect will run only once after initially page load/component mount
   useEffect(() => {
-    console.log("triggering useEffect services");
-    console.log(services);
-  }, [services]);
+    const siteWebVal = Web(GlobalValues.SiteURL);
+
+    const getCurrentUser = async () => {
+      const userInfo = await siteWebVal.currentUser();
+      setCurrentUser(userInfo);
+    }
+
+    getCurrentUser();
+
+  }, []);
+
+  // check list for current logged in user list item. Set the usetItemData state variable with results
+  useEffect(() => {
+    console.log(currentUser);
+
+    // check to see if user has existing item, if so bring it back
+    const checkSetUserItem = async () => {
+      const hubWeb = Web(GlobalValues.HubSiteURL);
+      const userItem = await hubWeb.lists.getByTitle(clientProfileListName).items.filter(`UserLoginName eq '${currentUser.LoginName}'`).get();
+      console.log('logging userItem:: ', userItem);
+
+      // TODO: will have to update form complete/reminder criteria based on marketing/courtney feedback
+      if (!userItem.length) {
+        setIsComplete(false);
+        setReminder(true);
+      }
+
+      setUserItemData(userItem);
+    };
+
+    checkSetUserItem();
+
+  }, [currentUser]);
+
+
+
+
+
 
   // set services checkboxes and state
   const onServicesChange = (text: string, value) => {
@@ -214,67 +270,74 @@ const ClientProfileInfo = ({
               "data-title": "Profile Title",
             }}
           >
-
+            {/* parent stack wrapper */}
             <Stack gap={20} horizontalAlign="center" {...profileContainerProps}>
+              {/* presentation/alignment stack for form */}
               <Stack
                 horizontal
                 horizontalAlign="center"
                 tokens={{ childrenGap: 50 }}
                 styles={{ root: { width: 650 } }}
               >
+
                 <Stack {...columnProps}>
-                  <TextField label="Full Name" />
+                  <TextField label="Full Name" value={fullName} onChange={(ev, newValue) => setFullName(newValue)} />
 
                   <Dropdown
                     label="Job Role"
                     selectedKey={
-                      jobFunctionItem ? jobFunctionItem.key : undefined
+                      jobRoleItem ? jobRoleItem.key : undefined
                     }
-                    // onChange={this._onChange}
+                    onChange={(ev, item) => setJobRoleItem(item)}
                     placeholder="Select an option"
                     options={jobRoleOptions}
-                    styles={{ dropdown: { width: 300 } }}
                   />
                 </Stack>
 
                 <Stack {...columnProps}>
-                  <TextField label="Title" />
+                  <TextField label="Title" value={title} onChange={(ev, newValue) => setTitle(newValue)} />
 
                   <Dropdown
                     label="Job Function"
                     selectedKey={
                       jobFunctionItem ? jobFunctionItem.key : undefined
                     }
-                    // onChange={this._onChange}
+                    onChange={(ev, item) => setJobFunctionItem(item)}
                     placeholder="Select an option"
                     options={jobFunctionOptions}
-                    styles={{ dropdown: { width: 300 } }}
                   />
                 </Stack>
               </Stack>
 
               <Stack gap={20} {...textAreasProps}>
-                <TextField label="Mailing Address" multiline rows={4} />
+                <TextField label="Mailing Address" multiline rows={4} value={mailingAddress} onChange={(ev, newValue) => setMailingAddress(newValue)} />
                 <TextField
                   label="What are your ESG Interests?"
                   multiline
                   rows={4}
+                  value={esgInterests}
+                  onChange={(ev, newValue) => setEsgInterests(newValue)}
                 />
                 <TextField
                   label="Do you hold any board positions, if so which boards?"
                   multiline
                   rows={4}
+                  value={boardPositions}
+                  onChange={(ev, newValue) => setBoardPositions(newValue)}
                 />
                 <TextField
                   label="What are you passionate about?"
                   multiline
                   rows={4}
+                  value={passions}
+                  onChange={(ev, newValue) => setPassions(newValue)}
                 />
               </Stack>
             </Stack>
 
           </PivotItem>
           {/* SUBSCRIPTIONS TAB */}
+          {/* TODO: need to implement the state handling for all the checkboxes */}
           <PivotItem headerText="Subscriptions" className={styles.marginTabsTop}>
 
             <div>
