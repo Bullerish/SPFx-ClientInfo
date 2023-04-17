@@ -977,7 +977,28 @@
     }
   }
 
-  // global styles inside of ClientInfoWebPart
+}
+
+.clientProfileInfo {
+
+  .marginTabsTop {
+    margin-top: 20px;
+  }
+
+  .subscriptionGuidanceText {
+    margin: 15px 0 15px 0;
+  }
+
+  .checkboxFlexStyles {
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 30px;
+    margin-top: 15px;
+    margin-bottom: 40px;
+  }
+
   .primaryButton {
     background-color: #0078d4;
   }
@@ -985,7 +1006,6 @@
   .defaultButton {
     background-color: #f4f4f4;
   }
-
 }
 
 // Manage Alerts SCSS here
