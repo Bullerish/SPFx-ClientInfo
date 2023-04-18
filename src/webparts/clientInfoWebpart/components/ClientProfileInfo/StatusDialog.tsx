@@ -12,21 +12,24 @@ import { PrimaryButton, Stack, Text } from "office-ui-fabric-react";
 
 initializeIcons();
 
-const ConfirmDialog = ({
-  confirmDialogHidden,
-  onSetConfirmDialogHidden,
+const StatusDialog = ({
+  isSubmissionSuccessful,
+  statusDialogHidden,
+  onSetStatusDialogHidden,
 }) => {
-  let message: string = "Confirm Form Submission?";
+  let message: string = isSubmissionSuccessful
+    ? "Your User Profile Information has been saved."
+    : "Failed to save your updated Client Profile Information. Please try again.";
 
   return (
     <>
       <Dialog
-        hidden={confirmDialogHidden}
-        onDismiss={() => onSetConfirmDialogHidden(true)}
+        hidden={statusDialogHidden}
+        onDismiss={() => onSetStatusDialogHidden(true)}
         minWidth={500}
         dialogContentProps={{
           type: DialogType.normal,
-          title: "Confirmation",
+          title: isSubmissionSuccessful ? "Success" : "Error",
           showCloseButton: true,
           className: styles.statusDialog,
         }}
@@ -42,11 +45,19 @@ const ConfirmDialog = ({
               {message}
             </Text>
           </Stack.Item>
+          <Stack.Item align="center">
+            <Icon
+              iconName={isSubmissionSuccessful ? "Completed" : "ErrorBadge"}
+              className={
+                isSubmissionSuccessful ? styles.iconSuccess : styles.iconError
+              }
+            />
+          </Stack.Item>
         </Stack>
 
         <DialogFooter>
           <PrimaryButton
-            onClick={() => onSetConfirmDialogHidden(true)}
+            onClick={() => onSetStatusDialogHidden(true)}
             text="Close"
           />
         </DialogFooter>
@@ -55,4 +66,4 @@ const ConfirmDialog = ({
   );
 };
 
-export default ConfirmDialog;
+export default StatusDialog;

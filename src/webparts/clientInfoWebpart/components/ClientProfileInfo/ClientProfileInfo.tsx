@@ -9,7 +9,6 @@ import {
   DefaultButton,
   PrimaryButton,
 } from "office-ui-fabric-react/lib/Button";
-import { MarqueeSelection } from "office-ui-fabric-react/lib/MarqueeSelection";
 import {
   Dropdown,
   DropdownMenuItemType,
@@ -23,8 +22,7 @@ import { IWeb, Web } from "@pnp/sp/webs";
 import "@pnp/sp/lists";
 import "@pnp/sp/fields";
 import "@pnp/sp/items";
-import { IItemAddResult } from "@pnp/sp/items";
-import { ISiteUser } from "@pnp/sp/site-users";
+
 import { ISiteUserInfo } from "@pnp/sp/site-users/types";
 import styles from "../ClientInfoWebpart.module.scss";
 import { GlobalValues } from "../../Dataprovider/GlobalValue";
@@ -32,6 +30,8 @@ import { setBaseUrl } from "office-ui-fabric-react";
 import { Pivot, PivotItem } from "office-ui-fabric-react/lib/Pivot";
 import { Stack, IStackProps } from "office-ui-fabric-react/lib/Stack";
 import { Checkbox } from "office-ui-fabric-react/lib/Checkbox";
+import ConfirmDialog from './ConfirmDialog';
+import StatusDialog from './StatusDialog';
 
 // interface for event handler for dropdowns
 interface IDropdownControlledState {
@@ -88,6 +88,13 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
   // state for currentUser and Webs instances
   const [currentUser, setCurrentUser] = useState<ISiteUserInfo>(null);
   const [userItemData, setUserItemData] = useState([]);
+
+  // states for confirmation and status dialogs
+  const [isSubmissionSuccessful, setIsSubmissionSuccessful] = useState<boolean>(null);
+  const [confirmDialogHidden, setConfirmDialogHidden] = useState<boolean>(true);
+  const [statusDialogHidden, setStatusDialogHidden] = useState<boolean>(true);
+
+
 
   // flags for "!" icon and reminder toast
   const [isComplete, setIsComplete] = useState<boolean>(null);
@@ -186,9 +193,10 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
 
   }, [currentUser]);
 
+  const stateLogger = () => {
+    console.log('logging all state::');
 
-
-
+  };
 
 
   // set services checkboxes and state
@@ -241,6 +249,16 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
     });
 
     setOtherInterests([...otherInterestsTempArr]);
+  };
+
+  // event handler to hide confirmation dialog
+  const onSetConfirmDialogHidden = () => {
+    setConfirmDialogHidden(true);
+  };
+
+  // event handler to hide status dialog
+  const onSetStatusDialogHidden = () => {
+    setStatusDialogHidden(true);
   };
 
   return (
@@ -402,6 +420,8 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
                 label="Please share the names and emails of your team members who will be working with CohnReznick"
                 multiline
                 rows={6}
+                value={fullName}
+                onChange={(ev, newValue) => setContacts(newValue)}
               />
             </div>
 
@@ -420,6 +440,8 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
           />
         </DialogFooter>
       </Dialog>
+      <ConfirmDialog confirmDialogHidden={confirmDialogHidden} onSetConfirmDialogHidden={onSetConfirmDialogHidden} />
+      <StatusDialog isSubmissionSuccessful={isSubmissionSuccessful} statusDialogHidden={statusDialogHidden} onSetStatusDialogHidden={onSetStatusDialogHidden} />
     </div>
   );
 };
