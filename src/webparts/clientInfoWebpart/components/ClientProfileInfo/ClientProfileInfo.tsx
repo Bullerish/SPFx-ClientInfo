@@ -32,6 +32,7 @@ import { Stack, IStackProps } from "office-ui-fabric-react/lib/Stack";
 import { Checkbox } from "office-ui-fabric-react/lib/Checkbox";
 import ConfirmDialog from './ConfirmDialog';
 import StatusDialog from './StatusDialog';
+import { IItemAddResult } from "@pnp/sp/items";
 
 // interface for event handler for dropdowns
 interface IDropdownControlledState {
@@ -87,18 +88,17 @@ const textAreasProps: Partial<IStackProps> = {
 const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientProfileInfoModalHide,}): React.ReactElement => {
   // state for currentUser and Webs instances
   const [currentUser, setCurrentUser] = useState<ISiteUserInfo>(null);
-  const [userItemData, setUserItemData] = useState([]);
+  const [userItemData, setUserItemData] = useState<any[]>([]);
+  const [itemID, setItemID] = useState<number>(null);
 
   // states for confirmation and status dialogs
   const [isSubmissionSuccessful, setIsSubmissionSuccessful] = useState<boolean>(null);
   const [confirmDialogHidden, setConfirmDialogHidden] = useState<boolean>(true);
   const [statusDialogHidden, setStatusDialogHidden] = useState<boolean>(true);
 
-
-
   // flags for "!" icon and reminder toast
-  const [isComplete, setIsComplete] = useState<boolean>(null);
-  const [reminder, setReminder] = useState<boolean>(null);
+  const [isComplete, setIsComplete] = useState<boolean>(false);
+  const [reminder, setReminder] = useState<boolean>(false);
 
   // Profile form tab states for inputs
   const [fullName, setFullName] = useState<string>('');
@@ -140,7 +140,7 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
     { text: "Renewable Energy", checked: false },
     { text: "Retail", checked: false },
     { text: "Government Contracting", checked: false },
-    { text: "CanGovernment - Audit/Accountingnabis", checked: false },
+    { text: "Government - Audit/Accountingnabis", checked: false },
     { text: "Government - Compliance and Monitoring", checked: false },
     { text: "Government - Emergency Management", checked: false },
   ]);
@@ -157,6 +157,25 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
   // list name of the Client Profile List to save/retrieve user item data in /sites/clientportal
   const clientProfileListName = 'ClientProfileList';
 
+  // object payload to be submitted in add/update pnpjs calls
+  let payload = {
+    Title: title,
+    FullName: fullName,
+    JobLevel: jobRoleItem.key,
+    JobFunction: jobFunctionItem.key,
+    MailingAddress: mailingAddress,
+    BoardPositions: boardPositions,
+    Passions: passions,
+    Services: [], // need to update to proper format prior to submitting data otherwise 400 will occur
+    Sectors: [],
+    OtherInterests: [],
+    ESGInterests: esgInterests,
+    Contacts: contacts,
+    UserLoginName: currentUser ? currentUser.LoginName : null,
+    isComplete: isComplete,
+    Reminder: reminder,
+  };
+
   // this useEffect will run only once after initially page load/component mount
   useEffect(() => {
     const siteWebVal = Web(GlobalValues.SiteURL);
@@ -164,7 +183,7 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
     const getCurrentUser = async () => {
       const userInfo = await siteWebVal.currentUser();
       setCurrentUser(userInfo);
-    }
+    };
 
     getCurrentUser();
 
@@ -177,27 +196,51 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
     // check to see if user has existing item, if so bring it back
     const checkSetUserItem = async () => {
       const hubWeb = Web(GlobalValues.HubSiteURL);
-      const userItem = await hubWeb.lists.getByTitle(clientProfileListName).items.filter(`UserLoginName eq '${currentUser.LoginName}'`).get();
-      console.log('logging userItem:: ', userItem);
 
-      // TODO: will have to update form complete/reminder criteria based on marketing/courtney feedback
-      if (!userItem.length) {
-        setIsComplete(false);
-        setReminder(true);
+      if (currentUser !== null) {
+        const loginName = currentUser.LoginName;
+        const userItem = await hubWeb.lists.getByTitle(clientProfileListName).items.select('ID', 'Title', 'FullName', 'JobLevel', 'JobFunction', 'MailingAddress', 'BoardPositions', 'Passions', 'Services', 'Sectors', 'OtherInterests', 'ESGInterests', 'Contacts', 'UserLoginName', 'isComplete', 'Reminder').filter(`UserLoginName eq '${loginName}'`).get();
+        console.log('logging userItem:: ', userItem);
+        setUserItemData(userItem);
       }
 
-      setUserItemData(userItem);
     };
 
     checkSetUserItem();
 
   }, [currentUser]);
 
-  const stateLogger = () => {
-    console.log('logging all state::');
+  // runs when userItemData has been populated with user's list item data
+  useEffect(() => {
+    let newServices = services;
+    let newSectors = sectors;
+    let newOtherInterests = otherInterests;
+    // TODO: will have to update form complete/reminder criteria based on marketing/courtney feedback
+    if (!userItemData.length) {
+      setIsComplete(false);
+      setReminder(true);
+    } else {
+      // set all states here to populate form fields
+      setItemID(userItemData[0].ID);
+      setFullName(userItemData[0].FullName);
+      setTitle(userItemData[0].Title);
+      setJobRoleItem({ key: userItemData[0].JobLevel, text: userItemData[0].JobLevel });
+      setJobFunctionItem({ key: userItemData[0].JobFunction, text: userItemData[0].JobFunction });
+      setMailingAddress(userItemData[0].MailingAddress);
+      setEsgInterests(userItemData[0].ESGInterests);
+      setBoardPositions(userItemData[0].BoardPositions);
+      setPassions(userItemData[0].Passions);
+      setContacts(userItemData[0].Contacts);
+      // additional logic needed to set checkboxes
+      newServices.forEach(item => {if (userItemData[0].Services.indexOf(item.text) !== -1) {item.checked = true}});
+      newSectors.forEach(item => {if (userItemData[0].Sectors.indexOf(item.text) !== -1) {item.checked = true}});
+      newOtherInterests.forEach(item => {if (userItemData[0].OtherInterests.indexOf(item.text) !== -1) {item.checked = true}});
 
-  };
-
+      setServices(newServices);
+      setSectors(newSectors);
+      setOtherInterests(newOtherInterests);
+    }
+  }, [userItemData]);
 
   // set services checkboxes and state
   const onServicesChange = (text: string, value) => {
@@ -205,7 +248,6 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
 
     servicesTempArr.forEach((e) => {
       if (text === e.text && value) {
-        console.log("inside foreach logging val:: ", e);
         e.checked = true;
       }
 
@@ -259,6 +301,48 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
   // event handler to hide status dialog
   const onSetStatusDialogHidden = () => {
     setStatusDialogHidden(true);
+  };
+
+  const updateServicesSectorsOtherInterests = () => {
+
+  };
+
+  // TODO: need to update for add/update
+  const submitUserProfileInfo = async () => {
+    const hubWeb = Web(GlobalValues.HubSiteURL);
+    // set empty temp arrs to populate
+    let servicesStringArr: string[] = [];
+    let sectorsStringArr: string[] = [];
+    let otherInterestsStringArr: string[] = [];
+
+    // filter on state arrs for only "checked" items, push the text of each object to the respective temp arr
+    services.filter(e => e.checked === true).forEach(e => servicesStringArr.push(e.text));
+    sectors.filter(e => e.checked === true).forEach(e => sectorsStringArr.push(e.text));
+    otherInterests.filter(e => e.checked === true).forEach(e => otherInterestsStringArr.push(e.text));
+
+    console.log('logging services arr to send in payload:: ', servicesStringArr);
+
+    // update payload props with new temp arrs from above
+    payload.Services = servicesStringArr;
+    payload.Sectors = sectorsStringArr;
+    payload.OtherInterests = otherInterestsStringArr;
+
+    if (!userItemData.length) {
+      // add new item to list
+      console.log('logging payload:: ', payload);
+      const addItemResult: IItemAddResult = await hubWeb.lists.getByTitle(clientProfileListName).items.add(payload);
+
+      // set isSubmissionSuccessful flag to true or false based on if item was added successfully or not
+      console.log('logging addItemResult:: ', addItemResult);
+    } else {
+      // update existing item in list
+    }
+
+  };
+
+  // triggers when uer clicks Confirm button on ConfirmDialog
+  const onConfirmSubmission = () => {
+    submitUserProfileInfo();
   };
 
   return (
@@ -420,7 +504,7 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
                 label="Please share the names and emails of your team members who will be working with CohnReznick"
                 multiline
                 rows={6}
-                value={fullName}
+                value={contacts}
                 onChange={(ev, newValue) => setContacts(newValue)}
               />
             </div>
@@ -430,17 +514,17 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
         <DialogFooter>
           <PrimaryButton
             className={styles.primaryButton}
-            // onClick={ensureAlertsListExists}
+            onClick={() => setConfirmDialogHidden(false)}
             text="Save"
           />
           <DefaultButton
             className={styles.defaultButton}
-            // onClick={() => setIsConfirmationHidden(true)}
+            onClick={onClientProfileInfoModalHide}
             text="Cancel"
           />
         </DialogFooter>
       </Dialog>
-      <ConfirmDialog confirmDialogHidden={confirmDialogHidden} onSetConfirmDialogHidden={onSetConfirmDialogHidden} />
+      <ConfirmDialog confirmDialogHidden={confirmDialogHidden} onSetConfirmDialogHidden={onSetConfirmDialogHidden} onConfirmSubmission={onConfirmSubmission} />
       <StatusDialog isSubmissionSuccessful={isSubmissionSuccessful} statusDialogHidden={statusDialogHidden} onSetStatusDialogHidden={onSetStatusDialogHidden} />
     </div>
   );

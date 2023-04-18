@@ -8,13 +8,14 @@ import {
 import { initializeIcons } from "@uifabric/icons";
 import { Icon } from "office-ui-fabric-react/lib/Icon";
 import styles from "../ClientInfoWebpart.module.scss";
-import { PrimaryButton, Stack, Text } from "office-ui-fabric-react";
+import { PrimaryButton, Stack, Text, DefaultButton } from "office-ui-fabric-react";
 
 initializeIcons();
 
 const ConfirmDialog = ({
   confirmDialogHidden,
   onSetConfirmDialogHidden,
+  onConfirmSubmission
 }) => {
   let message: string = "Confirm Form Submission?";
 
@@ -46,8 +47,14 @@ const ConfirmDialog = ({
 
         <DialogFooter>
           <PrimaryButton
+            onClick={onConfirmSubmission}
+            text="Confirm"
+            className={styles.primaryButton}
+          />
+          <DefaultButton
             onClick={() => onSetConfirmDialogHidden(true)}
-            text="Close"
+            text="Cancel"
+            className={styles.defaultButton}
           />
         </DialogFooter>
       </Dialog>
