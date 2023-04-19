@@ -59,6 +59,7 @@ const StatusDialog = ({
           <PrimaryButton
             onClick={() => onSetStatusDialogHidden(true)}
             text="Close"
+            className={styles.primaryButton}
           />
         </DialogFooter>
       </Dialog>

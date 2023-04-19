@@ -97,7 +97,7 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
   const [statusDialogHidden, setStatusDialogHidden] = useState<boolean>(true);
 
   // flags for "!" icon and reminder toast
-  const [isComplete, setIsComplete] = useState<boolean>(false);
+  const [isComplete, setIsComplete] = useState<boolean>(true);
   const [reminder, setReminder] = useState<boolean>(false);
 
   // Profile form tab states for inputs
@@ -140,7 +140,7 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
     { text: "Renewable Energy", checked: false },
     { text: "Retail", checked: false },
     { text: "Government Contracting", checked: false },
-    { text: "Government - Audit/Accountingnabis", checked: false },
+    { text: "Government - Audit/Accounting", checked: false },
     { text: "Government - Compliance and Monitoring", checked: false },
     { text: "Government - Emergency Management", checked: false },
   ]);
@@ -166,12 +166,12 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
     MailingAddress: mailingAddress,
     BoardPositions: boardPositions,
     Passions: passions,
-    Services: [], // need to update to proper format prior to submitting data otherwise 400 will occur
-    Sectors: [],
-    OtherInterests: [],
+    Services: {}, // need to update to proper format prior to submitting data otherwise 400 will occur
+    Sectors: {},
+    OtherInterests: {},
     ESGInterests: esgInterests,
     Contacts: contacts,
-    UserLoginName: currentUser ? currentUser.LoginName : null,
+    UserLoginName: currentUser !== null ? currentUser.LoginName : '',
     isComplete: isComplete,
     Reminder: reminder,
   };
@@ -231,10 +231,12 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
       setBoardPositions(userItemData[0].BoardPositions);
       setPassions(userItemData[0].Passions);
       setContacts(userItemData[0].Contacts);
+      setIsComplete(true);
+      setReminder(false);
       // additional logic needed to set checkboxes
-      newServices.forEach(item => {if (userItemData[0].Services.indexOf(item.text) !== -1) {item.checked = true}});
-      newSectors.forEach(item => {if (userItemData[0].Sectors.indexOf(item.text) !== -1) {item.checked = true}});
-      newOtherInterests.forEach(item => {if (userItemData[0].OtherInterests.indexOf(item.text) !== -1) {item.checked = true}});
+      newServices.forEach(item => {if (userItemData[0].Services.indexOf(item.text) !== -1) {item.checked = true;}});
+      newSectors.forEach(item => {if (userItemData[0].Sectors.indexOf(item.text) !== -1) {item.checked = true;}});
+      newOtherInterests.forEach(item => {if (userItemData[0].OtherInterests.indexOf(item.text) !== -1) {item.checked = true;}});
 
       setServices(newServices);
       setSectors(newSectors);
@@ -301,11 +303,10 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
   // event handler to hide status dialog
   const onSetStatusDialogHidden = () => {
     setStatusDialogHidden(true);
+    setConfirmDialogHidden(true);
+    onClientProfileInfoModalHide();
   };
 
-  const updateServicesSectorsOtherInterests = () => {
-
-  };
 
   // TODO: need to update for add/update
   const submitUserProfileInfo = async () => {
@@ -323,9 +324,9 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
     console.log('logging services arr to send in payload:: ', servicesStringArr);
 
     // update payload props with new temp arrs from above
-    payload.Services = servicesStringArr;
-    payload.Sectors = sectorsStringArr;
-    payload.OtherInterests = otherInterestsStringArr;
+    payload.Services = {results: servicesStringArr};
+    payload.Sectors = {results: sectorsStringArr};
+    payload.OtherInterests = {results: otherInterestsStringArr};
 
     if (!userItemData.length) {
       // add new item to list
@@ -334,16 +335,35 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
 
       // set isSubmissionSuccessful flag to true or false based on if item was added successfully or not
       console.log('logging addItemResult:: ', addItemResult);
+      if (addItemResult.data) {
+        setIsSubmissionSuccessful(true);
+        setStatusDialogHidden(false);
+      } else {
+        setIsSubmissionSuccessful(false);
+        setStatusDialogHidden(false);
+      }
     } else {
       // update existing item in list
+      console.log('logging payload:: ', payload);
+      const updatedItemResult = await hubWeb.lists.getByTitle(clientProfileListName).items.getById(itemID).update(payload);
+
+      console.log('logging updatedItemResult:: ', updatedItemResult);
+      if (updatedItemResult.data) {
+        setIsSubmissionSuccessful(true);
+        setStatusDialogHidden(false);
+      } else {
+        setIsSubmissionSuccessful(false);
+        setStatusDialogHidden(false);
+      }
+
     }
 
   };
 
-  // triggers when uer clicks Confirm button on ConfirmDialog
-  const onConfirmSubmission = () => {
-    submitUserProfileInfo();
-  };
+  // // triggers when uer clicks Confirm button on ConfirmDialog
+  // const onConfirmSubmission = () => {
+  //   submitUserProfileInfo();
+  // };
 
   return (
     <div>
@@ -383,16 +403,18 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
               >
 
                 <Stack {...columnProps}>
-                  <TextField label="Full Name" value={fullName} onChange={(ev, newValue) => setFullName(newValue)} />
+                  <TextField label="Full Name" value={fullName} required onChange={(ev, newValue) => setFullName(newValue)} errorMessage={fullName !== '' ? null : 'This field is required'} />
 
                   <Dropdown
-                    label="Job Role"
+                    label="Job Level"
                     selectedKey={
                       jobRoleItem ? jobRoleItem.key : undefined
                     }
                     onChange={(ev, item) => setJobRoleItem(item)}
                     placeholder="Select an option"
                     options={jobRoleOptions}
+                    required
+                    errorMessage={jobRoleItem.key ? null : 'This field is required'}
                   />
                 </Stack>
 
@@ -407,6 +429,8 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
                     onChange={(ev, item) => setJobFunctionItem(item)}
                     placeholder="Select an option"
                     options={jobFunctionOptions}
+                    required
+                    errorMessage={jobFunctionItem.key ? null : 'This field is required'}
                   />
                 </Stack>
               </Stack>
@@ -512,10 +536,12 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
           </PivotItem>
         </Pivot>
         <DialogFooter>
+          <Text style={{ color: 'red' }}>{(fullName !== '' && jobRoleItem.key && jobFunctionItem.key) ? null : '*Please fill out required fields to submit'}</Text>
           <PrimaryButton
             className={styles.primaryButton}
             onClick={() => setConfirmDialogHidden(false)}
             text="Save"
+            disabled={(fullName !== '' && jobRoleItem.key && jobFunctionItem.key) ? false : true}
           />
           <DefaultButton
             className={styles.defaultButton}
@@ -524,7 +550,9 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
           />
         </DialogFooter>
       </Dialog>
-      <ConfirmDialog confirmDialogHidden={confirmDialogHidden} onSetConfirmDialogHidden={onSetConfirmDialogHidden} onConfirmSubmission={onConfirmSubmission} />
+      {/* confirm dialog component. Modal/dialog window will open */}
+      <ConfirmDialog confirmDialogHidden={confirmDialogHidden} onSetConfirmDialogHidden={onSetConfirmDialogHidden} onConfirmSubmission={submitUserProfileInfo} />
+      {/* TODO: need to update logic after item submission to display Status Dialog component */}
       <StatusDialog isSubmissionSuccessful={isSubmissionSuccessful} statusDialogHidden={statusDialogHidden} onSetStatusDialogHidden={onSetStatusDialogHidden} />
     </div>
   );
