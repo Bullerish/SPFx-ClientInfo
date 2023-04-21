@@ -84,6 +84,13 @@
         }
       }
     }
+
+    .iconError {
+      color: $ms-color-error;
+      font-size: 10pt;
+      // display: inline-block;
+      // flex-grow: 1;
+    }
   }
 }
 
@@ -1083,4 +1090,35 @@
   }
 
 
+}
+
+.toastReminder {
+
+
+  .linkContainer {
+    // style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', gap: 10, marginTop: '10px' }}
+    display: flex;
+    justify-content: 'space-around';
+    align-items: center;
+    gap: 10;
+    margin-top: 10px;
+  }
+
+  .blueLink {
+    color: #0078d7;
+  }
+
+
+}
+
+.toastContainer {
+  // border-top: 4px solid #f57b20;
+  .toastBorderTop {
+    border-top: 4px solid #f57b20;
+  }
+
+  .alertIcon {
+    color: #f57b20;
+    font-size: 20pt;
+  }
 }

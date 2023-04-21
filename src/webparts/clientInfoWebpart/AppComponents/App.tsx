@@ -12,7 +12,13 @@ import { sp } from "@pnp/sp";
 import "@pnp/sp/webs";
 import "@pnp/sp/site-groups/web";
 import "@pnp/sp/site-users/web";
+import { PrimaryButton } from "office-ui-fabric-react/lib/Button";
 import { xor } from "lodash";
+import { Icon } from 'office-ui-fabric-react/lib/Icon';
+import { initializeIcons } from "@uifabric/icons";
+import toast, { Toaster } from 'react-hot-toast';
+
+initializeIcons();
 
 export interface IApp {
   spContext: any;
@@ -24,9 +30,30 @@ class App extends React.Component<IApp> {
     isModalOpen: false,
     isAlertModalOpen: false,
     isClientProfileInfoModalOpen: false,
+    isAlertIconShown: true,
+    isToastShown: false,
+    isDontRemind: false
   };
 
+  public onDontRemind = () => {
+    this.showHideToast(false);
+    this.setState({ isDontRemind: true });
+  }
+
+  public reminderToast = <div className={styles.toastReminder}>
+    <span>
+      Please fill out your Client Profile Information
+    </span>
+    <div className={styles.linkContainer}>
+      <Link onClick={() => this.setState({ isClientProfileInfoModalOpen: true })} className={styles.blueLink}>Profile Form</Link>
+      <Link onClick={this.onDontRemind}>Don't Remind Me</Link>
+      <Link onClick={() => toast.dismiss()}>Dismiss</Link>
+    </div>
+  </div>;
+
   public componentDidMount() {
+    // console.log('in componentDidMount');
+
     GlobalValues.SetValues(this.props.spContext)
       .then((result) => {
         this.LoadData();
@@ -35,6 +62,7 @@ class App extends React.Component<IApp> {
         console.log("componentDidMount:: error: ", error);
         this.ShowHideErrorDialog(true);
       });
+
   }
 
   // event handlers to show hide Client Profile Information
@@ -60,6 +88,28 @@ class App extends React.Component<IApp> {
     this.ShowHideErrorDialog(false);
   }
 
+  // for showing/hiding alert icon
+  public showHideAlertIcon = (isVisible: boolean) => {
+    this.setState({ isAlertIconShown: isVisible });
+  }
+
+  public showHideToast = (isVisible: boolean) => {
+    console.log('in showHideToast func, value of isVisible is: ', isVisible);
+    if (isVisible) {
+      toast(
+        this.reminderToast,
+        {
+          icon: <Icon iconName="AlertSolid" className={styles.alertIcon} />,
+          duration: Infinity,
+          id: 'reminderToast'
+        }
+      );
+    } else {
+      console.log('in else block of showHideToast func, dismissing toast');
+      toast.dismiss();
+    }
+  }
+
   public ShowHideErrorDialog = (isVisible) => {
     this.setState({ isModalOpen: isVisible });
   }
@@ -82,6 +132,9 @@ class App extends React.Component<IApp> {
     if (url.indexOf(GlobalValues.PermissionPage) > -1) IsPermissionPage = true;
     return (
       <React.Fragment>
+        <Toaster position="top-right" containerClassName={styles.toastContainer} toastOptions={{
+          className: styles.toastBorderTop
+         }} />
         <div className={styles.clientInfoWebpart}>
           <div className={styles.engagementTeam}>
             <div className={styles.clientHeading}>
@@ -97,6 +150,11 @@ class App extends React.Component<IApp> {
                 {IsPermissionPage == false ? (
                   <div className={styles.flexinncontainer}>
                     <div>
+                      {/* TODO: implement and set state for alretsolid item. Make sure to pass down props that factor state */}
+                      {this.state.isAlertIconShown ?
+                        <Icon iconName="AlertSolid" className={styles.iconError} />
+                        : null
+                      }
                       <Link
                         href={"#"}
                         onClick={() =>
@@ -162,7 +220,7 @@ class App extends React.Component<IApp> {
         </div>
         {/* Manage Alerts component */}
         <ManageAlerts spContext={this.props.spContext} isAlertModalOpen={this.state.isAlertModalOpen} onAlertModalHide={this.onAlertModalHide} />
-        <ClientProfileInfo spContext={this.props.spContext} isClientProfileInfoModalOpen={this.state.isClientProfileInfoModalOpen} onClientProfileInfoModalHide={this.onClientProfileInfoModalHide} />
+        <ClientProfileInfo spContext={this.props.spContext} isClientProfileInfoModalOpen={this.state.isClientProfileInfoModalOpen} onClientProfileInfoModalHide={this.onClientProfileInfoModalHide} showHideAlertIcon={this.showHideAlertIcon} showHideToast={this.showHideToast} isDontRemind={this.state.isDontRemind} />
         <ErrorDialog
           OnModalHide={this.OnModalHide}
           isModalOpen={this.state.isModalOpen}

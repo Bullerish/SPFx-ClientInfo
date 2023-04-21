@@ -85,7 +85,7 @@ const textAreasProps: Partial<IStackProps> = {
   styles: { root: { width: 650 } },
 };
 
-const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientProfileInfoModalHide,}): React.ReactElement => {
+const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientProfileInfoModalHide, showHideAlertIcon, showHideToast, isDontRemind}): React.ReactElement => {
   // state for currentUser and Webs instances
   const [currentUser, setCurrentUser] = useState<ISiteUserInfo>(null);
   const [userItemData, setUserItemData] = useState<any[]>([]);
@@ -97,7 +97,7 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
   const [statusDialogHidden, setStatusDialogHidden] = useState<boolean>(true);
 
   // flags for "!" icon and reminder toast
-  const [isComplete, setIsComplete] = useState<boolean>(true);
+  const [isComplete, setIsComplete] = useState<boolean>(null);
   const [reminder, setReminder] = useState<boolean>(false);
 
   // Profile form tab states for inputs
@@ -206,22 +206,29 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
 
     };
 
-    checkSetUserItem();
+    if (currentUser !== null) {
+      checkSetUserItem();
+    }
 
   }, [currentUser]);
 
   // runs when userItemData has been populated with user's list item data
   useEffect(() => {
+    console.log('in userItemData useEffect::');
+    // console.log('logging userItemData fullName:: ', userItemData[0].FullName);
     let newServices = services;
     let newSectors = sectors;
     let newOtherInterests = otherInterests;
     // TODO: will have to update form complete/reminder criteria based on marketing/courtney feedback
     if (!userItemData.length) {
+
       setIsComplete(false);
       setReminder(true);
+      showHideAlertIcon(true);
+      showHideToast(true);
+
     } else {
       // set all states here to populate form fields
-      setItemID(userItemData[0].ID);
       setFullName(userItemData[0].FullName);
       setTitle(userItemData[0].Title);
       setJobRoleItem({ key: userItemData[0].JobLevel, text: userItemData[0].JobLevel });
@@ -231,18 +238,116 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
       setBoardPositions(userItemData[0].BoardPositions);
       setPassions(userItemData[0].Passions);
       setContacts(userItemData[0].Contacts);
-      setIsComplete(true);
-      setReminder(false);
+
       // additional logic needed to set checkboxes
-      newServices.forEach(item => {if (userItemData[0].Services.indexOf(item.text) !== -1) {item.checked = true;}});
-      newSectors.forEach(item => {if (userItemData[0].Sectors.indexOf(item.text) !== -1) {item.checked = true;}});
-      newOtherInterests.forEach(item => {if (userItemData[0].OtherInterests.indexOf(item.text) !== -1) {item.checked = true;}});
+      if (userItemData[0].Services) {
+        newServices.forEach(item => {if (userItemData[0].Services.indexOf(item.text) !== -1) {item.checked = true;}});
+      }
+      if (userItemData[0].Sectors) {
+        newSectors.forEach(item => {if (userItemData[0].Sectors.indexOf(item.text) !== -1) {item.checked = true;}});
+      }
+      if (userItemData[0].OtherInterests) {
+        newOtherInterests.forEach(item => {if (userItemData[0].OtherInterests.indexOf(item.text) !== -1) {item.checked = true;}});
+      }
 
       setServices(newServices);
       setSectors(newSectors);
       setOtherInterests(newOtherInterests);
+
+      setIsComplete(userItemData[0].isComplete);
+      setReminder(userItemData[0].Reminder);
+      setItemID(userItemData[0].ID);
     }
   }, [userItemData]);
+
+  useEffect(() => {
+    console.log('in itemID useEffect::');
+    console.log('logging reminder state:: ', reminder);
+    // console.log('logging contacts state in itemID useEffect:: ', contacts);
+    // factor logic here to determine whether or not we display the alert icon on the main client info component
+    if (itemID !== null) {
+      if (
+        (fullName !== '' && fullName !== null) &&
+        (title !== '' && title !== null) &&
+        jobRoleItem.key &&
+        jobFunctionItem.key &&
+        (mailingAddress !== '' && mailingAddress !== null) &&
+        (esgInterests !== '' && esgInterests !== null) &&
+        (boardPositions !== '' && boardPositions !== null) &&
+        (passions !== '' && passions !== null) &&
+        (contacts !== '' && contacts !== null) &&
+        services.length &&
+        sectors.length &&
+        otherInterests.length
+      ) {
+        console.log('in passing block of itemID useEffect::');
+        setIsComplete(true);
+        showHideAlertIcon(false);
+        showHideToast(false);
+      } else {
+        console.log('in failing block of itemID useEffect::');
+        setIsComplete(false);
+        showHideAlertIcon(true);
+        if (reminder) {
+          console.log('in passing block of reminder check::');
+          showHideToast(true);
+        } else {
+          console.log('in failing block of reminder check::');
+          showHideToast(false);
+        }
+      }
+    }
+  }, [itemID]);
+
+  useEffect(() => {
+    const hubWeb = Web(GlobalValues.HubSiteURL);
+    console.log('running isDontRemind useEffect:: ', isDontRemind);
+    let servicesStringArr: string[] = [];
+    let sectorsStringArr: string[] = [];
+    let otherInterestsStringArr: string[] = [];
+
+    // filter on state arrs for only "checked" items, push the text of each object to the respective temp arr
+    services.filter(e => e.checked === true).forEach(e => servicesStringArr.push(e.text));
+    sectors.filter(e => e.checked === true).forEach(e => sectorsStringArr.push(e.text));
+    otherInterests.filter(e => e.checked === true).forEach(e => otherInterestsStringArr.push(e.text));
+
+    console.log('logging services arr to send in payload:: ', servicesStringArr);
+
+    // update payload props with new temp arrs from above
+    payload.Services = {results: servicesStringArr};
+    payload.Sectors = {results: sectorsStringArr};
+    payload.OtherInterests = {results: otherInterestsStringArr};
+
+    const runUpdateOnListItem = async () => {
+
+      if (isDontRemind && itemID === null) {
+        payload.Reminder = false;
+        const addItemResult: IItemAddResult = await hubWeb.lists.getByTitle(clientProfileListName).items.add(payload);
+
+        // TODO: check for item submission successful, then run getitembyid to fetch the newly updated list item, set the result in state var userItemData
+        if (currentUser !== null && addItemResult !== null) {
+          const loginName = currentUser.LoginName;
+          const userItem = await hubWeb.lists.getByTitle(clientProfileListName).items.select('ID', 'Title', 'FullName', 'JobLevel', 'JobFunction', 'MailingAddress', 'BoardPositions', 'Passions', 'Services', 'Sectors', 'OtherInterests', 'ESGInterests', 'Contacts', 'UserLoginName', 'isComplete', 'Reminder').filter(`UserLoginName eq '${loginName}'`).get();
+          console.log('logging userItem:: ', userItem);
+          setUserItemData(userItem);
+        }
+      } else if (isDontRemind && itemID !== null) {
+        payload.Reminder = false;
+        const updatedItemResult = await hubWeb.lists.getByTitle(clientProfileListName).items.getById(itemID).update(payload);
+        // TODO: check for item submission successful, then run getitembyid to fetch the newly updated list item, set the result in state var userItemData
+        if (currentUser !== null && updatedItemResult !== null) {
+          const loginName = currentUser.LoginName;
+          const userItem = await hubWeb.lists.getByTitle(clientProfileListName).items.select('ID', 'Title', 'FullName', 'JobLevel', 'JobFunction', 'MailingAddress', 'BoardPositions', 'Passions', 'Services', 'Sectors', 'OtherInterests', 'ESGInterests', 'Contacts', 'UserLoginName', 'isComplete', 'Reminder').filter(`UserLoginName eq '${loginName}'`).get();
+          console.log('logging userItem:: ', userItem);
+          setUserItemData(userItem);
+        }
+
+      }
+    };
+
+    runUpdateOnListItem();
+
+  }, [isDontRemind]);
 
   // set services checkboxes and state
   const onServicesChange = (text: string, value) => {
@@ -328,6 +433,45 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
     payload.Sectors = {results: sectorsStringArr};
     payload.OtherInterests = {results: otherInterestsStringArr};
 
+    // determine to set payload vars, alert icon, and reminder notification
+    if (
+      (fullName !== '' && fullName !== null) &&
+      (title !== '' && title !== null) &&
+      jobRoleItem.key &&
+      jobFunctionItem.key &&
+      (mailingAddress !== '' && mailingAddress !== null) &&
+      (esgInterests !== '' && esgInterests !== null) &&
+      (boardPositions !== '' && boardPositions !== null) &&
+      (passions !== '' && passions !== null) &&
+      (contacts !== '' && contacts !== null) &&
+      services.length &&
+      sectors.length &&
+      otherInterests.length
+    ) {
+      console.log('in passing block of itemID useEffect::');
+      setIsComplete(true);
+      payload.isComplete = true;
+      payload.Reminder = false;
+      showHideAlertIcon(false);
+      showHideToast(false);
+    } else {
+      console.log('in failing block of itemID useEffect::');
+      setIsComplete(false);
+      payload.isComplete = false;
+      // payload.Reminder = true;
+      showHideAlertIcon(true);
+      if (reminder) {
+        console.log('in passing block of reminder check::');
+        showHideToast(true);
+        payload.Reminder = true;
+      } else {
+        console.log('in failing block of reminder check::');
+        showHideToast(false);
+        payload.Reminder = false;
+      }
+    }
+
+
     if (!userItemData.length) {
       // add new item to list
       console.log('logging payload:: ', payload);
@@ -338,6 +482,14 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
       if (addItemResult.data) {
         setIsSubmissionSuccessful(true);
         setStatusDialogHidden(false);
+
+
+
+        const loginName = currentUser.LoginName;
+        const userItem = await hubWeb.lists.getByTitle(clientProfileListName).items.select('ID', 'Title', 'FullName', 'JobLevel', 'JobFunction', 'MailingAddress', 'BoardPositions', 'Passions', 'Services', 'Sectors', 'OtherInterests', 'ESGInterests', 'Contacts', 'UserLoginName', 'isComplete', 'Reminder').filter(`UserLoginName eq '${loginName}'`).get();
+        console.log('logging userItem:: ', userItem);
+        setUserItemData(userItem);
+
       } else {
         setIsSubmissionSuccessful(false);
         setStatusDialogHidden(false);
@@ -351,6 +503,43 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
       if (updatedItemResult.data) {
         setIsSubmissionSuccessful(true);
         setStatusDialogHidden(false);
+
+        // // testing
+        // if (
+        //   (fullName !== '' && fullName !== null) &&
+        //   (title !== '' && title !== null) &&
+        //   jobRoleItem.key &&
+        //   jobFunctionItem.key &&
+        //   (mailingAddress !== '' && mailingAddress !== null) &&
+        //   (esgInterests !== '' && esgInterests !== null) &&
+        //   (boardPositions !== '' && boardPositions !== null) &&
+        //   (passions !== '' && passions !== null) &&
+        //   (contacts !== '' && contacts !== null) &&
+        //   services.length &&
+        //   sectors.length &&
+        //   otherInterests.length
+        // ) {
+        //   console.log('in passing block of itemID useEffect::');
+        //   setIsComplete(true);
+        //   showHideAlertIcon(false);
+        //   showHideToast(false);
+        // } else {
+        //   console.log('in failing block of itemID useEffect::');
+        //   setIsComplete(false);
+        //   showHideAlertIcon(true);
+        //   if (reminder) {
+        //     console.log('in passing block of reminder check::');
+        //     showHideToast(true);
+        //   } else {
+        //     console.log('in failing block of reminder check::');
+        //     showHideToast(false);
+        //   }
+        // }
+
+        const loginName = currentUser.LoginName;
+        const userItem = await hubWeb.lists.getByTitle(clientProfileListName).items.select('ID', 'Title', 'FullName', 'JobLevel', 'JobFunction', 'MailingAddress', 'BoardPositions', 'Passions', 'Services', 'Sectors', 'OtherInterests', 'ESGInterests', 'Contacts', 'UserLoginName', 'isComplete', 'Reminder').filter(`UserLoginName eq '${loginName}'`).get();
+        console.log('logging userItem:: ', userItem);
+        setUserItemData(userItem);
       } else {
         setIsSubmissionSuccessful(false);
         setStatusDialogHidden(false);
@@ -359,11 +548,6 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
     }
 
   };
-
-  // // triggers when uer clicks Confirm button on ConfirmDialog
-  // const onConfirmSubmission = () => {
-  //   submitUserProfileInfo();
-  // };
 
   return (
     <div>
@@ -403,7 +587,7 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
               >
 
                 <Stack {...columnProps}>
-                  <TextField label="Full Name" value={fullName} required onChange={(ev, newValue) => setFullName(newValue)} errorMessage={fullName !== '' ? null : 'This field is required'} />
+                  <TextField label="Full Name" value={fullName} required onChange={(ev, newValue) => setFullName(newValue)} errorMessage={(fullName !== '' && fullName !== null) ? null : 'This field is required'} />
 
                   <Dropdown
                     label="Job Level"
@@ -536,12 +720,12 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
           </PivotItem>
         </Pivot>
         <DialogFooter>
-          <Text style={{ color: 'red' }}>{(fullName !== '' && jobRoleItem.key && jobFunctionItem.key) ? null : '*Please fill out required fields to submit'}</Text>
+          <Text style={{ color: 'red' }}>{((fullName !== '' && fullName !== null) && jobRoleItem.key && jobFunctionItem.key) ? null : '*Please fill out required fields to submit'}</Text>
           <PrimaryButton
             className={styles.primaryButton}
             onClick={() => setConfirmDialogHidden(false)}
             text="Save"
-            disabled={(fullName !== '' && jobRoleItem.key && jobFunctionItem.key) ? false : true}
+            disabled={((fullName !== '' && fullName !== null) && jobRoleItem.key && jobFunctionItem.key) ? false : true}
           />
           <DefaultButton
             className={styles.defaultButton}
