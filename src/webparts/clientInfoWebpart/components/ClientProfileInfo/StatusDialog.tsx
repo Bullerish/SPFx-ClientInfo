@@ -39,7 +39,7 @@ const StatusDialog = ({
         }}
         // styles={{ root: { maxHeight: 700 } }}
       >
-        <Stack>
+        <Stack gap={10}>
           <Stack.Item align="center">
             <Text variant="large" className={styles.subText}>
               {message}

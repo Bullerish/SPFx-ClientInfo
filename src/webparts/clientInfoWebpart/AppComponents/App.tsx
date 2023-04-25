@@ -46,8 +46,8 @@ class App extends React.Component<IApp> {
     </span>
     <div className={styles.linkContainer}>
       <Link onClick={() => this.setState({ isClientProfileInfoModalOpen: true })} className={styles.blueLink}>Profile Form</Link>
-      <Link onClick={this.onDontRemind}>Don't Remind Me</Link>
-      <Link onClick={() => toast.dismiss()}>Dismiss</Link>
+      <Link onClick={this.onDontRemind} className={styles.orangeLink}>Don't Remind Me</Link>
+      <Link onClick={() => toast.dismiss()} className={styles.orangeLink}>Dismiss</Link>
     </div>
   </div>;
 
