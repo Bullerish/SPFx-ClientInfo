@@ -301,42 +301,31 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
 
   useEffect(() => {
     const hubWeb = Web(GlobalValues.HubSiteURL);
+    const loginName = currentUser !== null ? currentUser.LoginName : null;
     console.log('running isDontRemind useEffect:: ', isDontRemind);
-    let servicesStringArr: string[] = [];
-    let sectorsStringArr: string[] = [];
-    let otherInterestsStringArr: string[] = [];
-
-    // filter on state arrs for only "checked" items, push the text of each object to the respective temp arr
-    services.filter(e => e.checked === true).forEach(e => servicesStringArr.push(e.text));
-    sectors.filter(e => e.checked === true).forEach(e => sectorsStringArr.push(e.text));
-    otherInterests.filter(e => e.checked === true).forEach(e => otherInterestsStringArr.push(e.text));
-
-    console.log('logging services arr to send in payload:: ', servicesStringArr);
-
-    // update payload props with new temp arrs from above
-    payload.Services = {results: servicesStringArr};
-    payload.Sectors = {results: sectorsStringArr};
-    payload.OtherInterests = {results: otherInterestsStringArr};
 
     const runUpdateOnListItem = async () => {
 
       if (isDontRemind && itemID === null) {
-        payload.Reminder = false;
-        const addItemResult: IItemAddResult = await hubWeb.lists.getByTitle(clientProfileListName).items.add(payload);
-
+        const addItemResult: IItemAddResult = await hubWeb.lists.getByTitle(clientProfileListName).items.add({
+          Reminder: false,
+          UserLoginName: loginName
+        });
         // TODO: check for item submission successful, then run getitembyid to fetch the newly updated list item, set the result in state var userItemData
         if (currentUser !== null && addItemResult !== null) {
-          const loginName = currentUser.LoginName;
+
           const userItem = await hubWeb.lists.getByTitle(clientProfileListName).items.select('ID', 'Title', 'FullName', 'JobLevel', 'JobFunction', 'MailingAddress', 'BoardPositions', 'Passions', 'Services', 'Sectors', 'OtherInterests', 'ESGInterests', 'Contacts', 'UserLoginName', 'isComplete', 'Reminder').filter(`UserLoginName eq '${loginName}'`).get();
           console.log('logging userItem:: ', userItem);
           setUserItemData(userItem);
         }
       } else if (isDontRemind && itemID !== null) {
-        payload.Reminder = false;
-        const updatedItemResult = await hubWeb.lists.getByTitle(clientProfileListName).items.getById(itemID).update(payload);
+        const updatedItemResult = await hubWeb.lists.getByTitle(clientProfileListName).items.getById(itemID).update({
+          Reminder: false,
+          UserLoginName: loginName
+        });
         // TODO: check for item submission successful, then run getitembyid to fetch the newly updated list item, set the result in state var userItemData
         if (currentUser !== null && updatedItemResult !== null) {
-          const loginName = currentUser.LoginName;
+
           const userItem = await hubWeb.lists.getByTitle(clientProfileListName).items.select('ID', 'Title', 'FullName', 'JobLevel', 'JobFunction', 'MailingAddress', 'BoardPositions', 'Passions', 'Services', 'Sectors', 'OtherInterests', 'ESGInterests', 'Contacts', 'UserLoginName', 'isComplete', 'Reminder').filter(`UserLoginName eq '${loginName}'`).get();
           console.log('logging userItem:: ', userItem);
           setUserItemData(userItem);
@@ -410,6 +399,141 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
     setStatusDialogHidden(true);
     setConfirmDialogHidden(true);
     onClientProfileInfoModalHide();
+  };
+
+  // resetting
+  const resetState = () => {
+    let newServices = services;
+    let newSectors = sectors;
+    let newOtherInterests = otherInterests;
+
+    if (userItemData.length) {
+      // run for update & set existing user item as state
+      setFullName(userItemData[0].FullName);
+      setTitle(userItemData[0].Title);
+      setJobRoleItem({ key: userItemData[0].JobLevel, text: userItemData[0].JobLevel });
+      setJobFunctionItem({ key: userItemData[0].JobFunction, text: userItemData[0].JobFunction });
+      setMailingAddress(userItemData[0].MailingAddress);
+      setEsgInterests(userItemData[0].ESGInterests);
+      setBoardPositions(userItemData[0].BoardPositions);
+      setPassions(userItemData[0].Passions);
+      setContacts(userItemData[0].Contacts);
+
+      // additional logic needed to set checkboxes
+      if (userItemData[0].Services) {
+        newServices.forEach(item => {if (userItemData[0].Services.indexOf(item.text) !== -1) {item.checked = true;}});
+      }
+      if (userItemData[0].Sectors) {
+        newSectors.forEach(item => {if (userItemData[0].Sectors.indexOf(item.text) !== -1) {item.checked = true;}});
+      }
+      if (userItemData[0].OtherInterests) {
+        newOtherInterests.forEach(item => {if (userItemData[0].OtherInterests.indexOf(item.text) !== -1) {item.checked = true;}});
+      }
+
+      console.log('logging Services from userItemData:: ', userItemData[0].Services);
+
+      if (userItemData[0].Services === null) {
+        setServices([
+          { text: "Accounting/Assurance", checked: false },
+          { text: "Advisory", checked: false },
+          { text: "Private Client Services", checked: false },
+          { text: "Solutions for C-Suite Executives", checked: false },
+          { text: "Tax", checked: false },
+        ]);
+      } else {
+        setServices(newServices);
+      }
+
+      if (userItemData[0].Sectors === null) {
+        setSectors([
+          { text: "Affordable Housing", checked: false },
+          { text: "Construction", checked: false },
+          { text: "Commercial Real Estate", checked: false },
+          { text: "Financial Services", checked: false },
+          { text: "Cannabis", checked: false },
+          { text: "Healthcare", checked: false },
+          { text: "Life Sciences", checked: false },
+          { text: "Manufacturing and Distribution", checked: false },
+          { text: "Not for Profit and Education", checked: false },
+          { text: "Private Equity/Other Financial Sponsors", checked: false },
+          { text: "Renewable Energy", checked: false },
+          { text: "Retail", checked: false },
+          { text: "Government Contracting", checked: false },
+          { text: "Government - Audit/Accounting", checked: false },
+          { text: "Government - Compliance and Monitoring", checked: false },
+          { text: "Government - Emergency Management", checked: false },
+        ]);
+      } else {
+        setSectors(newSectors);
+      }
+
+      if (userItemData[0].OtherInterests === null) {
+        setOtherInterests([
+          { text: "Alumni Events", checked: false },
+          { text: "CPE Offerings", checked: false },
+          { text: "Executive Women's Forum Events", checked: false },
+        ]);
+      } else {
+        setOtherInterests(newOtherInterests);
+      }
+
+      setIsComplete(userItemData[0].isComplete);
+      setReminder(userItemData[0].Reminder);
+      setItemID(userItemData[0].ID);
+
+    } else {
+      // run for new
+      setFullName('');
+      setTitle('');
+      setJobRoleItem({
+        key: undefined,
+        text: "",
+      });
+      setJobFunctionItem({
+        key: undefined,
+        text: "",
+      });
+      setMailingAddress('');
+      setEsgInterests('');
+      setBoardPositions('');
+      setPassions('');
+      setContacts('');
+
+      setServices([
+        { text: "Accounting/Assurance", checked: false },
+        { text: "Advisory", checked: false },
+        { text: "Private Client Services", checked: false },
+        { text: "Solutions for C-Suite Executives", checked: false },
+        { text: "Tax", checked: false },
+      ]);
+      setSectors([
+        { text: "Affordable Housing", checked: false },
+        { text: "Construction", checked: false },
+        { text: "Commercial Real Estate", checked: false },
+        { text: "Financial Services", checked: false },
+        { text: "Cannabis", checked: false },
+        { text: "Healthcare", checked: false },
+        { text: "Life Sciences", checked: false },
+        { text: "Manufacturing and Distribution", checked: false },
+        { text: "Not for Profit and Education", checked: false },
+        { text: "Private Equity/Other Financial Sponsors", checked: false },
+        { text: "Renewable Energy", checked: false },
+        { text: "Retail", checked: false },
+        { text: "Government Contracting", checked: false },
+        { text: "Government - Audit/Accounting", checked: false },
+        { text: "Government - Compliance and Monitoring", checked: false },
+        { text: "Government - Emergency Management", checked: false },
+      ]);
+      setOtherInterests([
+        { text: "Alumni Events", checked: false },
+        { text: "CPE Offerings", checked: false },
+        { text: "Executive Women's Forum Events", checked: false },
+      ]);
+
+    }
+
+    onClientProfileInfoModalHide();
+
   };
 
 
@@ -553,7 +677,7 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
     <div>
       <Dialog
         hidden={!isClientProfileInfoModalOpen}
-        onDismiss={onClientProfileInfoModalHide}
+        onDismiss={resetState}
         minWidth={750}
         dialogContentProps={{
           type: DialogType.normal,
@@ -729,7 +853,7 @@ const ClientProfileInfo = ({spContext, isClientProfileInfoModalOpen, onClientPro
           />
           <DefaultButton
             className={styles.defaultButton}
-            onClick={onClientProfileInfoModalHide}
+            onClick={resetState}
             text="Cancel"
           />
         </DialogFooter>
