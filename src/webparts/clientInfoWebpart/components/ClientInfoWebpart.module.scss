@@ -84,6 +84,13 @@
         }
       }
     }
+
+    .iconError {
+      color: $ms-color-error;
+      font-size: 10pt;
+      // display: inline-block;
+      // flex-grow: 1;
+    }
   }
 }
 
@@ -976,6 +983,36 @@
       }
     }
   }
+
+}
+
+.clientProfileInfo {
+
+  .marginTabsTop {
+    margin-top: 20px;
+  }
+
+  .subscriptionGuidanceText {
+    margin: 15px 0 15px 0;
+  }
+
+  .checkboxFlexStyles {
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 30px;
+    margin-top: 15px;
+    margin-bottom: 40px;
+  }
+
+  .primaryButton {
+    background-color: #0078d4;
+  }
+
+  .defaultButton {
+    background-color: #f4f4f4;
+  }
 }
 
 // Manage Alerts SCSS here
@@ -1027,6 +1064,7 @@
 
   .subText {
     flex-grow: 1;
+    margin-bottom: 15px;
   }
 
   .iconSuccess {
@@ -1043,5 +1081,48 @@
     flex-grow: 1;
   }
 
+  .primaryButton {
+    background-color: #0078d4;
+  }
 
+  .defaultButton {
+    background-color: #f4f4f4;
+  }
+
+
+}
+
+.toastReminder {
+
+
+  .linkContainer {
+    // style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', gap: 10, marginTop: '10px' }}
+    display: flex;
+    justify-content: 'space-around';
+    align-items: center;
+    gap: 10;
+    margin-top: 10px;
+  }
+
+  .blueLink {
+    color: #0078d7;
+  }
+
+  .orangeLink {
+    color: #f57b20;
+  }
+
+
+}
+
+.toastContainer {
+  // border-top: 4px solid #f57b20;
+  .toastBorderTop {
+    border-top: 4px solid #f57b20;
+  }
+
+  .alertIcon {
+    color: #f57b20;
+    font-size: 20pt;
+  }
 }
