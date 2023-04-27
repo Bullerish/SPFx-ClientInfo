@@ -394,13 +394,13 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         let obj = new ClientInfoClass();
         let _ServiceType = [];
         obj.GetServiceTypes().then((results) => {
-          console.log('logging getservicetypes before sort: ', results);
+
             results = results
                 .slice(0)
                 .sort((a, b) =>
                     (false ? a["TemplateTypeOrder"] < b["TemplateTypeOrder"] : a["TemplateTypeOrder"] > b["TemplateTypeOrder"]) ? 1 : -1);
 
-                console.log('logging getservicetypes after sort: ', results);
+
 
             results.forEach((element) => {
                 if ((element.Title).toLowerCase() == (this.state.TeamSelected).toLowerCase()) {
@@ -459,11 +459,14 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
     public checkEngagement = async (portalsCreated) => {
       console.log('checkEngagement fired::');
-      console.log('logging PortalTypeURL state::', this.state.PortalTypeURL);
+
         if (portalsCreated != null) {
+          console.log('in if statement portalsCreated !== null');
             let finalPortalTypeValue = portalsCreated.split(",");
             let engagementExists = false;
             for (var i = 0; i < finalPortalTypeValue.length; i++) {
+              console.log('log current finalPortalTypeValue[i]', finalPortalTypeValue[i]);
+              console.log('log current this.state.PortalTypeURL', this.state.PortalTypeURL);
                 if (finalPortalTypeValue[i] == this.state.PortalTypeURL) {
                     engagementExists = true;
                 }
@@ -963,8 +966,10 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         let hubWeb = Web(GlobalValues.HubSiteURL);
         if (Isnextyear == true) {
           console.log('in Isnextyear condition in Rollover func::');
+          console.log('logging EngagementNumberSelected:: ', this.state.EngagementNumberSelected);
             await hubWeb.lists.getByTitle(GlobalValues.EngagementPortalList).items.filter("EngagementNumberEndZero eq '" + this.state.EngagementNumberSelected + "'").getAll().then((data) => {
                 data = data.filter(e => e.PortalExist == true && e.ClientNumber == CRN && e.PortalType == PortalType && e.Team == Team);
+                console.log('logging data from engagement portal list:: ', data);
                 let eng = this.state.UpdatedEngagementNumberSelected.slice(-2);
                 let e1 = parseInt(eng) - 1;
                 let str1 = this.state.UpdatedEngagementNumberSelected.slice(0, -2) + e1.toString();
@@ -997,8 +1002,11 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         else {
           console.log('in else block of Rollover func::');
             let eng = this.state.EngagementNumberSelected.slice(-2);
+            console.log('logging engagement number slice value:: ', eng);
             let e1 = parseInt(eng) - 1;
+            console.log('logging e1 parseInt on eng:: ', e1);
             let str1 = this.state.EngagementNumberSelected.slice(0, -2) + e1.toString();
+            console.log('logging str1 value:: ', str1);
 
             await hubWeb.lists.getByTitle(GlobalValues.EngagementPortalList).items.filter("Title eq '" + str1 + "'").getAll().then((data) => {
                 data = data.filter(e => e.PortalExist == true && e.ClientNumber == CRN && e.PortalType == PortalType && e.Team == Team);
@@ -1070,7 +1078,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     private _validateSiteOwner(items: any[]) {
-      console.log('in validateSiteOwner func::');
         // show error message if this is a guest user
         let userEmail = items[0].secondaryText.toLowerCase();
         if ((userEmail.indexOf('cohnreznick.com') == -1) && (userEmail.indexOf('cohnreznickdev') == -1)) {
@@ -1717,7 +1724,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
                             {this.state.currentScreen == 'screen2' ?
                                 <div className={styles.screenTwo}>
-                                    {console.log('logging serviceTypeSelected state:: ', this.state.ServiceTypeSelected)}
                                     {this.state.showMessageBar && <OfficeUI.MessageBar
                                         messageBarType={this.state.MessageBarType}
                                         isMultiline={false}
@@ -1795,7 +1801,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
                             {this.state.currentScreen == 'screen3' ?
                                 <div className={styles.screenThree}>
-                                  {console.log('logging validate state on screen 3 render:: ', this.state.validate)}
+
                                     <div className={styles.freshRollover}>
                                         <div className={styles.engnumbername}>
                                             <div className={styles.engagementnames}>
@@ -2094,8 +2100,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                 </div> : ""}
                                         </div>
                                         <div className={styles.pnppicker}>
-                                            {console.log('logging addusers1 state:: ', this.state.addusers1)}
-                                            {console.log('logging AccessUserList state:: ', this.state.AccessUserList)}
+
                                             <PeoplePicker
                                                 context={this.props.spContext}
                                                 titleText={this.state.peoplePickerTitle}
@@ -2606,7 +2611,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     private submitDialog = async (e) => {
-      console.log('in submitDialog logging this.state.AdvisoryTemplate', this.state.AdvisoryTemplate);
 
         if (this.state.currentScreen == "screen1") {
             if (this.state.EngagementNumberSelected == "" || this.state.addusers.length == 0
@@ -2666,8 +2670,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             }
         } else if (this.state.currentScreen == "screen2") {
           console.log('in submitDialog screen2 ::');
-          console.log('logging  this.state.addusers ::', this.state.addusers);
-          console.log('logging  this.state.PortalChoiceSelected ::', this.state.PortalChoiceSelected);
+
             if (this.state.addusers.length == 0 || this.state.PortalChoiceSelected == "") {
                 this.setState({
                     validate: true

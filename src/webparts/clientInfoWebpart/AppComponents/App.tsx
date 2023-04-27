@@ -32,7 +32,8 @@ class App extends React.Component<IApp> {
     isClientProfileInfoModalOpen: false,
     isAlertIconShown: true,
     isToastShown: false,
-    isDontRemind: false
+    isDontRemind: false,
+    isExternalUser: null
   };
 
   public onDontRemind = () => {
@@ -63,6 +64,17 @@ class App extends React.Component<IApp> {
         this.ShowHideErrorDialog(true);
       });
 
+      // logic to determine whether or not "My Profile Information" will appear
+      console.log('logging spContext:: ', this.props.spContext.pageContext.user);
+      let user: string = this.props.spContext.pageContext.user.loginName;
+      console.log('logging spContext:: ', user.toLowerCase().indexOf('@cohnreznickdev'));
+
+      if (user.toLowerCase().indexOf('@cohnreznick') === -1 || user.toLowerCase().indexOf('@cohnreznickdev') === -1) {
+        this.setState({ isExternalUser: true });
+      } else {
+        this.setState({ isExternalUser: false });
+      }
+
   }
 
   // event handlers to show hide Client Profile Information
@@ -81,7 +93,7 @@ class App extends React.Component<IApp> {
 
   // show/hide Manage Alerts Modal
   public showHideAlertsModal = (isVisible: boolean) => {
-    this.setState({ isAlertModalOpen: isVisible });
+      this.setState({ isAlertModalOpen: isVisible });
   }
 
   public OnModalHide = () => {
@@ -94,7 +106,7 @@ class App extends React.Component<IApp> {
   }
 
   public showHideToast = (isVisible: boolean) => {
-    console.log('in showHideToast func, value of isVisible is: ', isVisible);
+    // console.log('in showHideToast func, value of isVisible is: ', isVisible);
     if (isVisible) {
       toast(
         this.reminderToast,
@@ -105,7 +117,7 @@ class App extends React.Component<IApp> {
         }
       );
     } else {
-      console.log('in else block of showHideToast func, dismissing toast');
+      // console.log('in else block of showHideToast func, dismissing toast');
       toast.dismiss();
     }
   }
@@ -130,11 +142,16 @@ class App extends React.Component<IApp> {
     var url = window.location.href;
     let IsPermissionPage = false;
     if (url.indexOf(GlobalValues.PermissionPage) > -1) IsPermissionPage = true;
+
+
+
     return (
       <React.Fragment>
-        <Toaster position="top-right" containerClassName={styles.toastContainer} toastOptions={{
-          className: styles.toastBorderTop
-         }} />
+        {this.state.isExternalUser &&
+          <Toaster position="top-right" containerClassName={styles.toastContainer} toastOptions={{
+            className: styles.toastBorderTop
+          }} />
+        }
         <div className={styles.clientInfoWebpart}>
           <div className={styles.engagementTeam}>
             <div className={styles.clientHeading}>
@@ -149,6 +166,7 @@ class App extends React.Component<IApp> {
               <div className={styles.manageSubportal}>
                 {IsPermissionPage == false ? (
                   <div className={styles.flexinncontainer}>
+                    {this.state.isExternalUser &&
                     <div>
                       {/* TODO: implement and set state for alretsolid item. Make sure to pass down props that factor state */}
                       {this.state.isAlertIconShown ?
@@ -164,6 +182,7 @@ class App extends React.Component<IApp> {
                         My Profile Information
                       </Link>
                     </div>
+                    }
                     <div>
                       <Link
                         href={"#"}
