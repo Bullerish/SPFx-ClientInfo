@@ -458,15 +458,15 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     public checkEngagement = async (portalsCreated) => {
-      console.log('checkEngagement fired::');
+      // console.log('checkEngagement fired::');
 
         if (portalsCreated != null) {
-          console.log('in if statement portalsCreated !== null');
+          // console.log('in if statement portalsCreated !== null');
             let finalPortalTypeValue = portalsCreated.split(",");
             let engagementExists = false;
             for (var i = 0; i < finalPortalTypeValue.length; i++) {
-              console.log('log current finalPortalTypeValue[i]', finalPortalTypeValue[i]);
-              console.log('log current this.state.PortalTypeURL', this.state.PortalTypeURL);
+              // console.log('log current finalPortalTypeValue[i]', finalPortalTypeValue[i]);
+              // console.log('log current this.state.PortalTypeURL', this.state.PortalTypeURL);
                 if (finalPortalTypeValue[i] == this.state.PortalTypeURL) {
                     engagementExists = true;
                 }
@@ -535,9 +535,12 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 });
                 let EngagementNumberEndZero = item.name.slice(-2);
                 if (EngagementNumberEndZero == "00") {
+                  console.log('setting updatedworkyear to true');
                     updatedworkyear = true;
                 }
                 else {
+                  console.log('setting updatedworkyear to false');
+
                     updatedworkyear = false;
                 }
                 Engagementdata.filter(async (e) => {
@@ -964,12 +967,18 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         let PortalType = this.state.PortalTypeSelected;
         let Team = this.state.TeamSelected;
         let hubWeb = Web(GlobalValues.HubSiteURL);
+        console.log('logging Isnextyear:: ', Isnextyear);
         if (Isnextyear == true) {
           console.log('in Isnextyear condition in Rollover func::');
           console.log('logging EngagementNumberSelected:: ', this.state.EngagementNumberSelected);
             await hubWeb.lists.getByTitle(GlobalValues.EngagementPortalList).items.filter("EngagementNumberEndZero eq '" + this.state.EngagementNumberSelected + "'").getAll().then((data) => {
+                // console.log('logging data before filter:: ', data);
+                // console.log('logging CRN:: ', CRN);
+                // console.log('logging PortalType:: ', PortalType);
+                // console.log('logging Team:: ', Team);
+
                 data = data.filter(e => e.PortalExist == true && e.ClientNumber == CRN && e.PortalType == PortalType && e.Team == Team);
-                console.log('logging data from engagement portal list:: ', data);
+                console.log('logging data after filter:: ', data);
                 let eng = this.state.UpdatedEngagementNumberSelected.slice(-2);
                 let e1 = parseInt(eng) - 1;
                 let str1 = this.state.UpdatedEngagementNumberSelected.slice(0, -2) + e1.toString();
@@ -1003,12 +1012,26 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
           console.log('in else block of Rollover func::');
             let eng = this.state.EngagementNumberSelected.slice(-2);
             console.log('logging engagement number slice value:: ', eng);
+
+
+            if (updatedworkyear) {
+              console.log('logging UpdatedEngagementNumberSelected:: ', this.state.UpdatedEngagementNumberSelected);
+            } else {
+              console.log('logging EngagementNumberSelected:: ', this.state.EngagementNumberSelected);
+            }
+
+            if (eng == '00') {
+              eng = this.state.UpdatedEngagementNumberSelected.slice(-2);
+              console.log(eng);
+            }
+
             let e1 = parseInt(eng) - 1;
             console.log('logging e1 parseInt on eng:: ', e1);
             let str1 = this.state.EngagementNumberSelected.slice(0, -2) + e1.toString();
             console.log('logging str1 value:: ', str1);
 
             await hubWeb.lists.getByTitle(GlobalValues.EngagementPortalList).items.filter("Title eq '" + str1 + "'").getAll().then((data) => {
+              console.log('logging data from call to Engagement Portal List:: ', data);
                 data = data.filter(e => e.PortalExist == true && e.ClientNumber == CRN && e.PortalType == PortalType && e.Team == Team);
                 if (data.length != 0) {
                     let WorkYear = parseInt(data[0].WorkYear);
@@ -1063,6 +1086,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     private _getPeoplePickerItems(items: any[]) {
+      console.log('in _getPeoplePickerItems func::');
         const currSite = Web(GlobalValues.HubSiteURL);
         let getSelectedUsers = [];
         let getusersEmails = [];
@@ -1079,13 +1103,17 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
     private _validateSiteOwner(items: any[]) {
         // show error message if this is a guest user
+      if (items.length > 0) {
         let userEmail = items[0].secondaryText.toLowerCase();
         if ((userEmail.indexOf('cohnreznick.com') == -1) && (userEmail.indexOf('cohnreznickdev') == -1)) {
-            // this is a guest user, do not validate
+          // this is a guest user, do not validate
+          this.setState({ addusers: [] });
+        } else {
+          this._getPeoplePickerItems(items);
         }
-        else {
-            this._getPeoplePickerItems(items);
-        }
+      } else {
+        this.setState({ addusers: [] });
+      }
     }
 
     // validate the user is a CR user:
@@ -1462,16 +1490,21 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     public onChangeYear = (event, item) => {
+      console.log('in onChangeYear func::');
         if (item) {
             this.setState({ Year: item.key });
 
             if (updatedworkyear == true) {
+              console.log('in updatedworkyear if statement::');
                 Isnextyear = false;
                 let hubWeb = Web(GlobalValues.HubSiteURL);
                 hubWeb.lists.getByTitle(GlobalValues.EngagementPortalList).items.filter("EngagementNumberEndZero eq '" + this.state.EngagementNumberSelected + "'").getAll().then((data) => {
                     let data1 = data.filter(e => e.WorkYear == item.key && e.ClientNumber == CRN && e.PortalType == this.state.PortalTypeSelected && e.Team == this.state.TeamSelected);
                     let data2 = data.filter(e => e.WorkYear == parseInt(item.key) - 1 && e.ClientNumber == CRN && e.PortalType == this.state.PortalTypeSelected && e.Team == this.state.TeamSelected);
+                    console.log('logging data2:: ', data2);
                     let data3 = data.filter(e => e.WorkYear == parseInt(item.key) - 1 && e.ClientNumber == CRN && e.PortalType == this.state.PortalTypeSelected && e.Team == this.state.TeamSelected && e.SplitSuffix != "");
+                    console.log('logging data2:: ', data3);
+
                     if (data1.length > 0) {
                         let ErrorMessage = "You can not create same engagement number " + this.state.EngagementNumberSelected + " for " + this.state.PortalTypeSelected + " (Year:" + item.key + ")";
                         this.setState({ Message: ErrorMessage, showMessageBar: true, MessageBarType: OfficeUI.MessageBarType.error, Checkeng: false, disableBtn: true, });
@@ -1479,20 +1512,29 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                     }
                     else {
                         if (data2.length == 1) {
+                          console.log('in if data2.length == 1');
                             let rolloveryear = parseInt(data2[0].WorkYear) + 1;
                             if (rolloveryear == item.key) {
+                              console.log('setting Isnextyear = true');
                                 Isnextyear = true;
                             }
                             else {
+                              console.log('setting Isnextyear = false');
+
                                 Isnextyear = false;
                             }
                         }
                         else if (data3.length >= 1) {
+                          console.log('in if data3.length >= 1');
                             let rolloveryear = parseInt(data3[0].WorkYear) + 1;
                             if (rolloveryear == item.key) {
+                              console.log('setting Isnextyear = true');
+
                                 Isnextyear = true;
                             }
                             else {
+                              console.log('setting Isnextyear = false');
+
                                 Isnextyear = false;
                             }
                         }
@@ -1710,6 +1752,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                             {(this.state.validate && this.state.addusers.length == 0) ?
                                                 <div className={styles.reqval}>Site Owner is mandatory and must be a CohnReznick employee.</div> : ''
                                             }
+                                            {console.log('in JSX: logging validate state:: ', this.state.validate)}
+                                            {console.log('in JSX: logging addusers state:: ', this.state.addusers)}
                                         </div>
                                     </div>
                                     {this.state.showMessageBar && <OfficeUI.MessageBar
@@ -1772,7 +1816,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                     </div>
                                     <Stack horizontal gap={20} className="portalChoice">
                                         {/* TODO: disable Rollover option if serviceTypeSelected !== starts with Request List */}
-                                        {(this.state.TeamSelected === 'Advisory' && this.state.PortalTypeSelected === 'Workflow') && !(this.state.ServiceTypeSelected === 'Request List - ASR' || this.state.ServiceTypeSelected === 'Request List - ICS' || this.state.ServiceTypeSelected === 'Request List - Proposal' || this.state.ServiceTypeSelected === 'Request List - SF 1408') ?
+                                        {(this.state.TeamSelected === 'Advisory' && this.state.PortalTypeSelected === 'Workflow') && !(this.state.ServiceTypeSelected.toLowerCase().indexOf('request list') > -1) ?
                                         <ChoiceGroup
                                             className={styles.innerChoice}
                                             options={PortalChoiceOptions1}
@@ -2613,16 +2657,19 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     private submitDialog = async (e) => {
 
         if (this.state.currentScreen == "screen1") {
+          console.log('in submitDialog screen1::');
             if (this.state.EngagementNumberSelected == "" || this.state.addusers.length == 0
                 || this.state.Year == null || this.state.PortalTypeSelected == ""
                 || (this.state.TeamSelected == "" && this.state.PortalTypeSelected == 'K1')
             ) {
+              console.log('setting validate state to true');
                 this.setState({
                     validate: true
                 });
 
             } else {
                 this.checkEngagement(this.state.PortalsCreated);
+                // console.log('calling this.newEngagementNumber()');
                 this.newEngagementNumber();
                 if (this.state.PortalTypeSelected == 'K1' && this.state.Checkeng == true) {
                     this.setState({
