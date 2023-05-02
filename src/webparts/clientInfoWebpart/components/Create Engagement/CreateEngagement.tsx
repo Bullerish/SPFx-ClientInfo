@@ -2259,7 +2259,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                     <div className={styles.formcontrols}>
                                         <Label>The following users will automatically have access:</Label>
                                         <div className={styles.usersemail}>{this.state.emailaddress}</div>
-                                                {console.log('logging emailaddress:: ', this.state.emailaddress)}
 
                                         {this.state.PortalChoiceSelected == 'Create New' ?
                                             <div>
