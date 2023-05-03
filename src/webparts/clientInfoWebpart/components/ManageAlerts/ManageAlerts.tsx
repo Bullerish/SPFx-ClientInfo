@@ -639,9 +639,15 @@ const ManageAlerts = ({
         // styles={{ root: { maxHeight: 700 } }}
       >
         <div className={styles.addDetailsListContainerStyles}>
+          <div className={styles.guidanceText}>
+            <span>
+              Parent level alerts can only be created for File Exchange and Workflow subportals
+            </span>
+          </div>
           <Text variant="mediumPlus">
             Sub-Portals staged for alert creation:
           </Text>
+
           {itemsToBeAddedForAlerts.length !== 0 &&
           <MarqueeSelection selection={selectionForAlertsToAdd}>
             <DetailsList
