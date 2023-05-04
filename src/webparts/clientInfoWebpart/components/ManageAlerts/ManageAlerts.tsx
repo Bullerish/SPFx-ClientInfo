@@ -429,46 +429,46 @@ const ManageAlerts = ({
   };
 
   // checks for UserAlertsList, if it doesn't exist it gets created then columns will be added
-  const ensureAlertsListExists = async () => {
-    // console.log(selectionDetails);
-    let hubWeb = Web(GlobalValues.HubSiteURL);
-    const alertsListEnsureResult = await hubWeb.lists.ensure(userAlertsList);
+  // const ensureAlertsListExists = async () => {
+  //   // console.log(selectionDetails);
+  //   let hubWeb = Web(GlobalValues.HubSiteURL);
+  //   const alertsListEnsureResult = await hubWeb.lists.ensure(userAlertsList);
 
-    if (alertsListEnsureResult.created) {
-      console.log("list was created somewhere!!!!!");
+  //   if (alertsListEnsureResult.created) {
+  //     console.log("list was created somewhere!!!!!");
 
-      // since list was newly created, need to add all the relevant columns/fields
-      const alertsToAddField: IFieldAddResult = await hubWeb.lists
-        .getByTitle(userAlertsList)
-        .fields.addMultilineText("AlertsToAdd", 6, true, false, false, true);
-      const alertsToDeleteField: IFieldAddResult = await hubWeb.lists
-        .getByTitle(userAlertsList)
-        .fields.addMultilineText("AlertsToDelete", 6, true, false, false, true);
-      const UserPrincipalNameField: IFieldAddResult = await hubWeb.lists
-        .getByTitle(userAlertsList)
-        .fields.addText("UserPrincipalName", 255);
-      const absoluteURLField: IFieldAddResult = await hubWeb.lists
-        .getByTitle(userAlertsList)
-        .fields.addText("AbsoluteUrl", 255);
-      const alertTypeField: IFieldAddResult = await hubWeb.lists
-        .getByTitle(userAlertsList)
-        .fields.addText("AlertType", 255);
-      const alertFrequencyField: IFieldAddResult = await hubWeb.lists
-        .getByTitle(userAlertsList)
-        .fields.addText("AlertFrequency", 255);
-      const timeDayField: IFieldAddResult = await hubWeb.lists
-        .getByTitle(userAlertsList)
-        .fields.addText("TimeDay", 255);
-      const timeTimeField: IFieldAddResult = await hubWeb.lists
-        .getByTitle(userAlertsList)
-        .fields.addText("TimeTime", 255);
+  //     // since list was newly created, need to add all the relevant columns/fields
+  //     const alertsToAddField: IFieldAddResult = await hubWeb.lists
+  //       .getByTitle(userAlertsList)
+  //       .fields.addMultilineText("AlertsToAdd", 6, true, false, false, true);
+  //     const alertsToDeleteField: IFieldAddResult = await hubWeb.lists
+  //       .getByTitle(userAlertsList)
+  //       .fields.addMultilineText("AlertsToDelete", 6, true, false, false, true);
+  //     const UserPrincipalNameField: IFieldAddResult = await hubWeb.lists
+  //       .getByTitle(userAlertsList)
+  //       .fields.addText("UserPrincipalName", 255);
+  //     const absoluteURLField: IFieldAddResult = await hubWeb.lists
+  //       .getByTitle(userAlertsList)
+  //       .fields.addText("AbsoluteUrl", 255);
+  //     const alertTypeField: IFieldAddResult = await hubWeb.lists
+  //       .getByTitle(userAlertsList)
+  //       .fields.addText("AlertType", 255);
+  //     const alertFrequencyField: IFieldAddResult = await hubWeb.lists
+  //       .getByTitle(userAlertsList)
+  //       .fields.addText("AlertFrequency", 255);
+  //     const timeDayField: IFieldAddResult = await hubWeb.lists
+  //       .getByTitle(userAlertsList)
+  //       .fields.addText("TimeDay", 255);
+  //     const timeTimeField: IFieldAddResult = await hubWeb.lists
+  //       .getByTitle(userAlertsList)
+  //       .fields.addText("TimeTime", 255);
 
-      addUserAlertsListItem();
-    } else {
-      console.log("list already existed!!!");
-      addUserAlertsListItem();
-    }
-  };
+  //     addUserAlertsListItem();
+  //   } else {
+  //     console.log("list already existed!!!");
+  //     addUserAlertsListItem();
+  //   }
+  // };
 
   // logic to process for determining if existing alerts are to be deleted
   const factorAlertsToDelete = (): void => {
@@ -867,7 +867,7 @@ const ManageAlerts = ({
           </div>
         )}
         <DialogFooter>
-          <PrimaryButton onClick={ensureAlertsListExists} text="Confirm" />
+          <PrimaryButton onClick={addUserAlertsListItem} text="Confirm" />
           <DefaultButton
             onClick={() => setIsConfirmationHidden(true)}
             text="Cancel"
