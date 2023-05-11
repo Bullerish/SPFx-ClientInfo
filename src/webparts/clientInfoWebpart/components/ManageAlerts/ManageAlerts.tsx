@@ -77,6 +77,9 @@ const ManageAlerts = ({
   const [itemsToBeAddedForAlerts, setItemsToBeAddedForAlerts] = useState<
     ISubWeb[]
   >([]);
+  const [existingAlertItems, setExistingAlertItems] = useState<
+    ISubWeb[]
+  >([]);
   // const [selectionDetails, setSelectionDetails] = useState<any>([]);
   const [alertSelectedSubPortals, setAlertSelectedSubPortals] = useState<
     ISubWeb[]
@@ -119,7 +122,7 @@ const ManageAlerts = ({
   let columns: IColumn[] = [
     {
       key: "column1",
-      name: "Sub-Portal Name",
+      name: "Engagement Name",
       fieldName: "Title",
       minWidth: 100,
       maxWidth: 200,
@@ -146,7 +149,7 @@ const ManageAlerts = ({
   let columnsAlt: IColumn[] = [
     {
       key: "column1",
-      name: "Sub-Portal Name",
+      name: "Engagement Name",
       fieldName: "Title",
       minWidth: 100,
       maxWidth: 200,
@@ -172,6 +175,7 @@ const ManageAlerts = ({
 
   let selection: Selection;
   let selectionForAlertsToAdd: Selection;
+  let selectionForExistingAlerts: Selection;
 
   // useEffect to get Subwebs
   //
@@ -290,7 +294,7 @@ const ManageAlerts = ({
 
               if (
                 (subPortalType === "AUD-WF" || subPortalType === "TAX-WF") &&
-                alert.d.results.length === 3
+                alert.d.results.length > 1
               ) {
                 // alertsToSet.push(item.Id);
                 // testing creating existing alert array
@@ -306,7 +310,7 @@ const ManageAlerts = ({
                 });
               } else if (
                 subPortalType === "AUD-FE" /* || subPortalType === "ADV-FE"*/ &&
-                alert.d.results.length === 1
+                alert.d.results.length > 1
               ) {
                 // alertsToSet.push(item.Id);
                 existingAlerts.push({
@@ -324,7 +328,8 @@ const ManageAlerts = ({
               alertsArrayInfo.push(alert);
 
               setAlertSelectedSubPortals(existingAlerts); //alertsToSet
-              setItemsToBeAddedForAlerts(existingAlerts); //alertsToSet
+              // setItemsToBeAddedForAlerts(existingAlerts); //alertsToSet
+              setExistingAlertItems(existingAlerts);
             }
           })
           .catch((error) => {
@@ -354,15 +359,6 @@ const ManageAlerts = ({
       setItems(output);
     }
   }, [isAlertModalOpen]);
-
-  // useEffect(() => {
-  //   if (!itemsToBeAddedForAlerts.length) {
-  //     selectionForAlertsToAdd = new Selection({
-  //       onSelectionChanged: () => transferToMainDetailsList(),
-  //       getKey: (item: any) => item.key,
-  //     });
-  //   }
-  // }, [itemsToBeAddedForAlerts]);
 
   // adds listItem either by updating the record or adding a new one if it doesn't already exist for the user
   const addUserAlertsListItem = async () => {
@@ -428,62 +424,21 @@ const ManageAlerts = ({
     // console.log("itemAddResult: ", itemAddResult);
   };
 
-  // checks for UserAlertsList, if it doesn't exist it gets created then columns will be added
-  // const ensureAlertsListExists = async () => {
-  //   // console.log(selectionDetails);
-  //   let hubWeb = Web(GlobalValues.HubSiteURL);
-  //   const alertsListEnsureResult = await hubWeb.lists.ensure(userAlertsList);
-
-  //   if (alertsListEnsureResult.created) {
-  //     console.log("list was created somewhere!!!!!");
-
-  //     // since list was newly created, need to add all the relevant columns/fields
-  //     const alertsToAddField: IFieldAddResult = await hubWeb.lists
-  //       .getByTitle(userAlertsList)
-  //       .fields.addMultilineText("AlertsToAdd", 6, true, false, false, true);
-  //     const alertsToDeleteField: IFieldAddResult = await hubWeb.lists
-  //       .getByTitle(userAlertsList)
-  //       .fields.addMultilineText("AlertsToDelete", 6, true, false, false, true);
-  //     const UserPrincipalNameField: IFieldAddResult = await hubWeb.lists
-  //       .getByTitle(userAlertsList)
-  //       .fields.addText("UserPrincipalName", 255);
-  //     const absoluteURLField: IFieldAddResult = await hubWeb.lists
-  //       .getByTitle(userAlertsList)
-  //       .fields.addText("AbsoluteUrl", 255);
-  //     const alertTypeField: IFieldAddResult = await hubWeb.lists
-  //       .getByTitle(userAlertsList)
-  //       .fields.addText("AlertType", 255);
-  //     const alertFrequencyField: IFieldAddResult = await hubWeb.lists
-  //       .getByTitle(userAlertsList)
-  //       .fields.addText("AlertFrequency", 255);
-  //     const timeDayField: IFieldAddResult = await hubWeb.lists
-  //       .getByTitle(userAlertsList)
-  //       .fields.addText("TimeDay", 255);
-  //     const timeTimeField: IFieldAddResult = await hubWeb.lists
-  //       .getByTitle(userAlertsList)
-  //       .fields.addText("TimeTime", 255);
-
-  //     addUserAlertsListItem();
-  //   } else {
-  //     console.log("list already existed!!!");
-  //     addUserAlertsListItem();
-  //   }
-  // };
 
   // logic to process for determining if existing alerts are to be deleted
   const factorAlertsToDelete = (): void => {
-    console.log("itemsToBeAdded count: ", itemsToBeAddedForAlerts.length);
+    // console.log("itemsToBeAdded count: ", itemsToBeAddedForAlerts.length);
 
-    const output: any[] = alertSelectedSubPortals.filter((obj1) => {
-      return !itemsToBeAddedForAlerts.some((obj2) => {
-        return obj1.key === obj2.key;
-      });
-    });
+    // const output: any[] = alertSelectedSubPortals.filter((obj1) => {
+    //   return !itemsToBeAddedForAlerts.some((obj2) => {
+    //     return obj1.key === obj2.key;
+    //   });
+    // });
 
-    // console.log("logging alertSelectedSubPortals: ", alertSelectedSubPortals);
-
-    console.log("itemsToDelete: ", output);
-    setAlertsToDelete(output);
+    // // console.log("logging alertSelectedSubPortals: ", alertSelectedSubPortals);
+    console.log('logging alertsToDelete:: ', alertsToDelete);
+    // console.log("itemsToDelete: ", output);
+    // setAlertsToDelete(output);
     setIsConfirmationHidden(false);
   };
 
@@ -600,6 +555,12 @@ const ManageAlerts = ({
     setItems(output);
   };
 
+  const onHandleExistingAlertsSelection = () => {
+    const engagementsToDelete: any[] = selectionForExistingAlerts.getSelection();
+
+    setAlertsToDelete(engagementsToDelete);
+  };
+
   // once user clicks close or x on statusDialog, we close all dialogs/modals and reset state
   const onSetStatusDialogHidden = () => {
     setStatusDialogHidden(true);
@@ -620,12 +581,17 @@ const ManageAlerts = ({
     getKey: (item: any) => item.key,
   });
 
+  selectionForExistingAlerts = new Selection({
+    onSelectionChanged: () => onHandleExistingAlertsSelection(),
+    getKey: (item: any) => item.key,
+  });
+
   return (
     <div>
       <Dialog
         hidden={!isAlertModalOpen}
         onDismiss={onSetStatusDialogHidden}
-        minWidth={960}
+        minWidth={1024}
         dialogContentProps={{
           type: DialogType.normal,
           title: "Alerts Management",
@@ -638,14 +604,19 @@ const ManageAlerts = ({
         }}
         // styles={{ root: { maxHeight: 700 } }}
       >
-        <div className={styles.addDetailsListContainerStyles}>
+        <>
+
           <div className={styles.guidanceText}>
             <span>
               Parent level alerts can only be created for File Exchange and Workflow subportals
             </span>
           </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+
+          <div className={styles.addDetailsListContainerStyles}>
           <Text variant="mediumPlus">
-            Sub-Portals staged for alert creation:
+            Select parent level alerts:
           </Text>
 
           {itemsToBeAddedForAlerts.length !== 0 &&
@@ -672,14 +643,52 @@ const ManageAlerts = ({
             />
           </MarqueeSelection>
           }
-        </div>
+          </div>
+          {/* this is the new existing alerts detailsList component */}
+          <div className={styles.addDetailsListContainerStyles}>
+          <Text variant="mediumPlus">
+            Existing Alerts (select items below to delete when saving):
+          </Text>
+
+          {existingAlertItems.length !== 0 &&
+          <MarqueeSelection selection={selectionForExistingAlerts}>
+            <DetailsList
+              items={existingAlertItems}
+              columns={columns}
+              checkboxVisibility={CheckboxVisibility.onHover}
+              setKey="set"
+              // onDidUpdate={handleNoItemsChecked}
+              // onActiveItemChanged={onActiveItemChanged}
+              onShouldVirtualize={() => false}
+              // selectionMode={!itemsToBeAddedForAlerts.length ? SelectionMode.single: SelectionMode.multiple}
+              selectionMode={SelectionMode.multiple}
+              // styles={{ root: { height: "500px" } }}
+              layoutMode={DetailsListLayoutMode.justified}
+              constrainMode={1}
+              selection={selectionForExistingAlerts}
+              selectionPreservedOnEmptyClick={true}
+              ariaLabelForSelectionColumn="Toggle selection"
+              ariaLabelForSelectAllCheckbox="Toggle selection for all items"
+              checkButtonAriaLabel="Row checkbox"
+              // onItemInvoked={onItemInvoked}
+              />
+          </MarqueeSelection>
+          }
+          </div>
+
+          </div>
+
+        </>
+
+
+
         <TextField
-          label="Filter by Sub-Portal Name:"
+          label="Filter by Engagement Name:"
           onChange={onChangeFilterText}
           className={styles.filterControlStyles}
         />
         <Text variant="mediumPlus">
-          Select Sub-Portals below to stage for alerts:
+          Select Engagements below to stage for alerts:
         </Text>
         <div className={styles.detailsListContainerStyles}>
         {items.length !== 0 &&
