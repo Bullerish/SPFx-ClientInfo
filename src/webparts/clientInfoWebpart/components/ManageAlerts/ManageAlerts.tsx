@@ -616,7 +616,7 @@ const ManageAlerts = ({
 
           <div className={styles.addDetailsListContainerStyles}>
           <Text variant="mediumPlus">
-            Select parent level alerts:
+            Selected parent level alerts:
           </Text>
 
           {itemsToBeAddedForAlerts.length !== 0 &&
@@ -804,7 +804,7 @@ const ManageAlerts = ({
           />
         </div>
         <DialogFooter>
-          <PrimaryButton onClick={factorAlertsToDelete} text="Save Alerts" />
+          <PrimaryButton onClick={factorAlertsToDelete} text="Save" />
           <DefaultButton onClick={onSetStatusDialogHidden} text="Cancel" />
         </DialogFooter>
       </Dialog>
