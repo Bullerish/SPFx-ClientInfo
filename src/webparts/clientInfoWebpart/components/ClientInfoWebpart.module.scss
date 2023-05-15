@@ -1021,7 +1021,13 @@
 
   .addDetailsListContainerStyles {
     height: 250px;
+    width: 49%;
     overflow-y: scroll;
+  }
+
+  .topContainer {
+    display: flex;
+    justify-content: space-between;
   }
 
   .detailsListContainerStyles {
