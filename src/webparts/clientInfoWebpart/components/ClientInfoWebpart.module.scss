@@ -1025,6 +1025,11 @@
     overflow-y: scroll;
   }
 
+  .topContainer {
+    display: flex;
+    justify-content: space-between;
+  }
+
   .detailsListContainerStyles {
     max-height: 400px;
     overflow-y: scroll;

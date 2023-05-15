@@ -612,7 +612,7 @@ const ManageAlerts = ({
             </span>
           </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <div className={styles.topContainer}>
 
           <div className={styles.addDetailsListContainerStyles}>
           <Text variant="mediumPlus">
