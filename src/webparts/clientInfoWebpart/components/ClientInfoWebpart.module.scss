@@ -88,6 +88,8 @@
     .iconError {
       color: $ms-color-error;
       font-size: 10pt;
+      position: relative;
+      top: 2px;
       // display: inline-block;
       // flex-grow: 1;
     }
