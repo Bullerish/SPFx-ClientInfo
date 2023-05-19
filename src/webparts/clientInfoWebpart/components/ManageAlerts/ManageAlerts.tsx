@@ -40,13 +40,14 @@ import { ISiteUserInfo } from "@pnp/sp/site-users/types";
 import styles from "../ClientInfoWebpart.module.scss";
 import StatusDialog from "./StatusDialog";
 import { GlobalValues } from "../../Dataprovider/GlobalValue";
+import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 import { setBaseUrl } from "office-ui-fabric-react";
 
 // for subwebs call
 export interface ISubWeb {
   key: string;
   title: string;
-  Id: string;
+  id: string;
   serverRelativeUrl: string;
   subPortalType: string;
   typeOfSubPortal: string;
@@ -105,6 +106,7 @@ const ManageAlerts = ({
   const [isSubmissionSuccessful, setIsSubmissionSuccessful] =
     useState<boolean>();
   const [statusDialogHidden, setStatusDialogHidden] = useState<boolean>();
+  const [isDataLoaded, setIsDataLoaded] = useState<boolean>(null);
 
   const hostUrl: string = window.location.host;
   const absoluteUrl: string = spContext.pageContext._web.absoluteUrl;
@@ -113,7 +115,7 @@ const ManageAlerts = ({
 
   const userAlertsList = "UserAlertsList";
   const alertsArrayInfo: object[] = [];
-  const existingAlerts: ISubWeb[] = [];
+  // const existingAlerts: ISubWeb[] = [];
   const subWebsWithKey: ISubWeb[] = [];
 
   let itemDetailsToBeSaved: string[] = [];
@@ -183,6 +185,16 @@ const ManageAlerts = ({
   let alertWeb = Web(absoluteUrl);
 
   useEffect(() => {
+    async function getCurrentUserId() {
+      const userId = await alertWeb.currentUser();
+      setCurrentUserId(userId);
+    }
+
+    getCurrentUserId();
+  }, []);
+
+  useEffect(() => {
+    setIsDataLoaded(false);
     let subPortalTypeName: string = "";
     let subPortalTypeFunc: string = "";
     let subPortalType: string = "";
@@ -203,7 +215,7 @@ const ManageAlerts = ({
         .orderBy("Title", true)();
       // console.table(subWebs);
 
-      console.log('logging subWebs:: ', subWebs);
+      // console.log('logging subWebs:: ', subWebs);
 
       subWebs.forEach((subWebItem) => {
         // split on serverRelativeUrl to create SubPortalType
@@ -251,18 +263,11 @@ const ManageAlerts = ({
 
       // console.log('logging subWebsWithKey:: ', subWebsWithKey);
       setSubWebInfo(subWebsWithKey);
-      //console.log("refetch of subwebs occured::::");
+
       // setItems(subWebsWithKey);
     }
 
-    async function getCurrentUserId() {
-      const userId = await alertWeb.currentUser();
-      setCurrentUserId(userId);
-    }
-
-
     if (isAlertModalOpen) {
-      getCurrentUserId();
       getSubwebs();
     }
   }, [isAlertModalOpen]);
@@ -272,10 +277,12 @@ const ManageAlerts = ({
     let subPortalTypeName: string = "";
     let subPortalTypeFunc: string = "";
     let subPortalType: string = "";
+    let existingAlerts: ISubWeb[] = [];
+
     // const itemsSelection = selection.getItems();
     // let alertsToSet: string[] = [];
 
-    console.log('logging subWebInfo:: ', subWebInfo);
+    // console.log('logging subWebInfo:: ', subWebInfo);
 
     if (subWebInfo.length > 0 && currentUserId) {
       // console.log("In Alerts useEffect");
@@ -305,13 +312,13 @@ const ManageAlerts = ({
 
               if (
                 (subPortalType === "AUD-WF" || subPortalType === "TAX-WF") &&
-                alert.d.results.length > 0
+                alert.d.results.length > 2
               ) {
                 // alertsToSet.push(item.Id);
                 // testing creating existing alert array
                 existingAlerts.push({
                   key: item.key,
-                  Id: item.Id,
+                  id: item.id,
                   title: item.title,
                   serverRelativeUrl: item.serverRelativeUrl,
                   subPortalType: item.subPortalType,
@@ -325,8 +332,8 @@ const ManageAlerts = ({
               ) {
                 // alertsToSet.push(item.Id);
                 existingAlerts.push({
-                  key: item.Id,
-                  Id: item.Id,
+                  key: item.id,
+                  id: item.id,
                   title: item.title,
                   serverRelativeUrl: item.serverRelativeUrl,
                   subPortalType: item.subPortalType,
@@ -339,8 +346,7 @@ const ManageAlerts = ({
               alertsArrayInfo.push(alert);
 
               setAlertSelectedSubPortals(existingAlerts); //alertsToSet
-              // setItemsToBeAddedForAlerts(existingAlerts); //alertsToSet
-              setExistingAlertItems(existingAlerts);
+
             }
           })
           .catch((error) => {
@@ -349,45 +355,38 @@ const ManageAlerts = ({
           });
       });
       // console.log("logging existingAlerts arr: ", existingAlerts);
+      console.log('about to set ExistingAlerts state:: ');
+
+      setTimeout(() => {
+        setExistingAlertItems(existingAlerts);
+
+      }, 400);
+
+
+
     }
-  }, [subWebInfo, currentUserId]);
+
+
+  }, [subWebInfo]);
 
   // for setting the pre-existing alerts on the DetailsList UI for user
   useEffect(() => {
-    // if (isAlertModalOpen) {
-    //   console.log("in If condition for isAlertModalOpen");
-    //   console.log('logging items state: ', items);
 
-    //   const output: any[] = items.filter((obj1) => {
-    //     return !existingAlertItems.some((obj2) => {
-    //       return obj1.key === obj2.key;
-    //     });
-    //   });
+    console.log('running existingAlertItems useEffect::');
 
-    //   console.log("logging output: ", output);
-    //   setItems(output);
-    // }
+    function setFilteredItems() {
+      setTimeout(() => {
+        setItems(subWebInfo.filter(item => {
+          return !existingAlertItems.some(element => {
+            return element.key === item.key;
+          });
+        }));
+        setIsDataLoaded(true);
+      }, 500);
+    }
 
-    // const subWebsArray = subWebInfo;
-    // const existingAlertItemsArray = existingAlertItems;
-
-    // console.log('logging subWebsArray:: ', subWebsArray);
-    // console.log('logging existingAlertItemsArray:: ', existingAlertItemsArray);
-
-
-      const output = subWebInfo.filter(item => {
-        return !existingAlertItems.some(element => {
-          return element.matterNumber === item.matterNumber;
-        });
-      });
-
-
-    // const filteredItemsArray = removeDuplicates(existingAlertItemsArray, subWebsArray);
-
-
+    setFilteredItems();
     // console.log('logging output:: ', output);
-
-    setItems(output);
 
   }, [existingAlertItems]);
 
@@ -411,7 +410,7 @@ const ManageAlerts = ({
     );
 
     output.forEach((el) => {
-      itemDetailsToBeSaved.push(el.ServerRelativeUrl);
+      itemDetailsToBeSaved.push(el.serverRelativeUrl);
     });
 
     alertsToDelete.forEach((el) => {
@@ -467,8 +466,8 @@ const ManageAlerts = ({
   const resetState = (): void => {
     console.log("in resetState func::");
 
-    setItems(subWebInfo);
-    setItemsToBeAddedForAlerts(alertSelectedSubPortals);
+    setItems([]);
+    setItemsToBeAddedForAlerts([]);
     setAlertsToDelete([]);
     setAlertTypeItem({
       key: "allChanges",
@@ -480,6 +479,7 @@ const ManageAlerts = ({
     });
     setTimeDay({ key: "Sunday", text: "Sunday" });
     setTimeTime({ key: "0", text: "12:00 AM" });
+    setIsDataLoaded(false);
     setIsSubmissionSuccessful(null);
   };
 
@@ -488,15 +488,18 @@ const ManageAlerts = ({
     ev: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>,
     text: string
   ) => {
-    const output: any[] = subWebInfo.filter((obj) => {
-      return itemsToBeAddedForAlerts.indexOf(obj) === -1;
+
+    const output: ISubWeb[] = subWebInfo.filter(item => {
+      return !existingAlertItems.some(element => {
+        return element.key === item.key;
+      });
     });
 
     console.log(output);
 
     setItems(
       text
-        ? output.filter((i) => i.Title.toLowerCase().indexOf(text) > -1)
+        ? output.filter((i) => i.title.toLowerCase().indexOf(text) > -1)
         : output
     );
   };
@@ -625,15 +628,15 @@ const ManageAlerts = ({
         }}
         // styles={{ root: { maxHeight: 700 } }}
       >
+        {isDataLoaded ?
         <>
-
           <div className={styles.guidanceText}>
             <span>
               Parent level alerts can only be created for File Exchange and Workflow subportals
             </span>
           </div>
 
-        <div className={styles.topContainer}>
+          <div className={styles.topContainer}>
 
           <div className={styles.addDetailsListContainerStyles}>
           <Text variant="mediumPlus">
@@ -641,7 +644,7 @@ const ManageAlerts = ({
           </Text>
 
           {itemsToBeAddedForAlerts.length !== 0 &&
-          <MarqueeSelection selection={selectionForAlertsToAdd}>
+
             <DetailsList
               items={itemsToBeAddedForAlerts}
               columns={columns}
@@ -662,7 +665,7 @@ const ManageAlerts = ({
               checkButtonAriaLabel="Row checkbox"
               // onItemInvoked={onItemInvoked}
             />
-          </MarqueeSelection>
+
           }
           </div>
           {/* this is the new existing alerts detailsList component */}
@@ -672,7 +675,7 @@ const ManageAlerts = ({
           </Text>
 
           {existingAlertItems.length !== 0 &&
-          <MarqueeSelection selection={selectionForExistingAlerts}>
+
             <DetailsList
               items={existingAlertItems}
               columns={columns}
@@ -693,15 +696,12 @@ const ManageAlerts = ({
               checkButtonAriaLabel="Row checkbox"
               // onItemInvoked={onItemInvoked}
               />
-          </MarqueeSelection>
+
           }
           </div>
 
           </div>
-
-        </>
-
-
+          {/* placeholder for end of fragment */}
 
         <TextField
           label="Filter by Engagement Name:"
@@ -713,7 +713,7 @@ const ManageAlerts = ({
         </Text>
         <div className={styles.detailsListContainerStyles}>
         {items.length !== 0 &&
-          <MarqueeSelection selection={selection}>
+
             <DetailsList
               items={items}
               columns={columns}
@@ -731,7 +731,7 @@ const ManageAlerts = ({
               checkButtonAriaLabel="Row checkbox"
               // onItemInvoked={onItemInvoked}
             />
-          </MarqueeSelection>
+
           }
         </div>
         <div className={styles.alertSettingsContainerStyles}>
@@ -824,11 +824,23 @@ const ManageAlerts = ({
             styles={{ dropdown: { width: 150 } }}
           />
         </div>
-        <DialogFooter>
-          <PrimaryButton onClick={factorAlertsToDelete} text="Save" />
-          <DefaultButton onClick={onSetStatusDialogHidden} text="Cancel" />
-        </DialogFooter>
+        </>
+        :
+        <Spinner size={SpinnerSize.large} label="Loading Portal and Alerts Data..." />
+        }
+
+           <DialogFooter>
+          {isDataLoaded ?
+            <>
+            <PrimaryButton onClick={factorAlertsToDelete} text="Save" />
+            <DefaultButton onClick={onSetStatusDialogHidden} text="Cancel" />
+            </>
+            :
+            null
+          }
+           </DialogFooter>
       </Dialog>
+
       <Dialog
         hidden={isConfirmationHidden}
         onDismiss={() => setIsConfirmationHidden(true)}
