@@ -832,7 +832,7 @@ const ManageAlerts = ({
            <DialogFooter>
           {isDataLoaded ?
             <>
-            <PrimaryButton onClick={factorAlertsToDelete} text="Save" />
+            <PrimaryButton onClick={factorAlertsToDelete} text="Save" className={styles.rightMargin} />
             <DefaultButton onClick={onSetStatusDialogHidden} text="Cancel" />
             </>
             :
