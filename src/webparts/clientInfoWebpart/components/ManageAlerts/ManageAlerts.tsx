@@ -107,6 +107,7 @@ const ManageAlerts = ({
     useState<boolean>();
   const [statusDialogHidden, setStatusDialogHidden] = useState<boolean>();
   const [isDataLoaded, setIsDataLoaded] = useState<boolean>(null);
+  const [noSubWebs, setNoSubWebs] = useState<boolean>(null);
 
   const hostUrl: string = window.location.host;
   const absoluteUrl: string = spContext.pageContext._web.absoluteUrl;
@@ -215,9 +216,14 @@ const ManageAlerts = ({
         .orderBy("Title", true)();
       // console.table(subWebs);
 
-      // console.log('logging subWebs:: ', subWebs);
+      console.log('logging subWebs:: ', subWebs);
+      if (!subWebs.length) {
+        setIsDataLoaded(true);
+        setNoSubWebs(true);
+      }
 
       subWebs.forEach((subWebItem) => {
+        console.log('logging subWebItem:: ', subWebItem.Title, subWebItem.ServerRelativeUrl);
         // split on serverRelativeUrl to create SubPortalType
         subPortalTypeName =
           subWebItem.ServerRelativeUrl.split("/")[3].split("-")[0];
@@ -246,6 +252,8 @@ const ManageAlerts = ({
           } else {
             typeOfSubPortal = "File Exchange";
           }
+
+
 
           let subWebItemWithKey: any = {
             // ...subWebItem,
@@ -359,7 +367,8 @@ const ManageAlerts = ({
 
       setTimeout(() => {
         setExistingAlertItems(existingAlerts);
-
+        setIsDataLoaded(true);
+        setNoSubWebs(false);
       }, 400);
 
 
@@ -381,7 +390,7 @@ const ManageAlerts = ({
             return element.key === item.key;
           });
         }));
-        setIsDataLoaded(true);
+
       }, 500);
     }
 
@@ -628,7 +637,7 @@ const ManageAlerts = ({
         }}
         // styles={{ root: { maxHeight: 700 } }}
       >
-        {isDataLoaded ?
+        {isDataLoaded && !noSubWebs ?
         <>
           <div className={styles.guidanceText}>
             <span>
@@ -825,12 +834,17 @@ const ManageAlerts = ({
           />
         </div>
         </>
+        : isDataLoaded && noSubWebs ?
+          <Text variant="mediumPlus">
+            No engagements available for parent level alerts.
+          </Text>
         :
         <Spinner size={SpinnerSize.large} label="Loading Portal and Alerts Data..." />
+
         }
 
            <DialogFooter>
-          {isDataLoaded ?
+          {isDataLoaded && !noSubWebs ?
             <>
             <PrimaryButton onClick={factorAlertsToDelete} text="Save" className={styles.rightMargin} />
             <DefaultButton onClick={onSetStatusDialogHidden} text="Cancel" />
