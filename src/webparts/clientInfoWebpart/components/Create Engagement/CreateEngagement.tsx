@@ -157,6 +157,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         CLUserSelected: "",
         CLPeoplePicker: [],
         AccessUserList: [],
+        // new prop for temp users to populate for FinalAccessUserList
+        OptionalAccessUser: [],
         FinalAccessUserList: "",
         dialogbuttonname: "Next",
         cancelbuttonname: "Cancel",
@@ -270,6 +272,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             CLPeoplePicker: [],
 
             AccessUserList: [],
+            // new prop for temp users to populate for FinalAccessUserList
+            OptionalAccessUser: [],
             FinalAccessUserList: "",
 
             dialogbuttonname: "Next",
@@ -1062,7 +1066,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     public _onChangePortalChoice = (event: React.FormEvent<HTMLDivElement>, option: IChoiceGroupOption) => {
-        this._getUserListCreatedon();
+
         this.setState({ PortalChoiceSelected: option.text });
         let ErrorMessage = "";
         this.setState({ Message: ErrorMessage, showMessageBar: false, MessageBarType: OfficeUI.MessageBarType.error, disableBtn: false });
@@ -1128,16 +1132,27 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
      // NEW People Picker for adding users.  Per Converge team, only CR users can be added at this time
      private async _getUserItems(items: any[]) {
+      console.log('in _getUserItems func::');
+      console.log('in items from getUserItems:: ', items);
         let selectedUsers = [];
         let accessUserList = [];
         items.forEach((e) => {
-            accessUserList.push(e.secondaryText);
+            // accessUserList.push(e.secondaryText); // old way
+            accessUserList.push({name: e.secondaryText});
+            // selectedUsers.push(e.text); // old and testing
             selectedUsers.push(e.text);
         });
-        this.setState({AccessUserList: accessUserList, addusers1: selectedUsers});
+
+        this.setState({OptionalAccessUser: accessUserList, addusers1: selectedUsers});
     }
 
     private getCLUserList() {
+      console.log('logging in getCLUserList func:: ');
+      console.log('logging this.state.AccessUserList:: ', this.state.AccessUserList);
+
+        // need to combine/spread values into one array then loop
+        let tempAccessUserList = [...this.state.AccessUserList, ...this.state.OptionalAccessUser];
+
         let CLUserSelected = '';
         let CRUserSelected = '';
         let CRADUserSelected = '';
@@ -1161,14 +1176,19 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
           }
         });
 
-        this.state.AccessUserList.forEach((e) => {
-            FinalAccessUserList += e + ";";
+        // this.state.AccessUserList.forEach((e) => {
+        //     FinalAccessUserList += e.name + ";";
+        // });
+
+        tempAccessUserList.forEach(e => {
+          FinalAccessUserList += e.name + ';';
         });
 
+        console.log('logging FinalAccessUserList data prior to setting state:: ', FinalAccessUserList);
         this.setState({
             CLUserSelected: CLUserSelected,
             CRUserSelected: CRUserSelected,
-            CRADUserSelected: CRADUserSelected + this.state.AccessUserList.toString().replace(',', ';'),
+            CRADUserSelected: CRADUserSelected,
             FinalAccessUserList: FinalAccessUserList
         });
     }
@@ -1210,22 +1230,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         let myfile = (document.querySelector("#newfile") as HTMLInputElement).files[0];
         this.setState({ K1FileName: myfile.name });
 
-    }
-
-    private _getUserListCreatedon() {
-        let obj = new ClientInfoClass();
-        //let userlist = "";
-        let userlist = [];
-        obj.GetUsersByGroup("CL-" + CRN
-        ).then((results) => {
-            results.forEach((e) => {
-                //this.state.AccessUserList.push({ name: e.Email });
-                userlist.push({ name: e.Email });
-                //userlist += e.Email + ";";
-            });
-            //this.setState({ FinalAccessUserList: userlist });
-            this.setState({ AccessUserList: userlist });
-        });
     }
 
     private async _getUserListAdvisory() {
@@ -2262,7 +2266,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
                                         {this.state.PortalChoiceSelected == 'Create New' ?
                                             <div>
-                                              {/* {console.log('logging this.state.addusers1:: ', this.state.addusers1)} */}
                                                 {this.state.TeamSelected == 'Advisory' && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Create New' ?
                                                     <div className={styles.usergroupscopy}>
                                                         {
@@ -2421,10 +2424,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                             : ""}
                                     </div>
                                     <div className={styles.divideralt}></div>
-
-                                  {console.log('logging this.state.addusers1:: ', this.state.addusers1)}
-                                  {console.log('logging this.state.currentScreen:: ', this.state.currentScreen)}
-                                  {console.log('logging this.state.FinalAccessUserList:: ', this.state.FinalAccessUserList)}
 
                                     <div className={styles.formcontrols}>
                                         <Label>Notifications</Label>
@@ -2646,6 +2645,11 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     private submitDialog = async (e) => {
+      let finalCRUsers = this.state.FinalAccessUserList + this.state.CRUserSelected + this.state.CRADUserSelected;
+
+
+
+
 
         if (this.state.currentScreen == "screen1") {
           console.log('in submitDialog screen1::');
@@ -2923,6 +2927,12 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                     }
             }
         }
+
+        console.log('submitDialog - logging CRUserSelected state:: ', this.state.CRUserSelected);
+        console.log('submitDialog - logging CRADUserSelected state:: ', this.state.CRADUserSelected);
+        console.log('submitDialog - logging finalCRUsers state:: ', finalCRUsers);
+
+
     }
 
     private save() {
