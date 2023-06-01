@@ -184,6 +184,8 @@ const ManageAlerts = ({
   //
   //
   let alertWeb = Web(absoluteUrl);
+  // implementing hubWeb to call engagement portal list
+  let hubWeb = Web(GlobalValues.HubSiteURL);
 
   useEffect(() => {
     async function getCurrentUserId() {
@@ -216,14 +218,20 @@ const ManageAlerts = ({
         .orderBy("Title", true)();
       // console.table(subWebs);
 
-      console.log('logging subWebs:: ', subWebs);
+      // console.log('logging subWebs:: ', subWebs);
+
+      // fetching only active Engagement Portals from the Engagement Portal List
+      const activeEngagementPortals = await hubWeb.lists.getByTitle('Engagement Portal List').items.select('Id', 'Title', 'SiteUrl', 'IsActive', 'PortalId').filter("IsActive eq 1").getAll();
+      // console.log('logging activeEngagementPortals:: ', activeEngagementPortals);
+
+      // if the user doesn't have permissions to any subportals and the length is 0, set flags to display message
       if (!subWebs.length) {
         setIsDataLoaded(true);
         setNoSubWebs(true);
       }
 
       subWebs.forEach((subWebItem) => {
-        console.log('logging subWebItem:: ', subWebItem.Title, subWebItem.ServerRelativeUrl);
+        // console.log('logging subWebItem:: ', subWebItem.Title, subWebItem.ServerRelativeUrl);
         // split on serverRelativeUrl to create SubPortalType
         subPortalTypeName =
           subWebItem.ServerRelativeUrl.split("/")[3].split("-")[0];
@@ -253,24 +261,38 @@ const ManageAlerts = ({
             typeOfSubPortal = "File Exchange";
           }
 
+          if (subWebItem.ServerRelativeUrl.indexOf('-K1-') === -1) {
 
+            let subWebItemWithKey: any = {
+              // ...subWebItem,
+              id: subWebItem.Id,
+              serverRelativeUrl: subWebItem.ServerRelativeUrl,
+              title: subWebItem.Title,
+              key: subWebItem.Id,
+              subPortalType: subPortalType,
+              typeOfSubPortal: typeOfSubPortal,
+              matterNumber: matterNumber,
+            };
+            subWebsWithKey.push(subWebItemWithKey);
+          }
 
-          let subWebItemWithKey: any = {
-            // ...subWebItem,
-            id: subWebItem.Id,
-            serverRelativeUrl: subWebItem.ServerRelativeUrl,
-            title: subWebItem.Title,
-            key: subWebItem.Id,
-            subPortalType: subPortalType,
-            typeOfSubPortal: typeOfSubPortal,
-            matterNumber: matterNumber,
-          };
-          subWebsWithKey.push(subWebItemWithKey);
         }
       });
 
-      // console.log('logging subWebsWithKey:: ', subWebsWithKey);
-      setSubWebInfo(subWebsWithKey);
+      // loop filter out subWebs that are not an active Engagement Portal
+      const finalSubWebsToSet = subWebsWithKey.filter(element => {
+        return activeEngagementPortals.some(item => {
+          let splitOnServerRelativeUrl = element.serverRelativeUrl.split('/');
+          let idOfPortal = splitOnServerRelativeUrl[splitOnServerRelativeUrl.length - 1];
+          // console.log('logging idOfPortal:: ', idOfPortal);
+
+          return idOfPortal === item.PortalId;
+        });
+      });
+
+      // console.log('logging finalSubWebsToSet:: ', finalSubWebsToSet);
+
+      setSubWebInfo(finalSubWebsToSet);
 
       // setItems(subWebsWithKey);
     }
@@ -443,7 +465,7 @@ const ManageAlerts = ({
 
     console.log("item details to be saved: ", listItem);
 
-    let hubWeb = Web(GlobalValues.HubSiteURL);
+    // let hubWeb = Web(GlobalValues.HubSiteURL);
 
     const itemAddResult: IItemAddResult = await hubWeb.lists
       .getByTitle(userAlertsList)
