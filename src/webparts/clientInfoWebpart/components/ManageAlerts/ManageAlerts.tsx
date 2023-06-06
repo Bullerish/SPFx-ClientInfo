@@ -663,7 +663,7 @@ const ManageAlerts = ({
         <>
           <div className={styles.guidanceText}>
             <span>
-              Parent level alerts can only be created for File Exchange and Workflow subportals
+              Parent level alerts can only be created for Tax/Assurance File Exchange and Workflow subportals
             </span>
           </div>
 
