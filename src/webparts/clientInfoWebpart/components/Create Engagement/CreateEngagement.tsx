@@ -2322,7 +2322,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                             }
                                                         </div>
                                                       { this.state.UsersToRollAlerts.length > 0 &&
-                                                        <div className={`${styles.usergroupscopy} ${styles.topdivider}`}>
+                                                        <div className={styles.usergroupscopy}>
                                                             <Label>If the following users currently have alerts, they will be created to the new sub-portal:</Label>
                                                             {
                                                                 this.state.UsersToRollAlerts.map(element =>
@@ -2373,7 +2373,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                         </div>
                                                         <div>
                                                           { this.state.UsersToRollAlerts.length > 0 &&
-                                                            <div className={`${styles.usergroupscopy} ${styles.topdivider}`}>
+                                                            <div className={styles.usergroupscopy}>
                                                               <Label>If the following users currently have alerts, they will be created in the new sub-portal:</Label>
                                                               {
                                                                 this.state.UsersToRollAlerts.map(element =>
