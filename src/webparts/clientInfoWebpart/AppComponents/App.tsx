@@ -147,11 +147,11 @@ class App extends React.Component<IApp> {
 
     return (
       <React.Fragment>
-        {this.state.isExternalUser &&
+        {/* {this.state.isExternalUser &&
           <Toaster position="top-right" containerClassName={styles.toastContainer} toastOptions={{
             className: styles.toastBorderTop
           }} />
-        }
+        } */}
         <div className={styles.clientInfoWebpart}>
           <div className={styles.engagementTeam}>
             <div className={styles.clientHeading}>
@@ -166,9 +166,8 @@ class App extends React.Component<IApp> {
               <div className={styles.manageSubportal}>
                 {IsPermissionPage == false ? (
                   <div className={styles.flexinncontainer}>
-                    {this.state.isExternalUser &&
+                    {/* {this.state.isExternalUser &&
                     <div>
-                      {/* TODO: implement and set state for alretsolid item. Make sure to pass down props that factor state */}
                       {this.state.isAlertIconShown ?
                         <Icon iconName="AlertSolid" className={styles.iconError} />
                         : null
@@ -182,7 +181,7 @@ class App extends React.Component<IApp> {
                         My Profile Information
                       </Link>
                     </div>
-                    }
+                    } */}
                     <div>
                       <Link
                         href={"#"}

@@ -714,6 +714,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                             'SiteOwnerId': this.state.addusersID,
                             'SiteUrl': { Url: site },
                             'ClientMembers': this.state.CLUserSelected,
+                            'EngagementMembers': finalCRUsers,
                             'TemplateType': this.state.AdvisoryTemplateSelected,
                             'isNotificationEmail': this.state.emailNotification,
                             'PortalExpiration': (this.state.portalExpiration ? this.state.portalExpiration : advMax),
@@ -1971,17 +1972,18 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                             {this.state.PortalChoiceSelected == 'Create New' ?
                                                 <div>
                                                     {this.state.TeamSelected == 'Advisory' && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Create New' ?
-                                                        <div>
-                                                            <Label>Please select which users should have access to this portal:</Label>
-                                                            <div className={styles.usergroups}>
-                                                                {this.state.CLUserList.filter(element => element.email !== "").map(element =>
-                                                                    <Checkbox label={element.email} checked={element.checked} onChange={(ev, value) => {
-                                                                        this.onChangeEmailCLList(value, element.email);
-                                                                    }} />
-                                                                )
-                                                                }
-                                                            </div>
-                                                        </div>
+                                                        // <div>
+                                                        //     <Label>Please select which users should have access to this portal:</Label>
+                                                        //     <div className={styles.usergroups}>
+                                                        //         {this.state.CLUserList.filter(element => element.email !== "").map(element =>
+                                                        //             <Checkbox label={element.email} checked={element.checked} onChange={(ev, value) => {
+                                                        //                 this.onChangeEmailCLList(value, element.email);
+                                                        //             }} />
+                                                        //         )
+                                                        //         }
+                                                        //     </div>
+                                                        // </div>
+                                                        null
                                                         : ""
                                                     }
                                                 </div>
@@ -2262,17 +2264,26 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                     </div>
                                     <div className={styles.formcontrols}>
                                         <Label>The following users will automatically have access:</Label>
+                                        {console.log('logging FinalAccessUserList:: ', this.state.FinalAccessUserList)}
+                                        {console.log('logging CLUserList:: ', this.state.CLUserList)}
+                                        {console.log('logging CRUserList:: ', this.state.CRUserList)}
                                         <div className={styles.usersemail}>{this.state.emailaddress}</div>
 
                                         {this.state.PortalChoiceSelected == 'Create New' ?
                                             <div>
                                                 {this.state.TeamSelected == 'Advisory' && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Create New' ?
-                                                    <div className={styles.usergroupscopy}>
+                                                    // <div className={styles.usergroupscopy}>
+                                                    <div>
                                                         {
                                                             this.state.CLUserSelected.split(";").map(element =>
                                                                 <div className={styles.usersemails}>{element}</div>
-                                                            )
-                                                        }
+                                                                )
+                                                            }
+                                                        {
+                                                            this.state.FinalAccessUserList.split(";").map(element =>
+                                                                <div className={styles.usersemails}>{element}</div>
+                                                                )
+                                                            }
                                                     </div> :
                                                     <div>
                                                       {this.state.FinalAccessUserList.split(';')[0].indexOf('[object Object]') === -1 &&
