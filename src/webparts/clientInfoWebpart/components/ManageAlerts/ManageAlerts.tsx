@@ -253,7 +253,8 @@ const ManageAlerts = ({
         if (
           subPortalType === "AUD-WF" ||
           subPortalType === "TAX-WF" ||
-          subPortalType === "AUD-FE"
+          subPortalType === "AUD-FE" ||
+          subPortalType === "TAX-FE"
         ) {
           if (determinesPortalType === true) {
             typeOfSubPortal = "Workflow";
@@ -292,7 +293,12 @@ const ManageAlerts = ({
 
       // console.log('logging finalSubWebsToSet:: ', finalSubWebsToSet);
 
-      setSubWebInfo(finalSubWebsToSet);
+      if (finalSubWebsToSet.length) {
+        setSubWebInfo(finalSubWebsToSet);
+      } else {
+        setIsDataLoaded(true);
+        setNoSubWebs(true);
+      }
 
       // setItems(subWebsWithKey);
     }
