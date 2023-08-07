@@ -326,22 +326,10 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         Isnextyear = false;
     }
 
-    // TODO: test componentDidUpdate to programatically trigger onChangeYear func (passing in empty object as react synthetic click event)
-    // public simulateYearClick = (e) => {
-    //   if (this.state.Year === '2020' && e) {
-    //     console.log('logging e click event:: ', e);
 
-    //   }
-    // }
 
     public componentDidUpdate(): void {
-        console.log('componentDidMount ran::');
 
-        // if (this.state.Year !== undefined && this.state.Year === '2020') {
-        //   console.log('logging ref of double zero dropdown component:: ', this._doubleZeroDropdown.current.selectedOptions);
-        //   // this.onChangeYear({}, {key: this.state.Year, text: this.state.Year});
-        // }
-        // this.setState({ onLoadYearTriggered: false });
 
         if (this._doubleZeroDropdown.current && this.state.Year !== undefined && this.state.onLoadYearTriggered === false) {
           setTimeout(() => {
@@ -515,9 +503,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
                     this.setState({ Checkeng: true });
 
-                    // TODO: testing random updates below, remove if no solution found
-                    // let ErrorMessage = "You can not create same engagement number " + this.state.EngagementNumberSelected + " for " + this.state.PortalTypeSelected;
-                    // this.setState({ Message: ErrorMessage, showMessageBar: true, MessageBarType: OfficeUI.MessageBarType.error, Checkeng: false });
+
 
                     console.log('logging this.state.Year in updatedworkyear eq true block:: ', this.state.Year);
 
@@ -1517,12 +1503,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 text: i.toString()
             });
         }
-        // console.log('logging option from GetYearOption func:: ', option);
-        // TODO: testing setting this.state.Year to first index in option array
-        // this.setState({ Year: option[0].key });
-        console.log('logging this.state.Year from GetYearOption func:: ', this.state.Year);
-        // TESTING PROGRAMATICALLY CALLING ONCHANGEYEAR FUNC (passing in empty object for react's synthetic click event)
-        // this.onChangeYear({}, this.state.Year);
+
+
 
         return option;
     }
@@ -1886,7 +1868,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                         }
                                     </div>
                                     <Stack horizontal gap={20} className="portalChoice">
-                                        {/* TODO: disable Rollover option if serviceTypeSelected !== starts with Request List */}
+
                                         {(this.state.TeamSelected === 'Advisory' && this.state.PortalTypeSelected === 'Workflow') && !(this.state.ServiceTypeSelected.toLowerCase().indexOf('request list') > -1) ?
                                         <ChoiceGroup
                                             className={styles.innerChoice}
