@@ -96,6 +96,8 @@ let ExDate = "";
 let updatedworkyear = false;
 let Isnextyear = false;
 class CreateEngagement extends React.Component<ICreateEngagement> {
+  private _doubleZeroDropdown = React.createRef<OfficeUI.IDropdown>();
+
     public state = {
         AdvantagePortalsItems: [],
         IsDataLoaded: false,
@@ -196,7 +198,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         showSpinner: false,
         IsPortalEntryCreated: "",
         PreExistingAlertUsers: [],
-        UsersToRollAlerts: []
+        UsersToRollAlerts: [],
+        onLoadYearTriggered: false
     };
 
     /**
@@ -321,6 +324,20 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
         updatedworkyear = false;
         Isnextyear = false;
+    }
+
+
+
+    public componentDidUpdate(): void {
+
+
+        if (this._doubleZeroDropdown.current && this.state.Year !== undefined && this.state.onLoadYearTriggered === false) {
+          setTimeout(() => {
+            this.onChangeYear({}, this._doubleZeroDropdown.current.selectedOptions[0]);
+          }, 1);
+        }
+
+
     }
 
     public openDialog(e) {
@@ -462,7 +479,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     public checkEngagement = async (portalsCreated) => {
-
+      console.log('in checkEngagement func:: ');
 
         if (portalsCreated != null) {
 
@@ -471,6 +488,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             for (var i = 0; i < finalPortalTypeValue.length; i++) {
 
                 if (finalPortalTypeValue[i] == this.state.PortalTypeURL) {
+                    console.log('engagement does exist::');
                     engagementExists = true;
                 }
             }
@@ -480,9 +498,18 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             }
             else {
                 if (updatedworkyear == true) {
+                  console.log('in updatedworkyear == true block::');
+                  console.log('logging engagementExists value:: ', engagementExists);
+
                     this.setState({ Checkeng: true });
+
+
+
+                    console.log('logging this.state.Year in updatedworkyear eq true block:: ', this.state.Year);
+
                     return true;
                 } else {
+                  console.log('in else block of updatedworkyear eq true:: ');
                     let ErrorMessage = "You can not create same engagement number " + this.state.EngagementNumberSelected + " for " + this.state.PortalTypeSelected;
                     this.setState({ Message: ErrorMessage, showMessageBar: true, MessageBarType: OfficeUI.MessageBarType.error, Checkeng: false });
                     return false;
@@ -520,7 +547,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     });
 
     public _onChangeEngagementNumber = async (tagList: { key: string, name: string }[]) => {
-
+      console.log('in _onChangeEngagementNumber func:: ');
 
         if (tagList.length == 0) {
             this.closeMessageBar();
@@ -1465,6 +1492,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
 
     public GetYearOption = () => {
+      console.log('in GetYearOption func:: ');
         let date = new Date();
         let year = date.getFullYear();
         let option = [];
@@ -1475,11 +1503,38 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 text: i.toString()
             });
         }
+
+
+
         return option;
     }
 
+    // removed event as it wasn't used and was preventing a manual call to this func outside of the user manually changing the Year dropdown
     public onChangeYear = (event, item) => {
       console.log('in onChangeYear func::');
+
+      console.log('logging event:: ', event);
+      console.log('logging event type:: ', typeof event);
+
+      console.log('logging item:: ', item);
+      console.log('logging item type:: ', typeof item);
+      console.log('logging this.state.Year:: ', this.state.Year);
+      console.log('logging typeof this.state.Year:: ', typeof this.state.Year);
+
+      console.log('logging !Object.keys(event).length value:: ', !Object.keys(event).length);
+
+
+
+      if (!Object.keys(event).length && this.state.onLoadYearTriggered === true) {
+        console.log('in if statement checking on onLoadYearTriggered');
+        console.log('logging this.state.Year:: ', this.state.Year);
+        console.log('logging this.state.onLoadYearTriggered:: ', this.state.onLoadYearTriggered);
+
+        // this.setState({ onLoadYearTriggered: true });
+        return;
+      }
+
+
         if (item) {
             this.setState({ Year: item.key });
 
@@ -1545,6 +1600,12 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             }
         }
 
+        if (!Object.keys(event).length && this.state.Year !== undefined) {
+          console.log('setting onLoadYearTriggered to true::');
+          this.setState({ onLoadYearTriggered: true });
+        }
+
+
     }
 
     public CloseButton = () => {
@@ -1559,6 +1620,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
     public onItemSelected = (item: ITag): ITag | null => {
       console.log('onItemSelected fired::');
+      this.setState({ onLoadYearTriggered: false });
 
         if (item && item.name) {
             EngagementNameTags = [{ key: item.key.toString(), name: item.name }];
@@ -1714,9 +1776,13 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                             {updatedworkyear == true ?
                                                 <Dropdown
                                                     placeholder="Select an option"
+                                                    // DoubleZeroRef={this.DoubleZeroRef}
+                                                    componentRef={this._doubleZeroDropdown}
+                                                    // notifyOnReselect={true}
                                                     onChange={this.onChangeYear}
                                                     options={this.GetYearOption()}
                                                     selectedKey={this.state.Year}
+                                                    // defaultSelectedKey={this.state.Year}
                                                 />
                                                 : <TextField disabled className={styles.engagementPrint} defaultValue={this.state.Year} />
                                             }
@@ -1802,7 +1868,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                         }
                                     </div>
                                     <Stack horizontal gap={20} className="portalChoice">
-                                        {/* TODO: disable Rollover option if serviceTypeSelected !== starts with Request List */}
+
                                         {(this.state.TeamSelected === 'Advisory' && this.state.PortalTypeSelected === 'Workflow') && !(this.state.ServiceTypeSelected.toLowerCase().indexOf('request list') > -1) ?
                                         <ChoiceGroup
                                             className={styles.innerChoice}
@@ -2656,14 +2722,12 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     private submitDialog = async (e) => {
-      let finalCRUsers = this.state.FinalAccessUserList + this.state.CRUserSelected + this.state.CRADUserSelected;
-
-
-
+      // let finalCRUsers = this.state.FinalAccessUserList + this.state.CRUserSelected + this.state.CRADUserSelected;
 
 
         if (this.state.currentScreen == "screen1") {
           console.log('in submitDialog screen1::');
+          console.log('logging this.state.Checkeng:: ', this.state.Checkeng);
             if (this.state.EngagementNumberSelected == "" || this.state.addusers.length == 0
                 || this.state.Year == null || this.state.PortalTypeSelected == ""
                 || (this.state.TeamSelected == "" && this.state.PortalTypeSelected == 'K1')
@@ -2939,9 +3003,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             }
         }
 
-        console.log('submitDialog - logging CRUserSelected state:: ', this.state.CRUserSelected);
-        console.log('submitDialog - logging CRADUserSelected state:: ', this.state.CRADUserSelected);
-        console.log('submitDialog - logging finalCRUsers state:: ', finalCRUsers);
+        // console.log('submitDialog - logging CRUserSelected state:: ', this.state.CRUserSelected);
+        // console.log('submitDialog - logging CRADUserSelected state:: ', this.state.CRADUserSelected);
+        // console.log('submitDialog - logging finalCRUsers state:: ', finalCRUsers);
 
 
     }

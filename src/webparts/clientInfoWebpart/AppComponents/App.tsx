@@ -25,6 +25,7 @@ export interface IApp {
 }
 
 class App extends React.Component<IApp> {
+
   public state = {
     ClientInfoState: new ClientInfoState(),
     isModalOpen: false,
