@@ -176,6 +176,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         MessageBarType: OfficeUI.MessageBarType.error,
         disableBtn: false,
         K1FileName: "",
+        K1Errors: [],
         success: false,
         PortalsCreated: "",
         PortalsCreatedFinal: "",
@@ -294,6 +295,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             disableBtn: false,
 
             K1FileName: "",
+            K1Errors: [],
             success: false,
             PortalsCreated: "",
             PortalsCreatedFinal: "",
@@ -480,7 +482,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     public checkEngagement = async (portalsCreated) => {
-      console.log('in checkEngagement func:: ');
+      // console.log('in checkEngagement func:: ');
 
         if (portalsCreated != null) {
 
@@ -499,18 +501,13 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             }
             else {
                 if (updatedworkyear == true) {
-                  console.log('in updatedworkyear == true block::');
-                  console.log('logging engagementExists value:: ', engagementExists);
-
+                //   console.log('in updatedworkyear == true block::');
+                //   console.log('logging engagementExists value:: ', engagementExists);
                     this.setState({ Checkeng: true });
-
-
-
-                    console.log('logging this.state.Year in updatedworkyear eq true block:: ', this.state.Year);
-
+                    // console.log('logging this.state.Year in updatedworkyear eq true block:: ', this.state.Year);
                     return true;
                 } else {
-                  console.log('in else block of updatedworkyear eq true:: ');
+                //   console.log('in else block of updatedworkyear eq true:: ');
                     let ErrorMessage = "You can not create same engagement number " + this.state.EngagementNumberSelected + " for " + this.state.PortalTypeSelected;
                     this.setState({ Message: ErrorMessage, showMessageBar: true, MessageBarType: OfficeUI.MessageBarType.error, Checkeng: false });
                     return false;
@@ -1048,9 +1045,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             }
 
             let e1 = parseInt(eng) - 1;
-            console.log('logging e1 parseInt on eng:: ', e1);
+            // console.log('logging e1 parseInt on eng:: ', e1);
             let str1 = this.state.EngagementNumberSelected.slice(0, -2) + e1.toString();
-            console.log('logging str1 value:: ', str1);
+            // console.log('logging str1 value:: ', str1);
 
             await hubWeb.lists.getByTitle(GlobalValues.EngagementPortalList).items.filter("Title eq '" + str1 + "'").getAll().then((data) => {
               console.log('logging data from call to Engagement Portal List:: ', data);
@@ -1176,8 +1173,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     private getCLUserList() {
-      console.log('logging in getCLUserList func:: ');
-      console.log('logging this.state.AccessUserList:: ', this.state.AccessUserList);
+      // console.log('logging in getCLUserList func:: ');
+      // console.log('logging this.state.AccessUserList:: ', this.state.AccessUserList);
 
         // need to combine/spread values into one array then loop
         let tempAccessUserList = [...this.state.AccessUserList, ...this.state.OptionalAccessUser];
@@ -1213,7 +1210,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
           FinalAccessUserList += e.name + ';';
         });
 
-        console.log('logging FinalAccessUserList data prior to setting state:: ', FinalAccessUserList);
+        // console.log('logging FinalAccessUserList data prior to setting state:: ', FinalAccessUserList);
         this.setState({
             CLUserSelected: CLUserSelected,
             CRUserSelected: CRUserSelected,
@@ -1254,18 +1251,22 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         return (date.getMonth() + 1) + '/' + date.getDate() + '/' + date.getFullYear();
     }
 
-
-    private OnFileSelect = () => {
-        let myfile = (document.querySelector("#newfile") as HTMLInputElement).files[0];
-        //TODO: ANALYZE THIS FILE        
-        const fileCheck = K1ImportCheck.validateK1File(myfile);        
-        if (fileCheck) {
-            // valid file, set state
+    // used for K1 files only
+    private async OnFileSelect () {
+        let myfile = (document.querySelector("#newfile") as HTMLInputElement).files[0];        
+        let k1Filecheck = await K1ImportCheck.validateK1File(myfile);
+        console.log("k1 file check",k1Filecheck);
+        if (k1Filecheck.length == 0) {
             this.setState({ K1FileName: myfile.name });
         }
-        else {
-            alert('errors in file.')
-        }                          
+        else {            
+            this.setState({ K1Errors: k1Filecheck, validate: true });
+        }                                       
+    }    
+
+    // reset K1 file validate error states on click
+    private resetFile = () => {        
+        this.setState({ K1Errors: [], validate: false });        
     }    
 
     private async _getUserListAdvisory() {
@@ -1432,7 +1433,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
               return data.json();
             });
 
-        console.log('logging userHasAlert: ', userAlertData);
+        //console.log('logging userHasAlert: ', userAlertData);
 
         if (userAlertData.d.results.length) {
           // usersWithAlerts.push(user);
@@ -1500,7 +1501,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
 
     public GetYearOption = () => {
-      console.log('in GetYearOption func:: ');
+      //console.log('in GetYearOption func:: ');
         let date = new Date();
         let year = date.getFullYear();
         let option = [];
@@ -1519,6 +1520,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
     // removed event as it wasn't used and was preventing a manual call to this func outside of the user manually changing the Year dropdown
     public onChangeYear = (event, item) => {
+        /*
       console.log('in onChangeYear func::');
 
       console.log('logging event:: ', event);
@@ -1530,32 +1532,28 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
       console.log('logging typeof this.state.Year:: ', typeof this.state.Year);
 
       console.log('logging !Object.keys(event).length value:: ', !Object.keys(event).length);
-
-
-
+*/
       if (!Object.keys(event).length && this.state.onLoadYearTriggered === true) {
-        console.log('in if statement checking on onLoadYearTriggered');
-        console.log('logging this.state.Year:: ', this.state.Year);
-        console.log('logging this.state.onLoadYearTriggered:: ', this.state.onLoadYearTriggered);
-
+  //      console.log('in if statement checking on onLoadYearTriggered');
+  //      console.log('logging this.state.Year:: ', this.state.Year);
+  //      console.log('logging this.state.onLoadYearTriggered:: ', this.state.onLoadYearTriggered);
         // this.setState({ onLoadYearTriggered: true });
         return;
       }
-
 
         if (item) {
             this.setState({ Year: item.key });
 
             if (updatedworkyear == true) {
-              console.log('in updatedworkyear if statement::');
+          //    console.log('in updatedworkyear if statement::');
                 Isnextyear = false;
                 let hubWeb = Web(GlobalValues.HubSiteURL);
                 hubWeb.lists.getByTitle(GlobalValues.EngagementPortalList).items.filter("EngagementNumberEndZero eq '" + this.state.EngagementNumberSelected + "'").getAll().then((data) => {
                     let data1 = data.filter(e => e.WorkYear == item.key && e.ClientNumber == CRN && e.PortalType == this.state.PortalTypeSelected && e.Team == this.state.TeamSelected);
                     let data2 = data.filter(e => e.WorkYear == parseInt(item.key) - 1 && e.ClientNumber == CRN && e.PortalType == this.state.PortalTypeSelected && e.Team == this.state.TeamSelected);
-                    console.log('logging data2:: ', data2);
+                //    console.log('logging data2:: ', data2);
                     let data3 = data.filter(e => e.WorkYear == parseInt(item.key) - 1 && e.ClientNumber == CRN && e.PortalType == this.state.PortalTypeSelected && e.Team == this.state.TeamSelected && e.SplitSuffix != "");
-                    console.log('logging data2:: ', data3);
+                 //   console.log('logging data2:: ', data3);
 
                     if (data1.length > 0) {
                         let ErrorMessage = "You can not create same engagement number " + this.state.EngagementNumberSelected + " for " + this.state.PortalTypeSelected + " (Year:" + item.key + ")";
@@ -1564,23 +1562,23 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                     }
                     else {
                         if (data2.length == 1) {
-                          console.log('in if data2.length == 1');
+                       //   console.log('in if data2.length == 1');
                             let rolloveryear = parseInt(data2[0].WorkYear) + 1;
                             if (rolloveryear == item.key) {
-                              console.log('setting Isnextyear = true');
+                       //       console.log('setting Isnextyear = true');
                                 Isnextyear = true;
                             }
                             else {
-                              console.log('setting Isnextyear = false');
+                      //        console.log('setting Isnextyear = false');
 
                                 Isnextyear = false;
                             }
                         }
                         else if (data3.length >= 1) {
-                          console.log('in if data3.length >= 1');
+                          //console.log('in if data3.length >= 1');
                             let rolloveryear = parseInt(data3[0].WorkYear) + 1;
                             if (rolloveryear == item.key) {
-                              console.log('setting Isnextyear = true');
+                         //     console.log('setting Isnextyear = true');
 
                                 Isnextyear = true;
                             }
@@ -1627,7 +1625,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
 
     public onItemSelected = (item: ITag): ITag | null => {
-      console.log('onItemSelected fired::');
+      // console.log('onItemSelected fired::');
       this.setState({ onLoadYearTriggered: false });
 
         if (item && item.name) {
@@ -2338,9 +2336,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                     </div>
                                     <div className={styles.formcontrols}>
                                         <Label>The following users will automatically have access:</Label>
-                                        {console.log('logging FinalAccessUserList:: ', this.state.FinalAccessUserList)}
+                                        {/* {console.log('logging FinalAccessUserList:: ', this.state.FinalAccessUserList)}
                                         {console.log('logging CLUserList:: ', this.state.CLUserList)}
-                                        {console.log('logging CRUserList:: ', this.state.CRUserList)}
+                                        {console.log('logging CRUserList:: ', this.state.CRUserList)} */}
                                         <div className={styles.usersemail}>{this.state.emailaddress}</div>
 
                                         {this.state.PortalChoiceSelected == 'Create New' ?
@@ -2589,7 +2587,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
                             {this.state.currentScreen == 'screen5' ?
                                 <div className={styles.screenFour}>
-                                  {console.log('logging this.state.currentScreen:: ', this.state.currentScreen)}
+                                  {/* {console.log('logging this.state.currentScreen:: ', this.state.currentScreen)} */}
                                     <div className={styles.freshRollover}>
                                         <div className={styles.engnumbername}>
                                             <div className={styles.engagementnames}>
@@ -2623,26 +2621,28 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                     </div>
                                     <div className={styles.formcontrols}>
                                         <Label>Upload Investors</Label>
-                                        <input type="file" accept=".csv" onChange={this.OnFileSelect} id='newfile' name='newfile'
+                                        <input type="file" accept=".csv" onChange={this.OnFileSelect.bind(this)} id='newfile' name='newfile'
                                         ></input>
-                                        <label className={styles.browsebutton} htmlFor={"newfile"}><span>Choose File</span></label>
+                                        <label className={styles.browsebutton} htmlFor={"newfile"} onClick={this.resetFile.bind(this)}><span>Choose File</span></label>
                                         {this.state.K1FileName != "" ? <p className={styles.addedFile}><b>{this.state.K1FileName}</b> is selected to upload </p> : null}
-                                        {(this.state.validate && this.state.K1FileName == "") ?
-                                            <div className={styles.reqval}>Upload Investors is mandatory.</div> : ''}
-                                        <p><i>Please upload a properly formatted Excel document containing all investor names and their corresponding access. You may download an Excel template for this process here.</i></p>
-                                        <a className={styles.downloadEXL} id="download_link" download={HubSiteURL + K1ExcelTemplate} href={HubSiteURL + K1ExcelTemplate}><Icon iconName="Download" className={styles.Icon} />Download Excel Template</a>
+                                        {(this.state.validate && this.state.K1FileName == "" && this.state.K1Errors.length == 0) ?
+                                            <div className={styles.reqval}>File upload is mandatory.</div> : ''}
+                                        {(this.state.validate && this.state.K1Errors.length > 0) ?
+                                            <div className={styles.reqval}>{this.state.K1Errors.map(txt => <div>{txt}</div>)}</div> : ''}
+                                        <p><i>Please upload a properly formatted CSV file containing all investor names and their corresponding access. You may download a CSV template for this process here.</i></p>
+                                        <a className={styles.downloadEXL} id="download_link" download={HubSiteURL + K1ExcelTemplate} href={HubSiteURL + K1ExcelTemplate}><Icon iconName="Download" className={styles.Icon} />Download CSV Template</a>
                                         {/* Do NOT DELETE THIS CODE */}
                                         {/* Do NOT DELETE THIS CODE */}
                                         {/* Do NOT DELETE THIS CODE */}
                                         {/* <a className={styles.k1instruction} id="K1-instruction" target="_blank" href={HubSiteURL + '/SitePages/K1-Portal%20Instructions.aspx'}>K1-Portal Instructions</a> */}
                                     </div>
                                     <div className={styles.divider}></div>
-                                    <div className={styles.formcontrols}>
+                                    {/* <div className={styles.formcontrols}>
                                         <Label>Notifications</Label>
                                         <Checkbox label="Email the above users once subportal has been created." checked={this.state.emailNotification} onChange={(ev, value) => {
                                             this.setState({ emailNotification: value });
                                         }} />
-                                    </div>
+                                    </div> */}
                                     <div className={styles.formcontrol}>
                                         <div className={styles.labelprint}>
                                             <DatePicker
@@ -2734,8 +2734,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
 
         if (this.state.currentScreen == "screen1") {
-          console.log('in submitDialog screen1::');
-          console.log('logging this.state.Checkeng:: ', this.state.Checkeng);
+        //   console.log('in submitDialog screen1::');
+        //   console.log('logging this.state.Checkeng:: ', this.state.Checkeng);
             if (this.state.EngagementNumberSelected == "" || this.state.addusers.length == 0
                 || this.state.Year == null || this.state.PortalTypeSelected == ""
                 || (this.state.TeamSelected == "" && this.state.PortalTypeSelected == 'K1')

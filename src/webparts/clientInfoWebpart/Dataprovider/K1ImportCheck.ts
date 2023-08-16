@@ -1,129 +1,77 @@
 
-import * as XLSX from 'xlsx';
+import CSVFileValidator from 'csv-file-validator';
 
-const headerColumns = ['K1 Partner Folder Name', 'Email Address (example: email1@domain.com;email2@domain.com)'];
+const config: any = {
+    headers: [
+        {
+            name: 'K1 Partner Folder Name',
+            required: true,
+            requiredError: (headerName, rowNumber, columnNumber) => {
+                return `${headerName} is missing in row ${rowNumber}.`;
+            }
+        },
+        {
+            name: 'Email Address (example: email1@domain.com;email2@domain.com)',
+            required: true,
+            validate: (emails) => {
+                let testEmails = true;
+                let emailsplit = emails.split(";"); 
+                for (let i = 0; i < emailsplit.length; i++) {
+                    let element = emailsplit[i];
+                    element = element.replace(/\n/g, ''); // remove line breaks
+                    element = element.trim(); // remove whitespace
+                    if (element != "") {
+                      //test for valid email
+                      const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                      let emailTest = emailPattern.test(element);          
+                      if (emailTest == false) {
+                        testEmails = false;
+                      }
+                    }
+                }
+                return testEmails;
+            },
+            validateError: (headerName, rowNumber, columnNumber) => {
+                return `${headerName} has invalid values in row ${rowNumber}.`;
+            }
+        }],
+    isHeaderNameOptional: false,
+    isColumnIndexAlphabetic: false
+};
 
-export class K1ImportCheck {
+export class K1ImportCheck {    
 
-    public static validateK1File(file) {
+    public static async validateK1File(file) {
+        let errorMessage = [];
         let myfile = (document.querySelector("#newfile") as HTMLInputElement).files[0];
-        //TODO: ANALYZE THIS FILE        
-        const reader = new FileReader();
-        //reader.readAsText(file);          
-        //reader.onload = (event: any) => {
-        // var data = event.target.result;
-        let data = XLSX.read(file, { type: 'binary', raw: true });
-        const wsname = data.SheetNames[0];
-        const ws = data.Sheets[wsname];
-        /* Convert array to json*/
-        const dataParse = XLSX.utils.sheet_to_json(ws, { header: 1 });
-        let isValidColumns = false;
-        var errorMessages = { ColumnLengthError: "", ColumnError: "", ColumnRequiredError: [], ColumnTypeLengthError: [] };
-        //const TypeLengthValidationRule = this.state.TypeLengthValidationRule;
-        if (dataParse && dataParse.length > 0) {
-            let headerColumn: any = dataParse[0];
-            if (headerColumn.length == headerColumns.length) {
-                /**Validation for No. of column and Column names */
-                for (let i = 0; i < headerColumn.length; i++) {
-                    if (headerColumn[i] == headerColumns[i]) {
-                        isValidColumns = true;
-                    } else {
-                        isValidColumns = false;
-                        errorMessages["ColumnError"] = `column ${headerColumns[i]} is not found`;
-                        break;
-                    }
-                }
-                if (isValidColumns) {
-                    let folderCount = 0;
-                    /**Validation for required column values */
-                    for (let i = 1; i < dataParse.length; i++) {
-                        let item = dataParse[i];
-                        /*if (!this.isValidRow(item)) {
-                            console.log(`${i + 1} is blank`);
-                            continue;
-                        }*/
-                        folderCount++;
-                        let colNames = [];
-                        headerColumns.forEach(checkIndex => {
-                            if (!item[checkIndex] || (item[checkIndex] && item[checkIndex] == "")) {
-                                colNames.push(headerColumns[checkIndex]);
-                            }
-                        });
-                        if (colNames.length > 0) {
-                            errorMessages["ColumnRequiredError"].push(`Row ${i + 1}: Missing value for ${colNames.join(', ')}`);
-                        }
-                        console.log('item is', item);
-                        /*
-                        let _self = this;
-                        Object.keys(TypeLengthValidationRule).forEach(async (key) => {
-                            let rules = TypeLengthValidationRule[key];
-                            let itemValue = item[rules.index];
-
-                            if (itemValue !== null && itemValue !== undefined && itemValue !== "") {
-                                if ("maxLength" in rules) {
-                                    if (itemValue.length > rules.maxLength) {
-                                        errorMessages["ColumnTypeLengthError"].push(`Row ${i + 1}: ${key} exceeds maximum characters (${rules.maxLength})`);
-                                    }
-                                }
-                                if ("isAlphanumeric" in rules) {
-                                    if (!_self.CheckAlphaNumeric(itemValue)) {
-                                        errorMessages["ColumnTypeLengthError"].push(`Row ${i + 1}: ${key} should be alphanumeric`);
-                                    }
-                                }
-                                if ("allowOnly" in rules) {
-                                    if (rules.allowOnly.indexOf(itemValue) === -1) {
-                                        errorMessages["ColumnTypeLengthError"].push(`Row ${i + 1}: ${key} has an invalid value`);
-                                    }
-                                }
-                                if ('isDate' in rules) {
-                                    if (!_self.CheckValidDate(itemValue)) {
-                                        errorMessages["ColumnTypeLengthError"].push(`Row ${i + 1}: ${key} doesn't have a valid date format (MM/DD/YYYY)`);
-                                    }
-                                }
-                                if ('isEmail' in rules) {
-                                    if (!_self.CheckValidEmail(itemValue)) {
-                                        errorMessages["ColumnTypeLengthError"].push(`Row ${i + 1}: ${key} has an invalid email value`);
-                                    }
-                                }
-                            }
-                        });*/
-                    }
-                }
-            }
-            else {
-                errorMessages["ColumnLengthError"] = "number of columns are not valid";
-            }
-        }
-        console.log("errorMessages", errorMessages);
-        if (errorMessages) {
-            return false;
+        const filename = myfile.name;
+        const extension = filename.substring(filename.lastIndexOf('.'));
+        if (extension != ".csv") {
+            errorMessage.push("Invalid file type.  Upload CSV files only.");
         }
         else {
-            return true;
+            //ANALYZE CSV FILE   
+            let csvData = await CSVFileValidator(file, config);
+            let csvErrors = csvData.inValidData; // Array of error messages
+            console.log('csvInvalid', csvErrors);
+            if (csvErrors.length > 0) {
+                let headerErrors = [];                
+                for (let i = 0; i < csvErrors.length; i++) {
+                    let errorMsg = csvErrors[i].message;                    
+                    if (errorMsg.startsWith("Header name ")) {                        
+                        headerErrors.push(errorMsg);
+                    }  
+                    else {
+                        errorMessage.push(errorMsg);
+                    }                      
+                }                    
+                if (headerErrors.length > 0) {
+                    errorMessage = headerErrors;
+                }                           
+            }                 
         }
-        //   this.setState({ ErrorMessages: errorMessages, IsValidColumns: isValidColumns, TotalRows: dataParse, isFileUpload: true });
+        return errorMessage;
     }
 
-
-    // Used to check K1 CSV rows
-    private isValidRow(row) {
-        if (!row || row.length == 0)
-            return false;
-        var inValidRowCount = 0;
-        row.forEach(column => {
-            if (!column || column.trim() == "")
-                inValidRowCount++;
-        });
-        return inValidRowCount == 0 ? true : false;
-    }
-
-    private CheckValidEmail(value) {
-        let exp = /^([a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6})*$/;
-        if (value && value.match(exp)) {
-            return true;
-        } else {
-            return false;
-        }
-    }
 
 }

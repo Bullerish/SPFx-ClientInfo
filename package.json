@@ -24,13 +24,13 @@
     "@types/react": "16.8.8",
     "@types/react-dom": "16.8.3",
     "@types/webpack-env": "1.13.1",
+    "csv-file-validator": "^2.1.0",
     "office-ui-fabric-react": "^6.189.2",
     "react": "16.8.5",
     "react-dom": "16.8.5",
     "react-hot-toast": "^2.4.0",
     "react-notifications": "^1.6.0",
-    "tslint-microsoft-contrib": "^6.2.0",
-    "xlsx": "^0.17.4"
+    "tslint-microsoft-contrib": "^6.2.0"    
   },
   "resolutions": {
     "@types/react": "16.8.8"
