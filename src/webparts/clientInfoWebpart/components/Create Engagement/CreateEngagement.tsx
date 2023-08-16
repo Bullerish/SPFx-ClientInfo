@@ -25,6 +25,7 @@ import { initializeIcons } from 'office-ui-fabric-react';
 import ProgressBar from "./ProgressBar";
 import { UserAction } from "../../Dataprovider/ActionEnums";
 import { ISiteUser } from "@pnp/sp/site-users";
+import { K1ImportCheck } from "../../Dataprovider/K1ImportCheck";
 initializeIcons();
 
 const Teamoptions: IChoiceGroupOption[] = [
@@ -1229,9 +1230,16 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
     private OnFileSelect = () => {
         let myfile = (document.querySelector("#newfile") as HTMLInputElement).files[0];
-        this.setState({ K1FileName: myfile.name });
-
-    }
+        //TODO: ANALYZE THIS FILE        
+        const fileCheck = K1ImportCheck.validateK1File(myfile);        
+        if (fileCheck) {
+            // valid file, set state
+            this.setState({ K1FileName: myfile.name });
+        }
+        else {
+            alert('errors in file.')
+        }                          
+    }    
 
     private async _getUserListAdvisory() {
         let obj = new ClientInfoClass();
@@ -2549,7 +2557,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                     </div>
                                     <div className={styles.formcontrols}>
                                         <Label>Upload Investors</Label>
-                                        <input type="file" onChange={this.OnFileSelect} id='newfile' name='newfile'
+                                        <input type="file" accept=".csv" onChange={this.OnFileSelect} id='newfile' name='newfile'
                                         ></input>
                                         <label className={styles.browsebutton} htmlFor={"newfile"}><span>Choose File</span></label>
                                         {this.state.K1FileName != "" ? <p className={styles.addedFile}><b>{this.state.K1FileName}</b> is selected to upload </p> : null}
