@@ -1255,12 +1255,12 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     private async OnFileSelect () {
         let myfile = (document.querySelector("#newfile") as HTMLInputElement).files[0];        
         let k1Filecheck = await K1ImportCheck.validateK1File(myfile);
-        console.log("k1 file check",k1Filecheck);
+        //console.log("k1 file check",k1Filecheck);
         if (k1Filecheck.length == 0) {
             this.setState({ K1FileName: myfile.name });
         }
         else {            
-            this.setState({ K1Errors: k1Filecheck, validate: true });
+            this.setState({ K1Errors: k1Filecheck, K1FileName: myfile.name, validate: true });
         }                                       
     }    
 
@@ -2979,7 +2979,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 }
             }
             else if (this.state.PortalTypeSelected == 'K1') {
-                if (this.state.K1FileName == "") {
+                if ((this.state.K1FileName == "") || (this.state.validate == true)) {
                     this.setState({
                         validate: true
                     });
