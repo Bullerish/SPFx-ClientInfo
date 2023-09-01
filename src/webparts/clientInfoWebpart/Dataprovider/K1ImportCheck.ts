@@ -54,6 +54,9 @@ const config: any = {
                 }
                 return testEmails;
             },
+            requiredError: (headerName, rowNumber, columnNumber) => {
+                return `${headerName} is missing in row ${rowNumber}.`;
+            },
             validateError: (headerName, rowNumber, columnNumber) => {
                 return `${headerName} has invalid values in row ${rowNumber}.`;
             }
@@ -72,26 +75,32 @@ export class K1ImportCheck {
         if (extension != ".csv") {
             errorMessage.push("Invalid file type.  Upload CSV files only.");
         }
-        else {
-            //ANALYZE CSV FILE   
+        else {            
+            // ANALYZE CSV FILE   
             let csvData = await CSVFileValidator(file, config);
-            let csvErrors = csvData.inValidData; // Array of error messages
-            console.log('csvInvalid', csvErrors);
-            if (csvErrors.length > 0) {
-                let headerErrors = [];                
-                for (let i = 0; i < csvErrors.length; i++) {
-                    let errorMsg = csvErrors[i].message;                    
-                    if (errorMsg.startsWith("Header name ")) {                        
-                        headerErrors.push(errorMsg);
-                    }  
-                    else {
-                        errorMessage.push(errorMsg);
-                    }                      
-                }                    
-                if (headerErrors.length > 0) {
-                    errorMessage = headerErrors;
-                }                           
-            }                 
+            let csvContent= csvData.data; // Array of data          
+            if (csvContent.length == 0) {
+                errorMessage.push("This file is empty.  Please upload a valid csv file.");
+            }
+            else {
+                let csvErrors = csvData.inValidData; // Array of error messages
+                //console.log('csvInvalid', csvErrors);
+                if (csvErrors.length > 0) {
+                    let headerErrors = [];                
+                    for (let i = 0; i < csvErrors.length; i++) {
+                        let errorMsg = csvErrors[i].message;                    
+                        if (errorMsg.startsWith("Header name ")) {                        
+                            headerErrors.push(errorMsg);
+                        }  
+                        else {
+                            errorMessage.push(errorMsg);
+                        }                      
+                    }                    
+                    if (headerErrors.length > 0) {
+                        errorMessage = headerErrors;
+                    }                           
+                }      
+            }           
         }
         return errorMessage;
     }

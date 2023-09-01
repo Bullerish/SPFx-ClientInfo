@@ -1255,18 +1255,13 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     private async OnFileSelect () {
         let myfile = (document.querySelector("#newfile") as HTMLInputElement).files[0];        
         let k1Filecheck = await K1ImportCheck.validateK1File(myfile);
-        console.log("k1 file check",k1Filecheck);
+        //console.log("k1 file check",k1Filecheck);
         if (k1Filecheck.length == 0) {
-            this.setState({ K1FileName: myfile.name });
+            this.setState({ K1Errors: [], K1FileName: myfile.name, validate: false });
         }
         else {            
-            this.setState({ K1Errors: k1Filecheck, validate: true });
+            this.setState({ K1Errors: k1Filecheck, K1FileName: myfile.name, validate: true });
         }                                       
-    }    
-
-    // reset K1 file validate error states on click
-    private resetFile = () => {        
-        this.setState({ K1Errors: [], validate: false });        
     }    
 
     private async _getUserListAdvisory() {
@@ -2623,7 +2618,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                         <Label>Upload Investors</Label>
                                         <input type="file" accept=".csv" onChange={this.OnFileSelect.bind(this)} id='newfile' name='newfile'
                                         ></input>
-                                        <label className={styles.browsebutton} htmlFor={"newfile"} onClick={this.resetFile.bind(this)}><span>Choose File</span></label>
+                                        <label className={styles.browsebutton} htmlFor={"newfile"}><span>Choose File</span></label>
                                         {this.state.K1FileName != "" ? <p className={styles.addedFile}><b>{this.state.K1FileName}</b> is selected to upload </p> : null}
                                         {(this.state.validate && this.state.K1FileName == "" && this.state.K1Errors.length == 0) ?
                                             <div className={styles.reqval}>File upload is mandatory.</div> : ''}
@@ -2979,7 +2974,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 }
             }
             else if (this.state.PortalTypeSelected == 'K1') {
-                if (this.state.K1FileName == "") {
+                if ((this.state.K1FileName == "") || (this.state.validate == true)) {
                     this.setState({
                         validate: true
                     });
