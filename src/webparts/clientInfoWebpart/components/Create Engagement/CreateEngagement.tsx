@@ -1665,7 +1665,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         let K1MaxDate = new Date(ExDate);
 
         let HubSiteURL = GlobalValues.HubSiteURL;
-        let K1ExcelTemplate = "/SiteAssets/K1ExcelTemplate.csv";
+        //let K1ExcelTemplate = "/SiteAssets/K1ExcelTemplate.csv";
+        let K1ExcelTemplate = "/SiteAssets/K1ExcelTemplateAutoRouting.csv";
         let TagpickerDisable = true;
         if (this.state.TeamSelected != "" && this.state.PortalTypeSelected != "") {
             TagpickerDisable = false;
