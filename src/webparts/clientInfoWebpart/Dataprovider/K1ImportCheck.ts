@@ -4,11 +4,34 @@ import CSVFileValidator from 'csv-file-validator';
 const config: any = {
     headers: [
         {
-            name: 'K1 Partner Folder Name',
+            name: 'Number',
             required: true,
             requiredError: (headerName, rowNumber, columnNumber) => {
                 return `${headerName} is missing in row ${rowNumber}.`;
             }
+        },
+        {
+            name: 'Entity or First Name',
+            required: true,
+            requiredError: (headerName, rowNumber, columnNumber) => {
+                return `${headerName} is missing in row ${rowNumber}.`;
+            }
+        },
+        {
+            name: 'MI',
+            required: false
+        },
+        {
+            name: 'Last Name',
+            required: false
+        },
+        {
+            name: 'Suffix',
+            required: false
+        },
+        {
+            name: 'Name (Continued)',
+            required: false
         },
         {
             name: 'Email Address (example: email1@domain.com;email2@domain.com)',
