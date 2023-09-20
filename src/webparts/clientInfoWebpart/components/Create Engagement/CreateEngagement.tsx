@@ -2693,7 +2693,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     private previousDialog(e) {
-        if (this.state.currentScreen == "screen2" || this.state.currentScreen == "screen5") {
+        if (this.state.currentScreen == "screen2") {
             this.setState({
                 validate: false,
                 IsDuplicate: false,
@@ -2721,6 +2721,19 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 currentScreen: "screen3",
                 dialogbuttonname: "Next",
                 titleText: "- Template and Provisioning",
+            });
+        }
+        if (this.state.currentScreen == "screen5") {
+            // clear the file input onload
+            this.setState({
+                K1FileName: "",
+                K1Errors: [],
+                validate: false,
+                IsDuplicate: false,
+                currentScreen: "screen1",
+                dialogbuttonname: "Next",
+                titleText: "",
+
             });
         }
     }
@@ -2974,7 +2987,12 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                     }
                 }
             }
-            else if (this.state.PortalTypeSelected == 'K1') {
+            else if (this.state.PortalTypeSelected == 'K1') {                
+                if ((this.state.K1FileName == "") || (this.state.validate == true)) {
+                    this.setState({
+                        validate: true
+                    });
+                }
                 if ((this.state.K1FileName == "") || (this.state.validate == true)) {
                     this.setState({
                         validate: true
