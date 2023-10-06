@@ -25,7 +25,7 @@ const config: any = {
                 return teststr;
             },
             validateError: (headerName, rowNumber, columnNumber) => {
-                return `${headerName} in row ${rowNumber} is invalid.  Cannot end in a period.`;
+                return `${headerName} value in row ${rowNumber} is invalid.  Cannot end in a period.`;
             }
         },
         {
@@ -40,7 +40,7 @@ const config: any = {
                 return teststr;
             },
             validateError: (headerName, rowNumber, columnNumber) => {
-                return `${headerName} in row ${rowNumber} is invalid.  Cannot end in a period.`;
+                return `${headerName} value in row ${rowNumber} is invalid.  Cannot end in a period.`;
             }
         },
         {
