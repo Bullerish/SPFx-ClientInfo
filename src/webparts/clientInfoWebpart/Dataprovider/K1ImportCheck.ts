@@ -15,11 +15,33 @@ const config: any = {
             required: true,
             requiredError: (headerName, rowNumber, columnNumber) => {
                 return `${headerName} is missing in row ${rowNumber}.`;
+            },
+            validate: (str) => {
+                let teststr = true;
+                let lastChar = str.slice(-1);
+                if (lastChar == ".") {
+                    teststr = false;
+                }
+                return teststr;
+            },
+            validateError: (headerName, rowNumber, columnNumber) => {
+                return `${headerName} in row ${rowNumber} is invalid.  Cannot end in a period.`;
             }
         },
         {
             name: 'MI',
-            required: false
+            required: false,
+            validate: (str) => {
+                let teststr = true;
+                let lastChar = str.slice(-1);
+                if (lastChar == ".") {
+                    teststr = false;
+                }
+                return teststr;
+            },
+            validateError: (headerName, rowNumber, columnNumber) => {
+                return `${headerName} in row ${rowNumber} is invalid.  Cannot end in a period.`;
+            }
         },
         {
             name: 'Last Name',
