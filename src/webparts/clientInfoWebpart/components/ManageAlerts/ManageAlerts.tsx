@@ -42,6 +42,7 @@ import StatusDialog from "./StatusDialog";
 import { GlobalValues } from "../../Dataprovider/GlobalValue";
 import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 import { setBaseUrl } from "office-ui-fabric-react";
+import "@pnp/sp/regional-settings";
 
 // for subwebs call
 export interface ISubWeb {
@@ -101,6 +102,10 @@ const ManageAlerts = ({
     key: "0",
     text: "12:00 AM",
   });
+  // adding new state for UTC time to submit to list item
+  const [utcTime, setUtcTime] = useState<Date>(null);
+
+
   const [isConfirmationHidden, setIsConfirmationHidden] =
     useState<boolean>(true);
   const [isSubmissionSuccessful, setIsSubmissionSuccessful] =
@@ -427,12 +432,114 @@ const ManageAlerts = ({
 
   }, [existingAlertItems]);
 
+  // TODO: create new function to take user inputs and factor utc time to submit in list item
+  const factorUtcTimeVal = async () => {
+
+
+    const userTimezoneOffsetMinutes = new Date().getTimezoneOffset();
+
+    // user selected day and time of day
+    const userDayOfWeek = timeDay.key;
+    const userInputTime = timeTime.text;
+
+    console.log('logging userInputTime:: ', userInputTime);
+
+    const dayOfWeekToValue = {
+      "Sunday": 0,
+      "Monday": 1,
+      "Tuesday": 2,
+      "Wednesday": 3,
+      "Thursday": 4,
+      "Friday": 5,
+      "Saturday": 6,
+    };
+
+    const hourToValue = {
+      "12:00 AM": 0,
+      "1:00 AM": 1,
+      "2:00 AM": 2,
+      "3:00 AM": 3,
+      "4:00 AM": 4,
+      "5:00 AM": 5,
+      "6:00 AM": 6,
+      "7:00 AM": 7,
+      "8:00 AM": 8,
+      "9:00 AM": 9,
+      "10:00 AM": 10,
+      "11:00 AM": 11,
+      "12:00 PM": 12,
+      "1:00 PM": 13,
+      "2:00 PM": 14,
+      "3:00 PM": 15,
+      "4:00 PM": 16,
+      "5:00 PM": 17,
+      "6:00 PM": 18,
+      "7:00 PM": 19,
+      "8:00 PM": 20,
+      "9:00 PM": 21,
+      "10:00 PM": 22,
+      "11:00 PM": 23,
+    };
+
+    const numericDayOfWeek = dayOfWeekToValue[userDayOfWeek];
+    const [userInputHour, period] = userInputTime.split(' ');
+    const numericHour = hourToValue[`${userInputHour} ${period}`];
+
+    console.log('logging numericHour:: ', numericHour);
+
+    // calculate UTC tiem for the specified day and time
+    const today = new Date();
+    const currentDayOfWeek = today.getDay();
+    const daysToAdd = (numericDayOfWeek + 7 - currentDayOfWeek) % 7;
+
+    const userLocalTime = new Date(today);
+    userLocalTime.setDate(today.getDate() + daysToAdd);
+
+    userLocalTime.setHours(numericHour);
+    userLocalTime.setMinutes(0);
+
+
+    // calculate UTC time
+    // const calculatedUtcTime = new Date(userLocalTime.getTime() + (userTimezoneOffsetMinutes * 60000));
+    // console.log("User's Local Time calculatedUtcTime: ", calculatedUtcTime);
+
+    // console.log('My local date time: ', new Date());
+
+    const usersUTCTime = userLocalTime.toISOString();
+
+
+    console.log("User's Local Time: ", userLocalTime);
+    console.log("User's Local Time converted to UTC string: ", usersUTCTime);
+
+    // log the hubweb's timezone info
+    const { Information } = await hubWeb.regionalSettings.timeZone();
+    console.log('logging webs timezone info:', Information);
+
+    // TODO: testing accounting for timezone bias
+    const localTime = userLocalTime.getTime();
+    const regionTimeOffset = (Information.Bias + Information.StandardBias) * 60000;
+    const localTimeOffset = userLocalTime.getTimezoneOffset() * 60000;
+    userLocalTime.setTime(localTime + (regionTimeOffset - localTimeOffset));
+
+    // log userLocalTime after accounting for region offset of web
+    console.log('logging userLocalTime after adjusting for regionOffset of web:: ', userLocalTime.toUTCString());
+    console.log('logging userLocalTime after adjusting for regionOffset of web (with .toISOString()):: ', userLocalTime.toISOString());
+
+
+    // const userTimeToSubmit = await hubWeb.regionalSettings.timeZone.localTimeToUTC(regionalSettingsLocalTime);
+
+
+    return userLocalTime.toISOString();
+
+
+  };
+
   // adds listItem either by updating the record or adding a new one if it doesn't already exist for the user
   const addUserAlertsListItem = async () => {
     let listItem: object = {};
     let listItemId: number;
 
-    console.log("in AddUserAlertslistItem Func");
+    console.log("in AddUserAlertslistItem Func::");
 
     // remove existing alerts prior to adding list item so we don't create duplicates
     const output: any[] = itemsToBeAddedForAlerts.filter((obj1) => {
@@ -441,10 +548,10 @@ const ManageAlerts = ({
       });
     });
 
-    console.log(
-      "itemsToBeAddedForAlerts without pre-existing alerts: ",
-      output
-    );
+    // console.log(
+    //   "itemsToBeAddedForAlerts without pre-existing alerts: ",
+    //   output
+    // );
 
     output.forEach((el) => {
       itemDetailsToBeSaved.push(el.serverRelativeUrl);
@@ -455,6 +562,11 @@ const ManageAlerts = ({
         itemDetailsToBeDeleted.push(el.alertId + "+" + el.serverRelativeUrl);
       }
     });
+
+    // TODO: call function to factor utc time and return the date obj to the utcTimeVal
+    const utcTimeVal = await factorUtcTimeVal();
+
+    console.log('Logging utcTimeVal returned:: ', utcTimeVal);
 
     // formulate object to input as payload below
     listItem = {
@@ -467,12 +579,15 @@ const ManageAlerts = ({
       AlertsToDelete: itemDetailsToBeDeleted.toString().replace(/,/g, ";"),
       TimeDay: timeDay.key,
       TimeTime: timeTime.key,
+      // TODO: create new property of UTCTime to submit to list
+      UtcTimeValue: utcTimeVal
     };
 
     console.log("item details to be saved: ", listItem);
 
-    // let hubWeb = Web(GlobalValues.HubSiteURL);
 
+
+    // TODO: uncomment all below after date testing
     const itemAddResult: IItemAddResult = await hubWeb.lists
       .getByTitle(userAlertsList)
       .items.add(listItem);
@@ -485,10 +600,7 @@ const ManageAlerts = ({
       setStatusDialogHidden(false);
     }
 
-    console.log("item was newly created", itemAddResult);
-    // }
-
-    // console.log("itemAddResult: ", itemAddResult);
+    console.log("itemAddResult: ", itemAddResult);
   };
 
   // logic to process for determining if existing alerts are to be deleted
@@ -516,6 +628,7 @@ const ManageAlerts = ({
     });
     setTimeDay({ key: "Sunday", text: "Sunday" });
     setTimeTime({ key: "0", text: "12:00 AM" });
+    setUtcTime(null);
     setIsDataLoaded(false);
     setIsSubmissionSuccessful(null);
   };
