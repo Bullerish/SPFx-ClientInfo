@@ -43,6 +43,9 @@ import { GlobalValues } from "../../Dataprovider/GlobalValue";
 import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 import { setBaseUrl } from "office-ui-fabric-react";
 import "@pnp/sp/regional-settings";
+// import moment from 'moment-timezone';
+
+var moment = require('moment-timezone');
 
 // for subwebs call
 export interface ISubWeb {
@@ -357,6 +360,7 @@ const ManageAlerts = ({
               ) {
                 // alertsToSet.push(item.Id);
                 // testing creating existing alert array
+
                 existingAlerts.push({
                   key: item.key,
                   id: item.id,
@@ -435,8 +439,9 @@ const ManageAlerts = ({
   // TODO: create new function to take user inputs and factor utc time to submit in list item
   const factorUtcTimeVal = async () => {
 
-
-    const userTimezoneOffsetMinutes = new Date().getTimezoneOffset();
+    // get user timezone data
+    const userTimeZone = spContext.pageContext;
+    console.log('logging userTimeZone: ', userTimeZone);
 
     // user selected day and time of day
     const userDayOfWeek = timeDay.key;
@@ -487,50 +492,51 @@ const ManageAlerts = ({
 
     console.log('logging numericHour:: ', numericHour);
 
-    // calculate UTC tiem for the specified day and time
+    // calculate UTC time for the specified day and time
     const today = new Date();
     const currentDayOfWeek = today.getDay();
     const daysToAdd = (numericDayOfWeek + 7 - currentDayOfWeek) % 7;
 
     const userLocalTime = new Date(today);
-    userLocalTime.setDate(today.getDate() + daysToAdd);
+
+    if (alertFrequencyItem.key === 'weeklySummary') {
+      userLocalTime.setDate(today.getDate() + daysToAdd);
+    }
 
     userLocalTime.setHours(numericHour);
     userLocalTime.setMinutes(0);
 
-
-    // calculate UTC time
-    // const calculatedUtcTime = new Date(userLocalTime.getTime() + (userTimezoneOffsetMinutes * 60000));
-    // console.log("User's Local Time calculatedUtcTime: ", calculatedUtcTime);
-
-    // console.log('My local date time: ', new Date());
-
-    const usersUTCTime = userLocalTime.toISOString();
-
-
-    console.log("User's Local Time: ", userLocalTime);
-    console.log("User's Local Time converted to UTC string: ", usersUTCTime);
+    // console.log('userLocalTime with user selected values: ', userLocalTime.toString());
+    // const userTimeToSubmit = await hubWeb.regionalSettings.timeZone.utcToLocalTime(userLocalTime.toISOString());
+    // const webTimeZone = await hubWeb.regionalSettings.timeZone();
 
     // log the hubweb's timezone info
     const { Information } = await hubWeb.regionalSettings.timeZone();
     console.log('logging webs timezone info:', Information);
 
-    // TODO: testing accounting for timezone bias
+    // // TODO: testing accounting for timezone bias
     const localTime = userLocalTime.getTime();
-    const regionTimeOffset = (Information.Bias + Information.StandardBias) * 60000;
+    const regionTimeOffset = (Information.Bias + Information.StandardBias + Information.DaylightBias) * 60000;
+    console.log('logging regionTimeOffset: ', regionTimeOffset);
     const localTimeOffset = userLocalTime.getTimezoneOffset() * 60000;
-    userLocalTime.setTime(localTime + (regionTimeOffset - localTimeOffset));
+    console.log('logging localTimeOffset: ', localTimeOffset);
 
-    // log userLocalTime after accounting for region offset of web
-    console.log('logging userLocalTime after adjusting for regionOffset of web:: ', userLocalTime.toUTCString());
-    console.log('logging userLocalTime after adjusting for regionOffset of web (with .toISOString()):: ', userLocalTime.toISOString());
+    // factor regionTimeOffset vs. localTimeOffset.
+    if (localTimeOffset > regionTimeOffset) {
+      userLocalTime.setTime(localTime + (localTimeOffset - regionTimeOffset));
+    } else {
+      userLocalTime.setTime(localTime + (regionTimeOffset - localTimeOffset));
+    }
+
+    console.log('logging userLocalTime: ', userLocalTime);
+
+    const userSelectedDateTime = moment(userLocalTime).tz(Intl.DateTimeFormat().resolvedOptions().timeZone);
+    const timeToSubmit = userSelectedDateTime.format();
+
+    console.log('logging timeToSubmit after moment: ', timeToSubmit);
 
 
-    // const userTimeToSubmit = await hubWeb.regionalSettings.timeZone.localTimeToUTC(regionalSettingsLocalTime);
-
-
-    return userLocalTime.toISOString();
-
+    return timeToSubmit;
 
   };
 
@@ -566,7 +572,7 @@ const ManageAlerts = ({
     // TODO: call function to factor utc time and return the date obj to the utcTimeVal
     const utcTimeVal = await factorUtcTimeVal();
 
-    console.log('Logging utcTimeVal returned:: ', utcTimeVal);
+    // console.log('Logging utcTimeVal returned:: ', utcTimeVal);
 
     // formulate object to input as payload below
     listItem = {
