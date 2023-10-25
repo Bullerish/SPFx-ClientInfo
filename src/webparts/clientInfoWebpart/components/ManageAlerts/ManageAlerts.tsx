@@ -436,7 +436,7 @@ const ManageAlerts = ({
 
   }, [existingAlertItems]);
 
-  // TODO: create new function to take user inputs and factor utc time to submit in list item
+
   const factorUtcTimeVal = async () => {
 
     // get user timezone data
@@ -514,7 +514,7 @@ const ManageAlerts = ({
     const { Information } = await hubWeb.regionalSettings.timeZone();
     console.log('logging webs timezone info:', Information);
 
-    // // TODO: testing accounting for timezone bias
+
     const localTime = userLocalTime.getTime();
     const regionTimeOffset = (Information.Bias + Information.StandardBias + Information.DaylightBias) * 60000;
     console.log('logging regionTimeOffset: ', regionTimeOffset);
@@ -569,7 +569,7 @@ const ManageAlerts = ({
       }
     });
 
-    // TODO: call function to factor utc time and return the date obj to the utcTimeVal
+
     const utcTimeVal = await factorUtcTimeVal();
 
     // console.log('Logging utcTimeVal returned:: ', utcTimeVal);
@@ -585,7 +585,6 @@ const ManageAlerts = ({
       AlertsToDelete: itemDetailsToBeDeleted.toString().replace(/,/g, ";"),
       TimeDay: timeDay.key,
       TimeTime: timeTime.key,
-      // TODO: create new property of UTCTime to submit to list
       UtcTimeValue: utcTimeVal
     };
 
@@ -593,7 +592,6 @@ const ManageAlerts = ({
 
 
 
-    // TODO: uncomment all below after date testing
     const itemAddResult: IItemAddResult = await hubWeb.lists
       .getByTitle(userAlertsList)
       .items.add(listItem);
