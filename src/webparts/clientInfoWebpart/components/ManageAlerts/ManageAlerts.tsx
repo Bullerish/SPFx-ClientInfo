@@ -226,10 +226,16 @@ const ManageAlerts = ({
         .orderBy("Title", true)();
       // console.table(subWebs);
 
+
       // console.log('logging subWebs:: ', subWebs);
 
+      const clientNumber = absoluteUrl.split('/')[absoluteUrl.split('/').length - 1];
+
+      console.log('logging clientNumber:: ', clientNumber);
+
       // fetching only active Engagement Portals from the Engagement Portal List
-      const activeEngagementPortals = await hubWeb.lists.getByTitle('Engagement Portal List').items.select('Id', 'Title', 'SiteUrl', 'IsActive', 'PortalId').filter("IsActive eq 1").getAll();
+      // const activeEngagementPortals = await hubWeb.lists.getByTitle('Engagement Portal List').items.select('Id', 'Title', 'SiteUrl', 'IsActive', 'PortalId').filter("IsActive eq 1").getAll();
+      const activeEngagementPortals = await hubWeb.lists.getByTitle('Engagement Portal List').items.select('Id', 'Title', 'SiteUrl', 'IsActive', 'PortalId').filter(`ClientNumber eq '${clientNumber}'`).getAll();
       // console.log('logging activeEngagementPortals:: ', activeEngagementPortals);
 
       // if the user doesn't have permissions to any subportals and the length is 0, set flags to display message
