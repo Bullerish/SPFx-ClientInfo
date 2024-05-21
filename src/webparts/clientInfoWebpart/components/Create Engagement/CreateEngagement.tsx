@@ -61,7 +61,7 @@ const PortalTypeOptionsForTax: IChoiceGroupOption[] = [
 ];
 
 const PortalChoiceOptions: IChoiceGroupOption[] = [
-    { key: 'Rollover', text: 'Rollover', },
+    { key: 'Rollover', text: 'Rollover' },
     { key: 'Create New', text: 'Create New' },
 ];
 
@@ -569,7 +569,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                 else {
                     updatedworkyear = false;
                 }
-                Engagementdata.filter(async (e) => {
+                Engagementdata.filter(async (e) => {//**BJ Look for the previous EngagmentYear here and if it isn't active or doesn't exist, set Rollover to Disabled. */
                     if (e.Title == item.name) {
                         ExDate = (6) + '-' + (1) + '-' + (parseInt(e.WorkYear) + 2);
                         let dt = new Date(ExDate);
@@ -989,7 +989,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     public Rollover = async () => {
-
         let PortalType = this.state.PortalTypeSelected;
         let Team = this.state.TeamSelected;
         let hubWeb = Web(GlobalValues.HubSiteURL);
@@ -2781,12 +2780,20 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                         if (this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'Workflow') {
                             this.Rollover();
                         }
+                        if (this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'File Exchange') {
+                            this.Rollover();
+                        }
                         else if (this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'Workflow') {
                             this.Rollover();
-                            //this.CheckSplitRollover();
+                        }
+                        else if (this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'File Exchange') {
+                            this.Rollover();
                         }
                         else if (this.state.TeamSelected == 'Advisory' && this.state.PortalTypeSelected == 'Workflow') {
                           this.Rollover();
+                        }
+                        else if (this.state.TeamSelected == 'Advisory' && this.state.PortalTypeSelected == 'File Exchange') {
+                            this.Rollover();
                         }
                         else {
                             this.setState({ isRollover: true });
