@@ -2100,7 +2100,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                         </div>
                                                             </div>
                                                         }
-                                                        {this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'Workflow' ?
+                                                        {this.state.TeamSelected == 'Tax' && (this.state.PortalTypeSelected == 'Workflow' || this.state.PortalChoiceSelected == 'FileExchange)' ?
                                                         <>
                                                             <div className={styles.userLists}>
                                                                 {
