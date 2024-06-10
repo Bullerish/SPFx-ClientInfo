@@ -1063,17 +1063,21 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                             RolloverURL: str1
                         });
 
-                        this.state.CRUserList.forEach((e) => {
-                            if (data[0].EngagementMembers.indexOf(e.email) > -1) {
-                                e.checked = true;
-                            }
-                        });
-
-                        this.state.CLUserList.forEach((e) => {
-                            if (data[0].ClientMembers.indexOf(e.email) > -1) {
-                                e.checked = true;
-                            }
-                        });
+                        if (this.state.CRUserList.length > 0 && data[0].EngagementMembers && data[0].EngagementMembers.length > 0) {
+                            this.state.CRUserList.forEach((e) => {
+                                if (data[0].EngagementMembers.indexOf(e.email) > -1) {
+                                    e.checked = true;
+                                }
+                            });
+                        }
+                        
+                        if (this.state.CLUserList.length > 0 && data[0].ClientMembers && data[0].ClientMembers.length > 0) {
+                            this.state.CLUserList.forEach((e) => {
+                                if (data[0].ClientMembers.indexOf(e.email) > -1) {
+                                    e.checked = true;
+                                }
+                            });
+                        }
 
                         if (this.state.AssuranceSplitRollover.length == 0) {
                             this._getUserList();
@@ -1265,25 +1269,40 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
     private async _getUserListAdvisory() {
         let obj = new ClientInfoClass();
-
+        let CRADUserList = [];
+        let CRUserList = [];
+        let CLUserList = [];
         // call to client site CRAD group (does not exist at subportal level)
         await obj.GetUsersByGroup("CRAD-ADV-" + CRN).then((res) => {
             res.forEach((e) => {
-                this.state.CRADUserList.push({ email: e.Email, checked: false });
+                CRADUserList.push({
+                    email: e.Email, checked: false
+                });
+            });
+            this.setState({
+                CRADUserList: CRADUserList
             });
         });
 
         // call to CRET permissions group at subportal level
         await obj.GetUsersByGroup("CRET-ADV-WF-" + this.state.RolloverURL).then((res) => {
             res.forEach((e) => {
-                this.state.CRUserList.push({ email: e.Email, checked: false });
+                CRUserList.push({
+                    email: e.Email, checked: false
+                });
             });
+            this.setState({ CRUserList: CRUserList });
         });
 
         // call to CL permissions group at subportal level
         await obj.GetUsersByGroup("CL-ADV-WF-" + this.state.RolloverURL).then((res) => {
             res.forEach((e) => {
-                this.state.CLUserList.push({ email: e.Email, checked: false });
+                CLUserList.push({
+                    email: e.Email, checked: false
+                });
+            });
+            this.setState({
+                CLUserList: CLUserList
             });
         });
 
@@ -1292,53 +1311,47 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     private async _getUserList() {
         try {
             let obj = new ClientInfoClass();
-            if (this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'Workflow') {
-                await obj.GetUsersByGroup("CRET-TAX-WF-" + this.state.RolloverURL).then((res) => {
-                    res.forEach((e) => {
-                        this.state.CRUserList.push({ email: e.Email, checked: false });
-                    });
-                });
+            let team = this.state.TeamSelected;
+            let portal = this.state.PortalTypeSelected;
+            let rolloverURL = this.state.RolloverURL;
 
-                await obj.GetUsersByGroup("CL-TAX-WF-" + this.state.RolloverURL).then((res) => {
-                    res.forEach((e) => {
-                        this.state.CLUserList.push({ email: e.Email, checked: false });
-                    });
-                });
+            const groupPrefixes = {
+                'Tax': {
+                    'Workflow': ['CRET-TAX-WF-', 'CL-TAX-WF-'],
+                    'File Exchange': ['CRET-TAX-FE-', 'CL-TAX-FE-']
+                },
+                'Assurance': {
+                    'Workflow': ['CRET-AUD-WF-', 'CL-AUD-WF-'],
+                    'File Exchange': ['CRET-AUD-FE-', 'CL-AUD-FE-']
+                },
+                'Advisory': {
+                    'File Exchange': ['CRET-ADV-FE-', 'CL-ADV-FE-']
+                }
+            };
 
-            }
-            if (this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'File Exchange') {
-                await obj.GetUsersByGroup("CRET-TAX-FE-" + this.state.RolloverURL).then((res) => {
-                    res.forEach((e) => {
-                        this.state.CRUserList.push({ email: e.Email, checked: false });
-                    });
-                });
+            if (groupPrefixes[team] && groupPrefixes[team][portal]) {
+                const groups = groupPrefixes[team][portal];
+                let crUserList = await this._getUsersByGroup(obj, groups[0] + rolloverURL);
+                let clUserList = await this._getUsersByGroup(obj, groups[1] + rolloverURL);
 
-                await obj.GetUsersByGroup("CL-TAX-FE-" + this.state.RolloverURL).then((res) => {
-                    res.forEach((e) => {
-                        this.state.CLUserList.push({ email: e.Email, checked: false });
-                    });
-                });
-
-            }
-            else if (this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'Workflow') {
-
-                await obj.GetUsersByGroup("CRET-AUD-WF-" + this.state.RolloverURL).then((res) => {
-                    res.forEach((e) => {
-                        this.state.CRUserList.push({ email: e.Email, checked: false });
-                    });
-                });
-
-                await obj.GetUsersByGroup("CL-AUD-WF-" + this.state.RolloverURL).then((res) => {
-                    res.forEach((e) => {
-                        this.state.CLUserList.push({ email: e.Email, checked: false });
-                    });
+                this.setState({
+                    CRUserList: crUserList,
+                    CLUserList: clUserList
                 });
             }
+        } catch (error) {
+            console.warn(error);
         }
-        catch {
-            return console.warn;
-        }
+    }
 
+    private async _getUsersByGroup(obj, group) {
+        let userList = [];
+        await obj.GetUsersByGroup(group).then((res) => {
+            res.forEach((e) => {
+                userList.push({ email: e.Email, checked: false });
+            });
+        });
+        return userList;
     }
 
 
@@ -2156,67 +2169,30 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                                 }
                                                             </> :
                                                             this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'File Exchange' ?
-                                                            <>
-                                                                <div className={styles.userLists}>
-                                                                    {
-                                                                        <div className={styles.usergroups}>
-                                                                            CRET-TAX-FE-{this.state.EngagementNumberSelected}
-                                                                            {this.state.CRUserList.filter(element => element.email !== "").map(element =>
-                                                                                <Checkbox label={element.email} checked={element.checked} onChange={(ev, value) => {
-                                                                                    this.onChangeEmailCRList(value, element.email);
-                                                                                }} />
-                                                                            )
-                                                                            }
-                                                                        </div>
-                                                                    }
-                                                                    {
-                                                                        <div className={styles.usergroups}>
-                                                                            CL-TAX-FE-{this.state.EngagementNumberSelected}
-                                                                            {this.state.CLUserList.filter(element => element.email !== "").map(element =>
-                                                                                <Checkbox label={element.email} checked={element.checked} onChange={(ev, value) => {
-                                                                                    this.onChangeEmailCLList(value, element.email);
-                                                                                }} />
-                                                                            )
-                                                                            }
-                                                                        </div>
-                                                                    }
-                                                                </div>
-                                                                {this.state.PreExistingAlertUsers.filter(e => e.hasAlert === true).length > 0 &&
-                                                                    <div className={styles.userLists}>
-                                                                        <Label>Select the users to rollover alerts for:</Label>
-                                                                        <div className={styles.usergroups}>
-                                                                            {/* {console.log('logging PreExistingAlertUsers: ', this.state.PreExistingAlertUsers)} */}
-                                                                            {this.state.PreExistingAlertUsers.filter(e => e.hasAlert === true).map(element =>
-                                                                                <Checkbox label={element.email} checked={element.checkedState} onChange={(ev, value) => {
-                                                                                    this.onChangeUsersToRollAlerts(value, element.email);
-                                                                                }} />
-                                                                            )}
-                                                                            {/* {console.log('logging UsersToRollAlerts: ', this.state.UsersToRollAlerts)} */}
-                                                                        </div>
-                                                                    </div>
-                                                                }
-                                                            </> :
-                                                            this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'Workflow' && this.state.AssuranceSplitRollover.length == 0 ?
                                                                 <>
                                                                     <div className={styles.userLists}>
-                                                                        <div className={styles.usergroups}>
-                                                                            CRET-AUD-WF-{this.state.EngagementNumberSelected}
-                                                                            {this.state.CRUserList.filter(element => element.email !== "").map(element =>
-                                                                                <Checkbox label={element.email} checked={element.checked} onChange={(ev, value) => {
-                                                                                    this.onChangeEmailCRList(value, element.email);
-                                                                                }} />
-                                                                            )
-                                                                            }
-                                                                        </div>
-                                                                        <div className={styles.usergroups}>
-                                                                            CL-AUD-WF-{this.state.EngagementNumberSelected}
-                                                                            {this.state.CLUserList.filter(element => element.email !== "").map(element =>
-                                                                                <Checkbox label={element.email} checked={element.checked} onChange={(ev, value) => {
-                                                                                    this.onChangeEmailCLList(value, element.email);
-                                                                                }} />
-                                                                            )
-                                                                            }
-                                                                        </div>
+                                                                        {
+                                                                            <div className={styles.usergroups}>
+                                                                                CRET-TAX-FE-{this.state.EngagementNumberSelected}
+                                                                                {this.state.CRUserList.filter(element => element.email !== "").map(element =>
+                                                                                    <Checkbox label={element.email} checked={element.checked} onChange={(ev, value) => {
+                                                                                        this.onChangeEmailCRList(value, element.email);
+                                                                                    }} />
+                                                                                )
+                                                                                }
+                                                                            </div>
+                                                                        }
+                                                                        {
+                                                                            <div className={styles.usergroups}>
+                                                                                CL-TAX-FE-{this.state.EngagementNumberSelected}
+                                                                                {this.state.CLUserList.filter(element => element.email !== "").map(element =>
+                                                                                    <Checkbox label={element.email} checked={element.checked} onChange={(ev, value) => {
+                                                                                        this.onChangeEmailCLList(value, element.email);
+                                                                                    }} />
+                                                                                )
+                                                                                }
+                                                                            </div>
+                                                                        }
                                                                     </div>
                                                                     {this.state.PreExistingAlertUsers.filter(e => e.hasAlert === true).length > 0 &&
                                                                         <div className={styles.userLists}>
@@ -2232,7 +2208,126 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                                             </div>
                                                                         </div>
                                                                     }
-                                                                </> : ""}
+                                                                </> :
+                                                                this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'File Exchange' ?
+                                                                    <>
+                                                                        <div className={styles.userLists}>
+                                                                            {
+                                                                                <div className={styles.usergroups}>
+                                                                                    CRET-AUD-FE-{this.state.EngagementNumberSelected}
+                                                                                    {this.state.CRUserList.filter(element => element.email !== "").map(element =>
+                                                                                        <Checkbox label={element.email} checked={element.checked} onChange={(ev, value) => {
+                                                                                            this.onChangeEmailCRList(value, element.email);
+                                                                                        }} />
+                                                                                    )
+                                                                                    }
+                                                                                </div>
+                                                                            }
+                                                                            {
+                                                                                <div className={styles.usergroups}>
+                                                                                    CL-AUD-FE-{this.state.EngagementNumberSelected}
+                                                                                    {this.state.CLUserList.filter(element => element.email !== "").map(element =>
+                                                                                        <Checkbox label={element.email} checked={element.checked} onChange={(ev, value) => {
+                                                                                            this.onChangeEmailCLList(value, element.email);
+                                                                                        }} />
+                                                                                    )
+                                                                                    }
+                                                                                </div>
+                                                                            }
+                                                                        </div>
+                                                                        {this.state.PreExistingAlertUsers.filter(e => e.hasAlert === true).length > 0 &&
+                                                                            <div className={styles.userLists}>
+                                                                                <Label>Select the users to rollover alerts for:</Label>
+                                                                                <div className={styles.usergroups}>
+                                                                                    {/* {console.log('logging PreExistingAlertUsers: ', this.state.PreExistingAlertUsers)} */}
+                                                                                    {this.state.PreExistingAlertUsers.filter(e => e.hasAlert === true).map(element =>
+                                                                                        <Checkbox label={element.email} checked={element.checkedState} onChange={(ev, value) => {
+                                                                                            this.onChangeUsersToRollAlerts(value, element.email);
+                                                                                        }} />
+                                                                                    )}
+                                                                                    {/* {console.log('logging UsersToRollAlerts: ', this.state.UsersToRollAlerts)} */}
+                                                                                </div>
+                                                                            </div>
+                                                                        }
+                                                                    </> :
+                                                                    this.state.TeamSelected == 'Advisory' && this.state.PortalTypeSelected == 'File Exchange' ?
+                                                                        <>
+                                                                            <div className={styles.userLists}>
+                                                                                {
+                                                                                    <div className={styles.usergroups}>
+                                                                                        CRET-ADV-FE-{this.state.EngagementNumberSelected}
+                                                                                        {this.state.CRUserList.filter(element => element.email !== "").map(element =>
+                                                                                            <Checkbox label={element.email} checked={element.checked} onChange={(ev, value) => {
+                                                                                                this.onChangeEmailCRList(value, element.email);
+                                                                                            }} />
+                                                                                        )
+                                                                                        }
+                                                                                    </div>
+                                                                                }
+                                                                                {
+                                                                                    <div className={styles.usergroups}>
+                                                                                        CL-ADV-FE-{this.state.EngagementNumberSelected}
+                                                                                        {this.state.CLUserList.filter(element => element.email !== "").map(element =>
+                                                                                            <Checkbox label={element.email} checked={element.checked} onChange={(ev, value) => {
+                                                                                                this.onChangeEmailCLList(value, element.email);
+                                                                                            }} />
+                                                                                        )
+                                                                                        }
+                                                                                    </div>
+                                                                                }
+                                                                            </div>
+                                                                            {this.state.PreExistingAlertUsers.filter(e => e.hasAlert === true).length > 0 &&
+                                                                                <div className={styles.userLists}>
+                                                                                    <Label>Select the users to rollover alerts for:</Label>
+                                                                                    <div className={styles.usergroups}>
+                                                                                        {/* {console.log('logging PreExistingAlertUsers: ', this.state.PreExistingAlertUsers)} */}
+                                                                                        {this.state.PreExistingAlertUsers.filter(e => e.hasAlert === true).map(element =>
+                                                                                            <Checkbox label={element.email} checked={element.checkedState} onChange={(ev, value) => {
+                                                                                                this.onChangeUsersToRollAlerts(value, element.email);
+                                                                                            }} />
+                                                                                        )}
+                                                                                        {/* {console.log('logging UsersToRollAlerts: ', this.state.UsersToRollAlerts)} */}
+                                                                                    </div>
+                                                                                </div>
+                                                                            }
+                                                                        </> :
+                                                                        this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'Workflow' && this.state.AssuranceSplitRollover.length == 0 ?
+                                                                            <>
+                                                                                <div className={styles.userLists}>
+                                                                                    <div className={styles.usergroups}>
+                                                                                        CRET-AUD-WF-{this.state.EngagementNumberSelected}
+                                                                                        {this.state.CRUserList.filter(element => element.email !== "").map(element =>
+                                                                                            <Checkbox label={element.email} checked={element.checked} onChange={(ev, value) => {
+                                                                                                this.onChangeEmailCRList(value, element.email);
+                                                                                            }} />
+                                                                                        )
+                                                                                        }
+                                                                                    </div>
+                                                                                    <div className={styles.usergroups}>
+                                                                                        CL-AUD-WF-{this.state.EngagementNumberSelected}
+                                                                                        {this.state.CLUserList.filter(element => element.email !== "").map(element =>
+                                                                                            <Checkbox label={element.email} checked={element.checked} onChange={(ev, value) => {
+                                                                                                this.onChangeEmailCLList(value, element.email);
+                                                                                            }} />
+                                                                                        )
+                                                                                        }
+                                                                                    </div>
+                                                                                </div>
+                                                                                {this.state.PreExistingAlertUsers.filter(e => e.hasAlert === true).length > 0 &&
+                                                                                    <div className={styles.userLists}>
+                                                                                        <Label>Select the users to rollover alerts for:</Label>
+                                                                                        <div className={styles.usergroups}>
+                                                                                            {/* {console.log('logging PreExistingAlertUsers: ', this.state.PreExistingAlertUsers)} */}
+                                                                                            {this.state.PreExistingAlertUsers.filter(e => e.hasAlert === true).map(element =>
+                                                                                                <Checkbox label={element.email} checked={element.checkedState} onChange={(ev, value) => {
+                                                                                                    this.onChangeUsersToRollAlerts(value, element.email);
+                                                                                                }} />
+                                                                                            )}
+                                                                                            {/* {console.log('logging UsersToRollAlerts: ', this.state.UsersToRollAlerts)} */}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                }
+                                                                            </> : ""}
                                                     </div>
                                                     {/* Do NOT DELETE THIS CODE */}
                                                     {/* Do NOT DELETE THIS CODE */}
@@ -2467,54 +2562,10 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                         </div>
                                                     </> :
                                                     this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'File Exchange' ?
-                                                    <>
-                                                        <div className={styles.userLists}>
-                                                            <div className={styles.usergroupscopy}>
-                                                                <span>CRET-TAX-FE-{this.state.RolloverURL}</span>
-                                                                {
-                                                                    this.state.CRUserSelected.split(";").map(element =>
-                                                                        <div className={styles.usersemails}>{element}</div>
-                                                                    )
-                                                                }
-                                                            </div>
-                                                            <div className={styles.usergroupscopy}>
-                                                                <span>CL-TAX-FE-{this.state.RolloverURL}</span>
-                                                                {
-                                                                    this.state.CLUserSelected.split(";").map(element =>
-                                                                        <div className={styles.usersemails}>{element}</div>
-                                                                    )
-                                                                }
-                                                            </div>
-                                                        </div>
-                                                        <div>
-                                                            <div className={styles.usergroupscopy}>
-                                                                {/* This is the lower section of the permissions for adding users who were not part of the rollover:
-                                                                NOTE: this should only be CR users as CL users should be added after the portal is created.
-                                                            */}
-                                                                {this.state.FinalAccessUserList.length != 0 ? <Label>The following new users will automatically have access:</Label> : ""}
-                                                                {
-                                                                    this.state.FinalAccessUserList.split(";").map(element =>
-                                                                        <div className={styles.usersemails}>{element}</div>
-                                                                    )
-                                                                }
-                                                            </div>
-                                                            {this.state.UsersToRollAlerts.length > 0 &&
-                                                                <div className={styles.usergroupscopy}>
-                                                                    <Label>If the following users currently have alerts, they will be created to the new sub-portal:</Label>
-                                                                    {
-                                                                        this.state.UsersToRollAlerts.map(element =>
-                                                                            <div className={styles.usersemails}>{element.email}</div>
-                                                                        )
-                                                                    }
-                                                                </div>
-                                                            }
-                                                        </div>
-                                                    </> :
-                                                    this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'Workflow' && this.state.AssuranceSplitRollover.length == 0 ?
                                                         <>
                                                             <div className={styles.userLists}>
                                                                 <div className={styles.usergroupscopy}>
-                                                                    <span>CRET-AUD-WF-{this.state.RolloverURL}</span>
+                                                                    <span>CRET-TAX-FE-{this.state.RolloverURL}</span>
                                                                     {
                                                                         this.state.CRUserSelected.split(";").map(element =>
                                                                             <div className={styles.usersemails}>{element}</div>
@@ -2522,7 +2573,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                                     }
                                                                 </div>
                                                                 <div className={styles.usergroupscopy}>
-                                                                    <span>CL-AUD-WF-{this.state.RolloverURL}</span>
+                                                                    <span>CL-TAX-FE-{this.state.RolloverURL}</span>
                                                                     {
                                                                         this.state.CLUserSelected.split(";").map(element =>
                                                                             <div className={styles.usersemails}>{element}</div>
@@ -2530,7 +2581,139 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                                                     }
                                                                 </div>
                                                             </div>
-                                                        </> : ""}
+                                                            <div>
+                                                                <div className={styles.usergroupscopy}>
+                                                                    {/* This is the lower section of the permissions for adding users who were not part of the rollover:
+                                                                NOTE: this should only be CR users as CL users should be added after the portal is created.
+                                                            */}
+                                                                    {this.state.FinalAccessUserList.length != 0 ? <Label>The following new users will automatically have access:</Label> : ""}
+                                                                    {
+                                                                        this.state.FinalAccessUserList.split(";").map(element =>
+                                                                            <div className={styles.usersemails}>{element}</div>
+                                                                        )
+                                                                    }
+                                                                </div>
+                                                                {this.state.UsersToRollAlerts.length > 0 &&
+                                                                    <div className={styles.usergroupscopy}>
+                                                                        <Label>If the following users currently have alerts, they will be created to the new sub-portal:</Label>
+                                                                        {
+                                                                            this.state.UsersToRollAlerts.map(element =>
+                                                                                <div className={styles.usersemails}>{element.email}</div>
+                                                                            )
+                                                                        }
+                                                                    </div>
+                                                                }
+                                                            </div>
+                                                        </> :
+                                                        this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'File Exchange' ?
+                                                            <>
+                                                                <div className={styles.userLists}>
+                                                                    <div className={styles.usergroupscopy}>
+                                                                        <span>CRET-AUD-FE-{this.state.RolloverURL}</span>
+                                                                        {
+                                                                            this.state.CRUserSelected.split(";").map(element =>
+                                                                                <div className={styles.usersemails}>{element}</div>
+                                                                            )
+                                                                        }
+                                                                    </div>
+                                                                    <div className={styles.usergroupscopy}>
+                                                                        <span>CL-AUD-FE-{this.state.RolloverURL}</span>
+                                                                        {
+                                                                            this.state.CLUserSelected.split(";").map(element =>
+                                                                                <div className={styles.usersemails}>{element}</div>
+                                                                            )
+                                                                        }
+                                                                    </div>
+                                                                </div>
+                                                                <div>
+                                                                    <div className={styles.usergroupscopy}>
+                                                                        {/* This is the lower section of the permissions for adding users who were not part of the rollover:
+                                                                NOTE: this should only be CR users as CL users should be added after the portal is created.
+                                                            */}
+                                                                        {this.state.FinalAccessUserList.length != 0 ? <Label>The following new users will automatically have access:</Label> : ""}
+                                                                        {
+                                                                            this.state.FinalAccessUserList.split(";").map(element =>
+                                                                                <div className={styles.usersemails}>{element}</div>
+                                                                            )
+                                                                        }
+                                                                    </div>
+                                                                    {this.state.UsersToRollAlerts.length > 0 &&
+                                                                        <div className={styles.usergroupscopy}>
+                                                                            <Label>If the following users currently have alerts, they will be created to the new sub-portal:</Label>
+                                                                            {
+                                                                                this.state.UsersToRollAlerts.map(element =>
+                                                                                    <div className={styles.usersemails}>{element.email}</div>
+                                                                                )
+                                                                            }
+                                                                        </div>
+                                                                    }
+                                                                </div>
+                                                            </> :
+                                                            this.state.TeamSelected == 'Advisory' && this.state.PortalTypeSelected == 'File Exchange' ?
+                                                                <>
+                                                                    <div className={styles.userLists}>
+                                                                        <div className={styles.usergroupscopy}>
+                                                                            <span>CRET-ADV-FE-{this.state.RolloverURL}</span>
+                                                                            {
+                                                                                this.state.CRUserSelected.split(";").map(element =>
+                                                                                    <div className={styles.usersemails}>{element}</div>
+                                                                                )
+                                                                            }
+                                                                        </div>
+                                                                        <div className={styles.usergroupscopy}>
+                                                                            <span>CL-ADV-FE-{this.state.RolloverURL}</span>
+                                                                            {
+                                                                                this.state.CLUserSelected.split(";").map(element =>
+                                                                                    <div className={styles.usersemails}>{element}</div>
+                                                                                )
+                                                                            }
+                                                                        </div>
+                                                                    </div>
+                                                                    <div>
+                                                                        <div className={styles.usergroupscopy}>
+                                                                            {/* This is the lower section of the permissions for adding users who were not part of the rollover:
+                                                                NOTE: this should only be CR users as CL users should be added after the portal is created.
+                                                            */}
+                                                                            {this.state.FinalAccessUserList.length != 0 ? <Label>The following new users will automatically have access:</Label> : ""}
+                                                                            {
+                                                                                this.state.FinalAccessUserList.split(";").map(element =>
+                                                                                    <div className={styles.usersemails}>{element}</div>
+                                                                                )
+                                                                            }
+                                                                        </div>
+                                                                        {this.state.UsersToRollAlerts.length > 0 &&
+                                                                            <div className={styles.usergroupscopy}>
+                                                                                <Label>If the following users currently have alerts, they will be created to the new sub-portal:</Label>
+                                                                                {
+                                                                                    this.state.UsersToRollAlerts.map(element =>
+                                                                                        <div className={styles.usersemails}>{element.email}</div>
+                                                                                    )
+                                                                                }
+                                                                            </div>
+                                                                        }
+                                                                    </div>
+                                                                </> :
+                                                                this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'Workflow' && this.state.AssuranceSplitRollover.length == 0 ?
+                                                                    <>
+                                                                        <div className={styles.userLists}>
+                                                                            <div className={styles.usergroupscopy}>
+                                                                                <span>CRET-AUD-WF-{this.state.RolloverURL}</span>
+                                                                                {
+                                                                                    this.state.CRUserSelected.split(";").map(element =>
+                                                                                        <div className={styles.usersemails}>{element}</div>
+                                                                                    )
+                                                                                }
+                                                                            </div>
+                                                                            <div className={styles.usergroupscopy}>
+                                                                                <span>CL-AUD-WF-{this.state.RolloverURL}</span>
+                                                                                {
+                                                                                    this.state.CLUserSelected.split(";").map(element =>
+                                                                                        <div className={styles.usersemails}>{element}</div>
+                                                                                    )
+                                                                                }
+                                                                            </div>
+                                                                        </div>
+                                                                    </> : ""}
                                                 {this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'Workflow' && this.state.PortalChoiceSelected == 'Rollover' ?
                                                     <div>
                                                         {/* Do NOT DELETE THIS CODE */}
