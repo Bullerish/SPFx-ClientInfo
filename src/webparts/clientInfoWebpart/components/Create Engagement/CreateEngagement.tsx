@@ -1063,17 +1063,21 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                             RolloverURL: str1
                         });
 
-                        this.state.CRUserList.forEach((e) => {
-                            if (data[0].EngagementMembers.indexOf(e.email) > -1) {
-                                e.checked = true;
-                            }
-                        });
-
-                        this.state.CLUserList.forEach((e) => {
-                            if (data[0].ClientMembers.indexOf(e.email) > -1) {
-                                e.checked = true;
-                            }
-                        });
+                        if (this.state.CRUserList.length > 0 && data[0].EngagementMembers && data[0].EngagementMembers.length > 0) {
+                            this.state.CRUserList.forEach((e) => {
+                                if (data[0].EngagementMembers.indexOf(e.email) > -1) {
+                                    e.checked = true;
+                                }
+                            });
+                        }
+                        
+                        if (this.state.CLUserList.length > 0 && data[0].ClientMembers && data[0].ClientMembers.length > 0) {
+                            this.state.CLUserList.forEach((e) => {
+                                if (data[0].ClientMembers.indexOf(e.email) > -1) {
+                                    e.checked = true;
+                                }
+                            });
+                        }
 
                         if (this.state.AssuranceSplitRollover.length == 0) {
                             this._getUserList();
