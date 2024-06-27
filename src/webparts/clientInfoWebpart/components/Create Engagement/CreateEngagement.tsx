@@ -1057,6 +1057,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                     if (Year == WorkYear + 1) {
                         this.setState({
                             Rollover: true,
+                            isRollover: true,
                             ServiceTypeSelected: data[0].TemplateType,
                             IndustryTypeSelected: data[0].IndustryType,
                             SupplementalSelected: data[0].Supplemental,
@@ -1070,7 +1071,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                 }
                             });
                         }
-                        
+
                         if (this.state.CLUserList.length > 0 && data[0].ClientMembers && data[0].ClientMembers.length > 0) {
                             this.state.CLUserList.forEach((e) => {
                                 if (data[0].ClientMembers.indexOf(e.email) > -1) {
@@ -1084,10 +1085,10 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                         }
                     }
                     else {
-                        this.setState({ isRollover: true });
+                        this.setState({ isRollover: false });
                     }
                 } else {
-                    this.setState({ isRollover: true });
+                    this.setState({ isRollover: false });
                 }
             });
         }
@@ -1697,7 +1698,6 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         if (this.state.TeamSelected != "" && this.state.PortalTypeSelected != "") {
             TagpickerDisable = false;
         }
-
         return (
             <div>
                 <Link className={styles.primarybutton} onClick={(e) => this.openDialog(e)}>Create Engagement Subportal</Link>
@@ -1896,8 +1896,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                         }
                                     </div>
                                     <Stack horizontal gap={20} className="portalChoice">
-
-                                        {(this.state.TeamSelected === 'Advisory' && this.state.PortalTypeSelected === 'Workflow') && !(this.state.ServiceTypeSelected.toLowerCase().indexOf('request list') > -1) ?
+                                        {(this.state.TeamSelected === 'Advisory' && this.state.PortalTypeSelected === 'Workflow') && !(this.state.ServiceTypeSelected.toLowerCase().indexOf('request list') > -1)?
                                             <ChoiceGroup
                                                 className={styles.innerChoice}
                                                 options={PortalChoiceOptions1}
@@ -1906,7 +1905,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                                             /> :
                                             <ChoiceGroup
                                                 className={styles.innerChoice}
-                                                options={this.state.isRollover ? PortalChoiceOptions1 : PortalChoiceOptions}
+                                                options={this.state.isRollover ? PortalChoiceOptions : PortalChoiceOptions1}
                                                 onChange={this._onChangePortalChoice}
                                                 selectedKey={this.state.PortalChoiceSelected}
                                             />
@@ -3081,7 +3080,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                             this.Rollover();
                         }
                         else {
-                            this.setState({ isRollover: true });
+                            this.setState({ isRollover: false });
                         }
                         this.setState({
                             validate: false,
