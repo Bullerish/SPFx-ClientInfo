@@ -1010,11 +1010,24 @@
 }
 
 .bulkRollover {
+  // border-top: 4px solid #f57b20;
+
+  [class^="ms-Dialog-header"] {
+    border-top: 4px solid #f57b20;
+  }
+
+  .choiceGroupContainer {
+    margin-bottom: 15px;
+  }
 
   .guidanceText {
     margin-bottom: 15px;
     font-weight: bold;
     font-size: 0.9rem;
+  }
+
+  .listViewPortsForRollover {
+    margin-bottom: 15px;
   }
 
   // [class^="ms-Label"] {
