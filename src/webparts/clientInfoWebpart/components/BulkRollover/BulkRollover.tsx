@@ -49,6 +49,7 @@ import {
   IGrouping,
 } from "@pnp/spfx-controls-react/lib/ListView";
 import { getMatterNumbersForClientSite } from './rolloverLogic';
+import { MatterAndRolloverData } from './rolloverLogic';
 
 
 
@@ -65,124 +66,15 @@ const BulkRollover = ({
   // all state variables
   const [team, setTeam] = useState<string>("");
   const [isDataLoaded, setIsDataLoaded] = useState<boolean>(true);
-  const [items, setItems] = useState([
-    {
-      ID: 1,
-      EngagementName: "Engagement 1",
-      Title: "Matter #1",
-      TemplateType: "Template Type 1",
-      SiteOwner: "Site Owner 1",
-      PortalExpiration: "",
-    },
-    {
-      ID: 2,
-      EngagementName: "Engagement 2",
-      Title: "Matter #2",
-      TemplateType: "Template Type 2",
-      SiteOwner: "Site Owner 2",
-      PortalExpiration: "",
-    },
-    {
-      ID: 3,
-      EngagementName: "Engagement 3",
-      Title: "Matter #3",
-      TemplateType: "Template Type 3",
-      SiteOwner: "Site Owner 3",
-      PortalExpiration:
-        "Tue Dec 02 2025 00:00:00 GMT-0800 (Pacific Standard Time)",
-    },
-    {
-      ID: 4,
-      EngagementName: "Engagement 4",
-      Title: "Matter #4",
-      TemplateType: "Template Type 4",
-      SiteOwner: "Site Owner 4",
-      PortalExpiration: "Expiration Date 4",
-    },
-    {
-      ID: 5,
-      EngagementName: "Engagement 5",
-      Title: "Matter #5",
-      TemplateType: "Template Type 5",
-      SiteOwner: "Site Owner 5",
-      PortalExpiration: "Expiration Date 5",
-    },
-    {
-      ID: 6,
-      EngagementName: "Engagement 6",
-      Title: "Matter #6",
-      TemplateType: "Template Type 6",
-      SiteOwner: "Site Owner 6",
-      PortalExpiration: "Expiration Date 6",
-    },
-    {
-      ID: 7,
-      EngagementName: "Engagement 7",
-      Title: "Matter #7",
-      TemplateType: "Template Type 7",
-      SiteOwner: "Site Owner 7",
-      PortalExpiration: "Expiration Date 7",
-    },
-  ]);
-  const [itemsStaged, setItemsStaged] = useState([
-    {
-      ID: 1,
-      EngagementName: "Engagement 1",
-      Title: "Matter #1",
-      TemplateType: "Template Type 1",
-      SiteOwner: "Site Owner 1",
-      PortalExpiration: "",
-    },
-    {
-      ID: 2,
-      EngagementName: "Engagement 2",
-      Title: "Matter #2",
-      TemplateType: "Template Type 2",
-      SiteOwner: "Site Owner 2",
-      PortalExpiration: "",
-    },
-    {
-      ID: 3,
-      EngagementName: "Engagement 3",
-      Title: "Matter #3",
-      TemplateType: "Template Type 3",
-      SiteOwner: "Site Owner 3",
-      PortalExpiration:
-        "Tue Dec 02 2025 00:00:00 GMT-0800 (Pacific Standard Time)",
-    },
-    {
-      ID: 4,
-      EngagementName: "Engagement 4",
-      Title: "Matter #4",
-      TemplateType: "Template Type 4",
-      SiteOwner: "Site Owner 4",
-      PortalExpiration: "Expiration Date 4",
-    },
-    {
-      ID: 5,
-      EngagementName: "Engagement 5",
-      Title: "Matter #5",
-      TemplateType: "Template Type 5",
-      SiteOwner: "Site Owner 5",
-      PortalExpiration: "Expiration Date 5",
-    },
-    {
-      ID: 6,
-      EngagementName: "Engagement 6",
-      Title: "Matter #6",
-      TemplateType: "Template Type 6",
-      SiteOwner: "Site Owner 6",
-      PortalExpiration: "Expiration Date 6",
-    },
-    {
-      ID: 7,
-      EngagementName: "Engagement 7",
-      Title: "Matter #7",
-      TemplateType: "Template Type 7",
-      SiteOwner: "Site Owner 7",
-      PortalExpiration: "Expiration Date 7",
-    },
-  ]);
+  const [taxRolloverData, setTaxRolloverData] = useState<MatterAndRolloverData[]>([]);
+  const [AudRolloverData, setAudRolloverData] = useState<
+    MatterAndRolloverData[]
+  >([]);
+
+  const [items, setItems] = useState<MatterAndRolloverData[]>([]);
+
+  const [itemsStaged, setItemsStaged] = useState<MatterAndRolloverData[]>([]);
+
   const [portalSelected, setPortalSelected] = useState([]);
   const [dateSelections, setDateSelections] = useState({});
 
@@ -269,6 +161,10 @@ const BulkRollover = ({
     }
   };
 
+  useEffect(() => {
+    console.log("items::", items);
+  }, [items])
+
   // const getMatterNumbersForClientSite = async (clientSiteNumber?: any) => {
   //   const hubSite = Web(GlobalValues.HubSiteURL);
   //   // get the current site's relative URL
@@ -306,6 +202,16 @@ const BulkRollover = ({
   useEffect(() => {
     console.log("team selected::", team);
 
+    setItemsStaged([]);
+
+    if (team === "tax") {
+      console.log("logging taxRolloverData::", taxRolloverData);
+      setItems(taxRolloverData);
+    } else if (team === "assurance") {
+      console.log("logging audRolloverData::", AudRolloverData);
+      setItems(AudRolloverData);
+    }
+
     // getMatterNumbersForClientSite();
   }, [team]);
 
@@ -318,8 +224,8 @@ const BulkRollover = ({
   }, [dateSelections]);
 
   useLayoutEffect(() => {
-    let taxPortalInfo = [];
-    let audPortalInfo = [];
+    // let taxPortalInfo = [];
+    // let audPortalInfo = [];
 
     if (isBulkRolloverOpen) {
       console.log(
@@ -329,6 +235,8 @@ const BulkRollover = ({
       getMatterNumbersForClientSite(clientSiteNumber).then((response) => {
         console.log("logging response from getMatterNumbersForClientSite::", response);
 
+        setAudRolloverData(response.audMatters);
+        setTaxRolloverData(response.taxMatters);
         // setItems(response);
         // setItemsStaged(response);
       });
@@ -349,7 +257,7 @@ const BulkRollover = ({
     //   isResizable: false,
     // },
     {
-      name: "EngagementName",
+      name: "newMatterEngagementName",
       displayName: "Engagement Name",
       sorting: false,
       minWidth: 100,
@@ -357,7 +265,7 @@ const BulkRollover = ({
       isResizable: true,
     },
     {
-      name: "Title",
+      name: "newMatterNumber",
       displayName: "Matter #",
       sorting: false,
       minWidth: 100,
@@ -365,7 +273,7 @@ const BulkRollover = ({
       isResizable: true,
     },
     {
-      name: "TemplateType",
+      name: "templateType",
       displayName: "Template Type",
       sorting: false,
       minWidth: 100,
