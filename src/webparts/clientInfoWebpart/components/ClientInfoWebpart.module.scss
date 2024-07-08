@@ -1030,9 +1030,11 @@
     margin-bottom: 15px;
   }
 
-  // [class^="ms-Label"] {
-  //   font-weight: bold;
-  // }
+  .trashCan {
+    color: #ff0000;
+    font-size: 16pt;
+    cursor: pointer;
+  }
 
   .innerChoice {
     width: 100%;

@@ -3,6 +3,7 @@ import { IWeb, Web } from "@pnp/sp/webs";
 import "@pnp/sp/lists";
 import "@pnp/sp/fields";
 import "@pnp/sp/items";
+import { ISiteUserInfo } from "@pnp/sp/site-users/types";
 
 const hubSite = Web(GlobalValues.HubSiteURL);
 
@@ -31,11 +32,11 @@ export interface MatterAndRolloverData {
   supplemental: string;
   newMatterPortalExpirationDate: string;
   isNotificationEmail: boolean;
-  siteOwner: string; // needs to be email address
+  siteOwner: string | ISiteUserInfo; // needs to be email address
 }
 
 // function to create the initial date for the DatePicker component
-const createDate18MonthsFromNow = (): Date => {
+export const createDate18MonthsFromNow = (): Date => {
   // console.log("createDate18MonthsFromNow fired::");
   const date = new Date();
   date.setMonth(date.getMonth() + 18);
@@ -160,6 +161,7 @@ const getRolloverEngagementPortalItems = async (
                     <FieldRef Name='IndustryType'/>
                     <FieldRef Name='Supplemental'/>
                     <FieldRef Name='PortalId'/>
+                    <FieldRef Name='SiteOwner'/>
                   </ViewFields>
                 </View>`,
         });

@@ -28,11 +28,6 @@ import { GlobalValues } from "../../Dataprovider/GlobalValue";
 import { setBaseUrl } from "office-ui-fabric-react";
 import { IItemAddResult } from "@pnp/sp/items";
 import {
-  DateTimePicker,
-  DateConvention,
-  TimeConvention,
-} from "@pnp/spfx-controls-react/lib/DateTimePicker";
-import {
   DatePicker,
   DayOfWeek,
   IDatePickerStrings,
@@ -50,6 +45,9 @@ import {
 } from "@pnp/spfx-controls-react/lib/ListView";
 import { getMatterNumbersForClientSite } from './rolloverLogic';
 import { MatterAndRolloverData } from './rolloverLogic';
+import { set } from '@microsoft/sp-lodash-subset';
+import { Icon } from "office-ui-fabric-react/lib/Icon";
+import { createDate18MonthsFromNow } from './rolloverLogic';
 
 
 
@@ -65,7 +63,7 @@ const BulkRollover = ({
 }): React.ReactElement => {
   // all state variables
   const [team, setTeam] = useState<string>("");
-  const [isDataLoaded, setIsDataLoaded] = useState<boolean>(true);
+  const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false);
   const [taxRolloverData, setTaxRolloverData] = useState<MatterAndRolloverData[]>([]);
   const [AudRolloverData, setAudRolloverData] = useState<
     MatterAndRolloverData[]
@@ -77,6 +75,8 @@ const BulkRollover = ({
 
   const [portalSelected, setPortalSelected] = useState([]);
   const [dateSelections, setDateSelections] = useState({});
+  const [enableNextButton, setEnableNextButton] = useState<boolean>(false);
+  const [isConfirmationScreen, setIsConfirmationScreen] = useState<boolean>(false);
 
   // store the current site's absolute URL (should be a client site URL)
   const clientSiteAbsoluteUrl = spContext._pageContext._web.absoluteUrl;
@@ -87,8 +87,15 @@ const BulkRollover = ({
 
   // function to reset all state variables back to their initial values
   const resetState = () => {
-    alert("resetState fired::");
     onBulkRolloverModalHide(false);
+    setTeam("");
+    setIsDataLoaded(false);
+    setTaxRolloverData([]);
+    setAudRolloverData([]);
+    setItems([]);
+    setItemsStaged([]);
+    setPortalSelected([]);
+    setDateSelections({});
   };
 
   // onChange event handler to capture the selected team value
@@ -100,7 +107,6 @@ const BulkRollover = ({
     // console.log(option.key);
     setTeam(option.key);
   };
-
 
   // function to format the date for the DatePicker component
   const onFormatDate = (date: Date): string => {
@@ -115,15 +121,38 @@ const BulkRollover = ({
   };
 
   // function to capture the selected date from the DatePicker component
-  const onSelectDate = (date: Date | null | undefined): void => {
-    console.log("onSelectDate fired::");
-    console.log(date);
+  const onSelectDate = (
+    date: Date | null | undefined,
+    rowItemToUpdate: MatterAndRolloverData
+  ): void => {
+    console.log('logging rowItemToUpdate with new::', rowItemToUpdate);
+    // let tempItemsStaged = itemsStaged;
+
+
+    const updatedItemsStaged = itemsStaged.map((item) => {
+      if (item.ID === rowItemToUpdate.ID) {
+        return {
+          ...item,
+          newMatterPortalExpirationDate: date.toString(),
+        };
+      }
+      return item;
+    });
+
+    console.log('logging rowItem after date update::', updatedItemsStaged);
+
+    setItemsStaged(updatedItemsStaged);
+
   };
 
-  const getPeoplePickerItems = (itemsArr: any[]) => {
+  const getPeoplePickerItems = (itemsArr: any[], itemRow: MatterAndRolloverData) => {
     const currSite = Web(GlobalValues.HubSiteURL);
     let getSelectedUsers = [];
     let getusersEmails = [];
+
+    console.log("logging itemsArr::", itemsArr);
+
+
     for (let item in itemsArr) {
       getSelectedUsers.push(itemsArr[item].text);
       getusersEmails.push(itemsArr[item].secondaryText);
@@ -139,11 +168,31 @@ const BulkRollover = ({
           //   emailaddress: getusersEmails,
           // });
           console.log("logging user info:: ", user);
+          console.log('logging itemRow::', itemRow);
+
+          const updatedItemsStaged = itemsStaged.map((item) => {
+            if (item.ID === itemRow.ID) {
+              return {
+                ...item,
+                siteOwner: user,
+              };
+            }
+            return item;
+          });
+
+          setItemsStaged(updatedItemsStaged);
+
         });
     });
+
+
+
+
+
   };
 
-  const validateSiteOwner = (itemsSiteOwner: any[]) => {
+  const validateSiteOwner = (itemsSiteOwner: any[], rowItemToUpdate) => {
+    // console.log('logging itemsSiteOwner::', itemsSiteOwner);
     // show error message if this is a guest user
     if (itemsSiteOwner.length > 0) {
       let userEmail = itemsSiteOwner[0].secondaryText.toLowerCase();
@@ -154,16 +203,73 @@ const BulkRollover = ({
         // this is a guest user, do not validate
         // this.setState({ addusers: [] });
       } else {
-        getPeoplePickerItems(itemsSiteOwner);
+        getPeoplePickerItems(itemsSiteOwner, rowItemToUpdate);
       }
     } else {
       // this.setState({ addusers: [] });
     }
   };
 
+  const moveSelectedToStaged = () => {
+    // Step 1: Iterate over portalSelected to handle each selected item
+    portalSelected.forEach((selectedItem) => {
+      // Step 2: Remove the selected item from 'items'
+      const newItems = items.filter((item) => item.ID !== selectedItem.ID);
+
+      // Update the 'items' state without the selected item
+      setItems(newItems);
+
+      // Step 3: Add the selected item to 'itemsStaged'
+      // Check if the item is already in 'itemsStaged' to avoid duplicates
+      const isAlreadyStaged = itemsStaged.some(
+        (item) => item.ID === selectedItem.ID
+      );
+      if (!isAlreadyStaged) {
+        setItemsStaged((prevItemsStaged) => [...prevItemsStaged, selectedItem]);
+      }
+    });
+  };
+
+  const unstageItem = (ev, itemRowToRemove) => {
+    console.log('logging itemRowToRemove::', itemRowToRemove);
+    // Step 1: Remove the selected item from 'itemsStaged'
+    const newItemsStaged = itemsStaged.filter(
+      (item) => item.ID !== itemRowToRemove.ID
+    );
+
+    setItemsStaged(newItemsStaged);
+
+    // Step 2: Add the selected item to 'items'
+    // Check if the item is already in 'items' to avoid duplicates
+    const isAlreadyInItems = items.some((item) => item.ID === itemRowToRemove.ID);
+    if (!isAlreadyInItems) {
+
+      setItems((prevItems) => [...prevItems, itemRowToRemove]);
+    }
+
+  };
+
+  // function to check if all items in the itemsStaged array contain a site owner
+  const checkItemsStagedForSiteOwner = () => {
+    let allItemsHaveSiteOwner = true;
+    itemsStaged.forEach((item) => {
+      if (item.siteOwner === "" || item.siteOwner === null) {
+        allItemsHaveSiteOwner = false;
+      }
+    });
+    return allItemsHaveSiteOwner;
+  };
+
   useEffect(() => {
     console.log("items::", items);
-  }, [items])
+  }, [items]);
+
+  useEffect(() => {
+    console.log("itemsStaged::", itemsStaged);
+    if (itemsStaged.length > 0) {
+      setEnableNextButton(checkItemsStagedForSiteOwner());
+    }
+  }, [itemsStaged]);
 
   // const getMatterNumbersForClientSite = async (clientSiteNumber?: any) => {
   //   const hubSite = Web(GlobalValues.HubSiteURL);
@@ -216,16 +322,24 @@ const BulkRollover = ({
   }, [team]);
 
   useEffect(() => {
-    console.log("portalSelected::", portalSelected);
+    console.log("portalSelected::", portalSelected[0]);
+
+    if (portalSelected.length > 0) {
+      moveSelectedToStaged();
+    }
+
+
   }, [portalSelected]);
 
   useEffect(() => {
     console.log("dateSelections::", dateSelections);
   }, [dateSelections]);
 
+  useEffect(() => {
+    console.log("enableNextButton::", enableNextButton);
+  }, [enableNextButton]);
+
   useLayoutEffect(() => {
-    // let taxPortalInfo = [];
-    // let audPortalInfo = [];
 
     if (isBulkRolloverOpen) {
       console.log(
@@ -237,6 +351,12 @@ const BulkRollover = ({
 
         setAudRolloverData(response.audMatters);
         setTaxRolloverData(response.taxMatters);
+
+        if (response.audMatters.length > 0 || response.taxMatters.length > 0) {
+          setIsDataLoaded(true);
+        }
+
+
         // setItems(response);
         // setItemsStaged(response);
       });
@@ -248,14 +368,6 @@ const BulkRollover = ({
 
   // define columns/viewfields so the ListView component knows what to render
   const viewFields: IViewField[] = [
-    // {
-    //   name: "ID",
-    //   displayName: "",
-    //   sorting: false,
-    //   minWidth: 0,
-    //   maxWidth: 0,
-    //   isResizable: false,
-    // },
     {
       name: "newMatterEngagementName",
       displayName: "Engagement Name",
@@ -280,79 +392,12 @@ const BulkRollover = ({
       maxWidth: 225,
       isResizable: true,
     },
-    // {
-    //   name: "SiteOwner",
-    //   displayName: "Site Owner",
-    //   sorting: false,
-    //   minWidth: 100,
-    //   maxWidth: 250,
-    //   isResizable: true,
-    //   render: (rowItem, index, column) => {
-    //     return (
-    //       <div>
-    //         <PeoplePicker
-    //           context={spContext}
-    //           showtooltip={false}
-    //           required={true}
-    //           onChange={(items) => validateSiteOwner(items)}
-    //           showHiddenInUI={false}
-    //           principalTypes={[PrincipalType.User]}
-    //           ensureUser={true}
-    //           personSelectionLimit={1}
-    //           placeholder="Enter name or email"
-    //           // defaultSelectedUsers={this.state.addusers}
-    //         />
-    //       </div>
-    //     );
-    //   },
-    // },
-    // {
-    //   name: "PortalExpiration",
-    //   displayName: "Expiration Date",
-    //   sorting: false,
-    //   minWidth: 100,
-    //   maxWidth: 250,
-    //   isResizable: true,
-    //   render: (rowItem, index, column) => {
-    //     console.log("rowItem::", rowItem);
-
-    //     const onDateChange = (date: Date | null | undefined): void => {
-    //       setDateSelections((prevSelections) => ({
-    //         ...prevSelections,
-    //         [rowItem.ID]: date, // Use a unique identifier from your row data
-    //       }));
-    //     };
-
-    //     return (
-    //       <div>
-    //         <DatePicker
-    //           // label="DateTime Picker - 24h"
-    //           // dateConvention={DateConvention.DateTime}
-    //           // timeConvention={TimeConvention.Hours24}
-    //           allowTextInput={false}
-    //           value={new Date(rowItem.PortalExpiration)}
-    //           initialPickerDate={new Date()}
-    //           onSelectDate={onDateChange}
-    //           formatDate={onFormatDate}
-    //         />
-    //       </div>
-    //     );
-    //   },
-    // },
   ];
 
   // define columns/viewfieldsStaged so the ListView component knows what to render (is for staged portals)
   const viewFieldsStaged: IViewField[] = [
-    // {
-    //   name: "ID",
-    //   displayName: "",
-    //   sorting: false,
-    //   minWidth: 0,
-    //   maxWidth: 0,
-    //   isResizable: false,
-    // },
     {
-      name: "EngagementName",
+      name: "newMatterEngagementName",
       displayName: "Engagement Name",
       sorting: false,
       minWidth: 100,
@@ -360,7 +405,7 @@ const BulkRollover = ({
       isResizable: true,
     },
     {
-      name: "Title",
+      name: "newMatterNumber",
       displayName: "Matter #",
       sorting: false,
       minWidth: 100,
@@ -368,7 +413,7 @@ const BulkRollover = ({
       isResizable: true,
     },
     {
-      name: "TemplateType",
+      name: "templateType",
       displayName: "Template Type",
       sorting: false,
       minWidth: 100,
@@ -379,30 +424,35 @@ const BulkRollover = ({
       name: "SiteOwner",
       displayName: "Site Owner",
       sorting: false,
-      minWidth: 100,
+      minWidth: 180,
       maxWidth: 250,
       isResizable: true,
       render: (rowItem, index, column) => {
+
+        console.log("logging rowItem from viewFieldsStaged::", rowItem);
+
+        console.log('logging rowItem siteOwner Email::', rowItem["siteOwner.Email"]);
+
         return (
           <div>
             <PeoplePicker
               context={spContext}
               showtooltip={false}
               required={true}
-              onChange={(item) => validateSiteOwner(item)}
+              onChange={(item) => validateSiteOwner(item, rowItem)}
               showHiddenInUI={false}
               principalTypes={[PrincipalType.User]}
               ensureUser={true}
               personSelectionLimit={1}
               placeholder="Enter name or email"
-              // defaultSelectedUsers={this.state.addusers}
+              defaultSelectedUsers={rowItem["siteOwner.Email"] ? [rowItem["siteOwner.Email"]] : []}
             />
           </div>
         );
       },
     },
     {
-      name: "PortalExpiration",
+      name: "newMatterPortalExpirationDate",
       displayName: "Expiration Date",
       sorting: false,
       minWidth: 100,
@@ -411,12 +461,12 @@ const BulkRollover = ({
       render: (rowItem, index, column) => {
         // console.log("rowItem::", rowItem);
 
-        const onDateChange = (date: Date | null | undefined): void => {
-          setDateSelections((prevSelections) => ({
-            ...prevSelections,
-            [rowItem.ID]: date, // Use a unique identifier from your row data
-          }));
-        };
+        // const onDateChange = (date: Date | null | undefined): void => {
+        //   setDateSelections((prevSelections) => ({
+        //     ...prevSelections,
+        //     [rowItem.ID]: date, // Use a unique identifier from your row data
+        //   }));
+        // };
 
         return (
           <div>
@@ -425,11 +475,93 @@ const BulkRollover = ({
               // dateConvention={DateConvention.DateTime}
               // timeConvention={TimeConvention.Hours24}
               allowTextInput={false}
-              value={new Date(rowItem.PortalExpiration)}
+              value={new Date(rowItem.newMatterPortalExpirationDate)}
               initialPickerDate={new Date()}
-              onSelectDate={onDateChange}
+              onSelectDate={(dateToSend) => onSelectDate(dateToSend, rowItem)}
               formatDate={onFormatDate}
             />
+          </div>
+        );
+      },
+    },
+    {
+      name: "",
+      displayName: "",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 100,
+      isResizable: false,
+      render: (rowItem, index, column) => {
+
+
+        return (
+          <div>
+            <Icon iconName='Delete' className={styles.trashCan} onClick={(ev) => unstageItem(ev, rowItem)} />
+          </div>
+        );
+      },
+    },
+  ];
+
+  const confirmationViewFields: IViewField[] = [
+    {
+      name: "newMatterEngagementName",
+      displayName: "Engagement Name",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 250,
+      isResizable: true,
+    },
+    {
+      name: "newMatterNumber",
+      displayName: "Matter #",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 250,
+      isResizable: true,
+    },
+    {
+      name: "templateType",
+      displayName: "Template Type",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 225,
+      isResizable: true,
+    },
+    {
+      name: "siteOwner",
+      displayName: "Site Owner",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 100,
+      isResizable: false,
+      render: (rowItem, index, column) => {
+        // console.log("logging rowItem from confirmationViewFields::", rowItem);
+
+        return (
+          <div>
+            <span>{rowItem["siteOwner.Title"]}</span>
+          </div>
+        );
+      },
+    },
+    {
+      name: "newMatterPortalExpirationDate",
+      displayName: "Expiration Date",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 100,
+      isResizable: false,
+      render: (rowItem, index, column) => {
+        // console.log("logging rowItem from confirmationViewFields::", rowItem);
+
+        return (
+          <div>
+            <span>
+              {onFormatDate(
+                new Date(rowItem.newMatterPortalExpirationDate)
+              ).toString()}
+            </span>
           </div>
         );
       },
@@ -454,33 +586,44 @@ const BulkRollover = ({
         }}
         // styles={{ root: { maxHeight: 700 } }}
       >
-        <span className={styles.guidanceText}>
-          Choose a team to see WF portals that are available for rollover
-        </span>
-
         {/* Team select choice group */}
-        <div className={styles.choiceGroupContainer}>
-          <ChoiceGroup
-            className={styles.innerChoice}
-            // defaultSelectedKey="B"
-            label="Team"
-            required={true}
-            options={[
-              {
-                key: "assurance",
-                text: "Assurance",
-              },
-              {
-                key: "tax",
-                text: "Tax",
-              },
-            ]}
-            onChange={onTeamChange}
+        {isDataLoaded && !isConfirmationScreen && (
+          <>
+            <span className={styles.guidanceText}>
+              Choose a team to see WF portals that are available for rollover
+            </span>
+            <div className={styles.choiceGroupContainer}>
+              <ChoiceGroup
+                className={styles.innerChoice}
+                // defaultSelectedKey="B"
+                label="Team"
+                required={true}
+                options={[
+                  {
+                    key: "assurance",
+                    text: "Assurance",
+                  },
+                  {
+                    key: "tax",
+                    text: "Tax",
+                  },
+                ]}
+                onChange={onTeamChange}
+              />
+            </div>
+          </>
+        )}
+
+        {!isDataLoaded && !isConfirmationScreen && (
+          <Spinner
+          size={SpinnerSize.large}
+          label="Loading Eligible Rollover Portals...this could take some time depending on the amount of portals."
           />
-        </div>
+        )}
+
 
         {/* ListView component to display list of portals */}
-        {isDataLoaded ? (
+        {isDataLoaded && team !== "" && !isConfirmationScreen && (
           <>
             <span className={styles.guidanceText}>
               Select engagements below to bulk rollover. No permissions will be
@@ -489,19 +632,18 @@ const BulkRollover = ({
 
             {/* ListView component to hold portals available for rollover */}
             <div className={styles.listViewPortsForRollover}>
-            <ListView
-              items={items}
-              viewFields={viewFields}
-              // iconFieldName="FileRef"
-              compact={true}
-              selectionMode={SelectionMode.multiple}
-              selection={(selectionItem) => setPortalSelected(selectionItem)}
-              // defaultSelection={defaultSelectedFromScreen2}
-              showFilter={false}
-              key="engagementPortals"
-            />
+              <ListView
+                items={items}
+                viewFields={viewFields}
+                // iconFieldName="FileRef"
+                compact={true}
+                selectionMode={SelectionMode.single}
+                selection={(selectionItem) => setPortalSelected(selectionItem)}
+                // defaultSelection={defaultSelectedFromScreen2}
+                showFilter={false}
+                key="engagementPortals"
+              />
             </div>
-
 
             <span className={styles.guidanceText}>
               Enter a Site Owner and Expiration Date for each portal to
@@ -521,35 +663,74 @@ const BulkRollover = ({
               key="engagementPortalsStaged"
             />
           </>
-        ) : (
-          <Spinner
-            size={SpinnerSize.large}
-            label="Loading Engagement Portal Data...this could take some time depending on the number of portals you have access to."
-          />
+        )}
+
+        {isConfirmationScreen && (
+        <>
+          <span className={styles.guidanceText}>
+            Selected engagements will be rolled over from previous year. No
+            Permissions will be rolled over to the new portals.
+          </span>
+
+          {/* ListView component to hold portals available for rollover */}
+          <div className={styles.listViewPortsForRollover}>
+            <ListView
+              items={itemsStaged}
+              viewFields={confirmationViewFields}
+              // iconFieldName="FileRef"
+              compact={true}
+              selectionMode={SelectionMode.none}
+              // selection={(selectionItem) => setPortalSelected(selectionItem)}
+              // defaultSelection={defaultSelectedFromScreen2}
+              showFilter={false}
+              key="confirmationRollovers"
+            />
+          </div>
+        </>
         )}
 
         {/* Dialog footer to hold buttons */}
         <DialogFooter>
-          <div className={styles.dialogFooterButtonContainer}>
-            <DefaultButton
-              className={styles.defaultButton}
-              onClick={resetState}
-              text="Cancel"
-            />
-            <PrimaryButton
-              className={styles.primaryButton}
-              // onClick={() => setConfirmDialogHidden(false)}
-              text="Next"
-              // disabled={
-              //   fullName !== "" &&
-              //   fullName !== null &&
-              //   jobRoleItem.key &&
-              //   jobFunctionItem.key
-              //     ? false
-              //     : true
-              // }
-            />
-          </div>
+          {isDataLoaded && team !== "" && (
+            <>
+              <div className={styles.dialogFooterButtonContainer}>
+                <DefaultButton
+                  className={styles.defaultButton}
+                  onClick={resetState}
+                  text="Cancel"
+                />
+
+                <div>
+                {isConfirmationScreen && (
+                  <DefaultButton
+                    className={styles.defaultButton}
+                    onClick={() => setIsConfirmationScreen(false)}
+                    style={{ marginRight: "8px" }}
+                    text="Back"
+                  />
+                  )}
+
+                  {enableNextButton && !isConfirmationScreen && (
+                    <PrimaryButton
+                      className={styles.primaryButton}
+                      onClick={() => setIsConfirmationScreen(true)}
+                      text="Next"
+                      // disabled={!enableNextButton}
+                    />
+                  )}
+
+                  {isConfirmationScreen && (
+                    <PrimaryButton
+                    className={styles.primaryButton}
+                    // onClick={() => setIsConfirmationScreen(true)}
+                    text="Create Portals"
+                    // disabled={!enableNextButton}
+                    />
+                  )}
+                </div>
+              </div>
+            </>
+          )}
         </DialogFooter>
       </Dialog>
       {/* confirm dialog component. Modal/dialog window will open */}
