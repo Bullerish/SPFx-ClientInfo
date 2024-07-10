@@ -13,6 +13,10 @@ import {
   ChoiceGroup,
   IChoiceGroupOption,
 } from "office-ui-fabric-react/lib/ChoiceGroup";
+import {
+  MessageBar,
+  MessageBarType,
+} from "office-ui-fabric-react/lib/MessageBar";
 import { TextField } from "office-ui-fabric-react/lib/TextField";
 import { Text } from "office-ui-fabric-react/lib/Text";
 import { sp } from "@pnp/sp";
@@ -51,6 +55,8 @@ import { createDate18MonthsFromNow } from './rolloverLogic';
 
 
 
+
+
 export interface IDatePickerFormatExampleState {
   firstDayOfWeek?: DayOfWeek;
   value?: Date | null;
@@ -77,9 +83,12 @@ const BulkRollover = ({
   const [dateSelections, setDateSelections] = useState({});
   const [enableNextButton, setEnableNextButton] = useState<boolean>(false);
   const [isConfirmationScreen, setIsConfirmationScreen] = useState<boolean>(false);
+  const [isDataSubmitted, setIsDataSubmitted] = useState<boolean>(false);
 
   // store the current site's absolute URL (should be a client site URL)
   const clientSiteAbsoluteUrl = spContext._pageContext._web.absoluteUrl;
+  const hubSite = Web(GlobalValues.HubSiteURL);
+
   const clientSiteServerRelativeUrl =
     spContext._pageContext._web.serverRelativeUrl;
   const relativeUrlArr = clientSiteServerRelativeUrl.split("/");
@@ -96,6 +105,9 @@ const BulkRollover = ({
     setItemsStaged([]);
     setPortalSelected([]);
     setDateSelections({});
+    setEnableNextButton(false);
+    setIsConfirmationScreen(false);
+    setIsDataSubmitted(false);
   };
 
   // onChange event handler to capture the selected team value
@@ -110,13 +122,16 @@ const BulkRollover = ({
 
   // function to format the date for the DatePicker component
   const onFormatDate = (date: Date): string => {
+    // return (
+    //   date.getMonth() +
+    //   1 +
+    //   "/" +
+    //   date.getDate() +
+    //   "/" +
+    //   (date.getFullYear() % 100)
+    // );
     return (
-      date.getMonth() +
-      1 +
-      "/" +
-      date.getDate() +
-      "/" +
-      (date.getFullYear() % 100)
+      date.getMonth() + 1 + "/" + date.getDate() + "/" + date.getFullYear()
     );
   };
 
@@ -192,7 +207,9 @@ const BulkRollover = ({
   };
 
   const validateSiteOwner = (itemsSiteOwner: any[], rowItemToUpdate) => {
-    // console.log('logging itemsSiteOwner::', itemsSiteOwner);
+    console.log('logging itemsSiteOwner::', itemsSiteOwner);
+    console.log('logging rowItemToUpdate::', rowItemToUpdate);
+    let tempItemsStaged = itemsStaged;
     // show error message if this is a guest user
     if (itemsSiteOwner.length > 0) {
       let userEmail = itemsSiteOwner[0].secondaryText.toLowerCase();
@@ -207,6 +224,22 @@ const BulkRollover = ({
       }
     } else {
       // this.setState({ addusers: [] });
+
+      const updatedItemsStaged = itemsStaged.map((item) => {
+        if (item.ID === rowItemToUpdate.ID) {
+          return {
+            ...item,
+            siteOwner: "",
+          };
+        }
+        return item;
+      });
+
+      setItemsStaged(updatedItemsStaged);
+
+
+
+
     }
   };
 
@@ -244,6 +277,8 @@ const BulkRollover = ({
     const isAlreadyInItems = items.some((item) => item.ID === itemRowToRemove.ID);
     if (!isAlreadyInItems) {
 
+      itemRowToRemove.siteOwner = "";
+
       setItems((prevItems) => [...prevItems, itemRowToRemove]);
     }
 
@@ -260,6 +295,60 @@ const BulkRollover = ({
     return allItemsHaveSiteOwner;
   };
 
+  const submitPortalRolloverData = () => {
+    // Step 1: Iterate over itemsStaged to handle each staged item
+    Promise.all(itemsStaged.map(stagedItem => {
+      // console.log("logging stagedItem::", stagedItem);
+      // Step 2: Prepare the item data to be submitted
+      const itemData = {
+        Title: stagedItem.newMatterNumber,
+        EngagementName: stagedItem.newMatterEngagementName,
+        ClientNumber: stagedItem.clientNumber,
+        EngagementNumberEndZero: stagedItem.engagementNumberEndZero,
+        WorkYear: stagedItem.newMatterWorkYear,
+        Team: stagedItem.team,
+        PortalType: stagedItem.portalType,
+        SiteUrl: {
+          __metadata: { type: "SP.FieldUrlValue" },
+          Description: stagedItem.newMatterSiteUrl,
+          Url: stagedItem.newMatterSiteUrl,
+        },
+        RolloverUrl: {
+          __metadata: { type: "SP.FieldUrlValue" },
+          Description: stagedItem.rolloverMatterSiteUrl,
+          Url: stagedItem.rolloverMatterSiteUrl,
+        },
+        Rollover: stagedItem.rollover,
+        PortalId: stagedItem.newMatterPortalId,
+        TemplateType: stagedItem.templateType,
+        IndustryType: stagedItem.industryType,
+        Supplemental: stagedItem.supplemental,
+        SiteOwnerId: stagedItem.siteOwner["Id"],
+        PortalExpiration: new Date(stagedItem.newMatterPortalExpirationDate),
+        isNotificationEmail: true,
+      };
+
+      // Step 3: Submit the item data to the list
+      return hubSite.lists
+        .getByTitle("Engagement Portal List")
+        .items.add(itemData);
+        // .then((result: IItemAddResult) => {
+        //   console.log(`Item with ID: ${result.data.ID} added successfully`);
+        // });
+    }))
+    .then((results) => {
+      console.log('setting isDataSubmitted to true::');
+      setIsDataSubmitted(true);
+
+    })
+    .catch((error) => {
+      console.error("An error occurred while adding items:", error);
+    });
+
+
+
+  };
+
   useEffect(() => {
     console.log("items::", items);
   }, [items]);
@@ -271,39 +360,6 @@ const BulkRollover = ({
     }
   }, [itemsStaged]);
 
-  // const getMatterNumbersForClientSite = async (clientSiteNumber?: any) => {
-  //   const hubSite = Web(GlobalValues.HubSiteURL);
-  //   // get the current site's relative URL
-  //   // const clientSiteServerRelativeUrl = spContext._pageContext._web.serverRelativeUrl;
-
-  //   let engagementList = await hubSite.lists
-  //     .getByTitle("Engagement List")
-  //     .items.select(
-  //       "Title",
-  //       "ClientNumber",
-  //       "EngagementName",
-  //       "ID",
-  //       "WorkYear",
-  //       "Team",
-  //       "Portals_x0020_Created"
-  //     )
-  //     .getAll();
-
-  //   // console.table(engagementList);
-
-  //   // TODO: finish filtering the list based on the selected team and client site number
-  //   const filterByPortalsCreatedTax = engagementList.filter((listItem) => {
-  //     return (
-  //       listItem.Portals_x0020_Created === null &&
-  //       listItem.Team == "Tax" &&
-  //       listItem.ClientNumber == clientSiteNumber
-  //     );
-  //   });
-
-  //   console.table(filterByPortalsCreatedTax);
-  // };
-
-  // runs after a radio button is selected for Team type
 
   useEffect(() => {
     console.log("team selected::", team);
@@ -431,7 +487,7 @@ const BulkRollover = ({
 
         console.log("logging rowItem from viewFieldsStaged::", rowItem);
 
-        console.log('logging rowItem siteOwner Email::', rowItem["siteOwner.Email"]);
+        // console.log('logging rowItem siteOwner Email::', (rowItem as ISiteUserInfo)["siteOwner.Email"]);
 
         return (
           <div>
@@ -455,9 +511,9 @@ const BulkRollover = ({
       name: "newMatterPortalExpirationDate",
       displayName: "Expiration Date",
       sorting: false,
-      minWidth: 100,
+      minWidth: 125,
       maxWidth: 250,
-      isResizable: true,
+      isResizable: false,
       render: (rowItem, index, column) => {
         // console.log("rowItem::", rowItem);
 
@@ -616,11 +672,10 @@ const BulkRollover = ({
 
         {!isDataLoaded && !isConfirmationScreen && (
           <Spinner
-          size={SpinnerSize.large}
-          label="Loading Eligible Rollover Portals...this could take some time depending on the amount of portals."
+            size={SpinnerSize.large}
+            label="Loading Eligible Rollover Portals...this could take some time depending on the amount of portals."
           />
         )}
-
 
         {/* ListView component to display list of portals */}
         {isDataLoaded && team !== "" && !isConfirmationScreen && (
@@ -666,27 +721,39 @@ const BulkRollover = ({
         )}
 
         {isConfirmationScreen && (
-        <>
-          <span className={styles.guidanceText}>
-            Selected engagements will be rolled over from previous year. No
-            Permissions will be rolled over to the new portals.
-          </span>
+          <>
+            <span className={styles.guidanceText}>
+              Selected engagements will be rolled over from previous year. No
+              Permissions will be rolled over to the new portals.
+            </span>
 
-          {/* ListView component to hold portals available for rollover */}
-          <div className={styles.listViewPortsForRollover}>
-            <ListView
-              items={itemsStaged}
-              viewFields={confirmationViewFields}
-              // iconFieldName="FileRef"
-              compact={true}
-              selectionMode={SelectionMode.none}
-              // selection={(selectionItem) => setPortalSelected(selectionItem)}
-              // defaultSelection={defaultSelectedFromScreen2}
-              showFilter={false}
-              key="confirmationRollovers"
-            />
-          </div>
-        </>
+            {/* ListView component to hold portals available for rollover */}
+            <div className={styles.listViewPortsForRollover}>
+              <ListView
+                items={itemsStaged}
+                viewFields={confirmationViewFields}
+                // iconFieldName="FileRef"
+                compact={true}
+                selectionMode={SelectionMode.none}
+                // selection={(selectionItem) => setPortalSelected(selectionItem)}
+                // defaultSelection={defaultSelectedFromScreen2}
+                showFilter={false}
+                key="confirmationRollovers"
+              />
+            </div>
+
+            {isDataSubmitted && (
+              <MessageBar
+                messageBarType={MessageBarType.success}
+                isMultiline={true}
+                className={styles.successMsg}
+              >
+                Thank you. Your portals are in the process of being created. You
+                will receive an email confirmation shortly when your portals are
+                active. Please close this window.
+              </MessageBar>
+            )}
+          </>
         )}
 
         {/* Dialog footer to hold buttons */}
@@ -701,13 +768,13 @@ const BulkRollover = ({
                 />
 
                 <div>
-                {isConfirmationScreen && (
-                  <DefaultButton
-                    className={styles.defaultButton}
-                    onClick={() => setIsConfirmationScreen(false)}
-                    style={{ marginRight: "8px" }}
-                    text="Back"
-                  />
+                  {isConfirmationScreen && (
+                    <DefaultButton
+                      className={styles.defaultButton}
+                      onClick={() => setIsConfirmationScreen(false)}
+                      style={{ marginRight: "8px" }}
+                      text="Back"
+                    />
                   )}
 
                   {enableNextButton && !isConfirmationScreen && (
@@ -721,10 +788,10 @@ const BulkRollover = ({
 
                   {isConfirmationScreen && (
                     <PrimaryButton
-                    className={styles.primaryButton}
-                    // onClick={() => setIsConfirmationScreen(true)}
-                    text="Create Portals"
-                    // disabled={!enableNextButton}
+                      className={styles.primaryButton}
+                      onClick={submitPortalRolloverData}
+                      text="Create Portals"
+                      // disabled={!enableNextButton}
                     />
                   )}
                 </div>

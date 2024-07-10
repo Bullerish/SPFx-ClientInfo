@@ -32,7 +32,7 @@ export interface MatterAndRolloverData {
   supplemental: string;
   newMatterPortalExpirationDate: string;
   isNotificationEmail: boolean;
-  siteOwner: string | ISiteUserInfo; // needs to be email address
+  siteOwner: string | ISiteUserInfo | number; // needs to be email address
 }
 
 // function to create the initial date for the DatePicker component
