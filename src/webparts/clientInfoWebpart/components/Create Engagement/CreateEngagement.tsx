@@ -367,7 +367,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
 
     updatedworkyear = false;
     Isnextyear = false;
-  };
+  }
 
   public componentDidUpdate(): void {
     if (
@@ -404,16 +404,16 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
   // event handlers to show hide Client Profile Information
   public onBulkRolloverModalHide = () => {
     this.showHideBulkRolloverModal(false);
-  };
+  }
 
   // show/hide Client Profile Information Modal
   public showHideBulkRolloverModal = (isVisible: boolean) => {
     this.setState({ isBulkRolloverOpen: isVisible });
-  };
+  }
 
   public ShowHideProgressBar = (isVisible) => {
     this.setState({ showSpinner: isVisible });
-  };
+  }
 
   public SetAssuranceSplitData = (AsuranceSplitData) => {
     this.setState({ AsuranceSplitData: AsuranceSplitData }, () => {
@@ -427,11 +427,11 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         });
       }
     });
-  };
+  }
 
   public SetAssuranceSplitDataRollOver = (Data) => {
     this.setState({ AssuranceSplitRollover: Data });
-  };
+  }
 
   public loadEngagements = async (Team) => {
     this.setState({
@@ -454,7 +454,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
       });
     });
     EngagementNumberTags = this.state.EngagementNumber;
-  };
+  }
 
   public loadAdvisoryTemplates = () => {
     let obj = new ClientInfoClass();
@@ -468,7 +468,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
       });
     });
     this.setState({ AdvisoryTemplate: advisoryTemplatesHolder });
-  };
+  }
 
   public loadServiceTypes = () => {
     let obj = new ClientInfoClass();
@@ -499,7 +499,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
       this.setState({ ServiceType: _ServiceType });
     });
     return this.state.ServiceType;
-  };
+  }
 
   public loadIndustryTypes = () => {
     let _IndustryType = [];
@@ -523,7 +523,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
       this.setState({ IndustryType: _IndustryType });
     });
     return this.state.IndustryType;
-  };
+  }
 
   public loadAssuranceSupplemental = () => {
     let obj = new ClientInfoClass();
@@ -553,7 +553,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
       SupplementalSelected: "N/A",
       SupplementalSelectedKey: "N/A",
     });
-  };
+  }
 
   public checkEngagement = async (portalsCreated) => {
     // console.log('in checkEngagement func:: ');
@@ -616,7 +616,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
       });
       return false;
     }
-  };
+  }
 
   private SaveEngagementList = () => {
     let obj = new ClientInfoClass();
@@ -625,7 +625,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
       .catch((error) => {
         console.log("SaveEngagementList:: Error: ", error);
       });
-  };
+  }
 
   private CheckIfEngCreated = async () => {
     let obj = new ClientInfoClass();
@@ -643,7 +643,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
       .catch((error) => {
         console.log("CheckIfEngCreated::error:", error);
       });
-  };
+  }
 
   public _onChangeEngagementNumber = async (
     tagList: { key: string; name: string }[]
@@ -693,7 +693,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
       });
       //this.checkEngagement();
     }
-  };
+  }
 
   private newEngagementNumber() {
     if (updatedworkyear == true) {
@@ -1107,7 +1107,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
             });
         });
       });
-  };
+  }
 
   public _onChangeServiceType = (
     event: React.FormEvent<HTMLDivElement>,
@@ -1117,7 +1117,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
       ServiceTypeSelected: item.text,
       ServiceTypeSelectedKey: item.key,
     });
-  };
+  }
 
   public _onChangeIndustryType = (
     event: React.FormEvent<HTMLDivElement>,
@@ -1127,7 +1127,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
       IndustryTypeSelected: item.text,
       IndustryTypeSelectedKey: item.key,
     });
-  };
+  }
 
   public _onChangeSupplemental = (
     event: React.FormEvent<HTMLDivElement>,
@@ -1137,7 +1137,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
       SupplementalSelected: item.text,
       SupplementalSelectedKey: item.key,
     });
-  };
+  }
 
   public _onChangeAdvisoryTemplate = (
     event: React.FormEvent<HTMLDivElement>,
@@ -1147,7 +1147,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
       AdvisoryTemplateSelected: item.text,
       AdvisoryTemplateSelectedKey: item.key,
     });
-  };
+  }
   public _onChangeTeam = async (
     event: React.FormEvent<HTMLDivElement>,
     option: IChoiceGroupOption
@@ -1167,7 +1167,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
       this.setState({ TeamURL: "ADV" });
     }
     await this.loadEngagements(TeamValue);
-  };
+  }
   public _onChangePortalType = async (
     event: React.FormEvent<HTMLDivElement>,
     option: IChoiceGroupOption
@@ -1190,7 +1190,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
     await this.loadEngagements(this.state.TeamURL);
     this.setState({ showMessageBar: false });
-  };
+  }
 
   public CheckSplitRollover = () => {
     let currentengNumber = "";
@@ -1228,7 +1228,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         AssuranceSplitRollover: results,
       });
     });
-  };
+  }
 
   public Rollover = async () => {
     let PortalType = this.state.PortalTypeSelected;
@@ -1370,7 +1370,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
           }
         });
     }
-  };
+  }
 
   public _onChangePortalChoice = (
     event: React.FormEvent<HTMLDivElement>,
@@ -1390,10 +1390,10 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     ) {
       this._getUserListAdvisory();
     }
-  };
+  }
   private closeMessageBar = () => {
     this.setState({ showMessageBar: false });
-  };
+  }
 
   private _getPeoplePickerItems(items: any[]) {
     const currSite = Web(GlobalValues.HubSiteURL);
@@ -1530,20 +1530,20 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     this.setState({
       portalExpiration: date,
     });
-  };
+  }
 
   private _onSelectDate2 = (date: Date | null | undefined): void => {
     this.setState({
       // DateExtend: date
       portalExpiration: portalExpDate,
     });
-  };
+  }
 
   private _onSelectDate3 = (date: Date | null | undefined): void => {
     this.setState({
       K1Date: date,
     });
-  };
+  }
 
   private _onSelectDateFileExp = (date: Date | null | undefined): void => {
     portalExpDate = addMonths(date, 6); // set the portal expiration for 6 months after the file expiration
@@ -1552,13 +1552,13 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
       portalExpiration: portalExpDate,
       fileExpiration: date, // this is the date the user picked
     });
-  };
+  }
 
   private _onFormatDate = (date: Date): string => {
     return (
       date.getMonth() + 1 + "/" + date.getDate() + "/" + date.getFullYear()
     );
-  };
+  }
 
   // used for K1 files only
   private async OnFileSelect() {
@@ -1691,7 +1691,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     this.setState({ CRUserList: CRList });
     // this.setState({ PreExistingAlertUsers: checkedUsers });
     this.formulatePreExistingAlertUsers();
-  };
+  }
 
   public onChangeEmailCLList = (value, email) => {
     let CLList = this.state.CLUserList;
@@ -1707,7 +1707,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     });
     this.setState({ CLUserList: CLList });
     this.formulatePreExistingAlertUsers();
-  };
+  }
 
   // new onChange function for new CRAD group
   public onChangeEmailCRADList = (value, email) => {
@@ -1725,7 +1725,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     });
     this.setState({ CRADUserList: CRADList });
     // this.formulatePreExistingAlertUsers();
-  };
+  }
 
   public formulatePreExistingAlertUsers = async () => {
     const prevUsersToRollAlertsState = this.state.UsersToRollAlerts;
@@ -1798,7 +1798,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     // console.log('setting PreExistingAlertUsers state::');
     this.setState({ PreExistingAlertUsers: allCheckedUsers });
     this.setState({ UsersToRollAlerts: filteredObjs });
-  };
+  }
 
   public onChangeUsersToRollAlerts = (val, email) => {
     console.log("onChangeUsersToRollAlerts firing:::");
@@ -1839,7 +1839,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     });
 
     this.setState({ PreExistingAlertUsers: preExistingAlertUsersHolder });
-  };
+  }
 
   public GetYearOption = () => {
     //console.log('in GetYearOption func:: ');
@@ -1855,7 +1855,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     }
 
     return option;
-  };
+  }
 
   // removed event as it wasn't used and was preventing a manual call to this func outside of the user manually changing the Year dropdown
   public onChangeYear = (event, item) => {
@@ -1991,7 +1991,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
       console.log("setting onLoadYearTriggered to true::");
       this.setState({ onLoadYearTriggered: true });
     }
-  };
+  }
 
   public CloseButton = () => {
     this.ResetState();
@@ -2000,7 +2000,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
       currentScreen: "",
     });
     window.location.reload();
-  };
+  }
 
   public onItemSelected = (item: ITag): ITag | null => {
     // console.log('onItemSelected fired::');
@@ -2010,7 +2010,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
       EngagementNameTags = [{ key: item.key.toString(), name: item.name }];
     }
     return item;
-  };
+  }
 
   public render(): React.ReactElement<ICreateEngagement> {
     const inputProps: IInputProps = {
@@ -4559,7 +4559,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
     // console.log('submitDialog - logging CRUserSelected state:: ', this.state.CRUserSelected);
     // console.log('submitDialog - logging CRADUserSelected state:: ', this.state.CRADUserSelected);
     // console.log('submitDialog - logging finalCRUsers state:: ', finalCRUsers);
-  };
+  }
 
   private save() {
     let siteCollectionUrl = GlobalValues.HubSiteURL;
@@ -4597,7 +4597,7 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
       .then((data) => {
         return data.length > 0 ? (_isDuplicate = true) : (_isDuplicate = false);
       });
-  };
+  }
 }
 
 export default CreateEngagement;
