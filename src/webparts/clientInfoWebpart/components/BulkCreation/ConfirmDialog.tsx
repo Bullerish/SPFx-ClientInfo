@@ -1,74 +1,40 @@
-import React from 'react'
-import {
-  ListView,
-  IViewField,
-  SelectionMode,
-  GroupOrder,
-  IGrouping,
-} from "@pnp/spfx-controls-react/lib/ListView";
-import styles from "../ClientInfoWebpart.module.scss";
-import { MatterAndCreationData } from './creationLogic'
+import React from 'react';
+import { DefaultButton, PrimaryButton, Dialog, DialogType, DialogFooter } from 'office-ui-fabric-react';
 
+interface ConfirmDialogProps {
+  hidden: boolean;
+  onDismiss: () => void;
+  onBack: () => void;
+  onCreate: () => void;
+  selectedEngagements: any[];
+}
 
-const ConfirmDialog = (items: MatterAndCreationData[], ) => {
-  const viewFields: IViewField[] = [
-    {
-      name: "newMatterEngagementName",
-      displayName: "Engagement Name",
-      sorting: false,
-      minWidth: 100,
-      maxWidth: 250,
-      isResizable: true,
-    },
-    {
-      name: "newMatterNumber",
-      displayName: "Matter #",
-      sorting: false,
-      minWidth: 100,
-      maxWidth: 250,
-      isResizable: true,
-    },
-    {
-      name: "templateType",
-      displayName: "Template Type",
-      sorting: false,
-      minWidth: 100,
-      maxWidth: 225,
-      isResizable: true,
-    },
-    {
-      name: "siteOwner",
-      displayName: "Site Owner",
-      sorting: false,
-      minWidth: 100,
-      maxWidth: 225,
-      isResizable: true,
-    },
-    {
-      name: "newMatterPortalExpirationDate",
-      displayName: "Expiration Date",
-      sorting: false,
-      minWidth: 100,
-      maxWidth: 225,
-      isResizable: true,
-    },
-  ];
-
+const ConfirmDialog: React.FC<ConfirmDialogProps> = ({ hidden, onDismiss, onBack, onCreate, selectedEngagements }) => {
   return (
-    <div className={styles.listViewPortsForCreation}>
-      <ListView
-        items={items}
-        viewFields={viewFields}
-        // iconFieldName="FileRef"
-        compact={true}
-        selectionMode={SelectionMode.none}
-        // selection={(selectionItem) => setPortalSelected(selectionItem)}
-        // defaultSelection={defaultSelectedFromScreen2}
-        showFilter={false}
-        key="engagementPortals"
-      />
-    </div>
+    <Dialog
+      hidden={hidden}
+      onDismiss={onDismiss}
+      dialogContentProps={{
+        type: DialogType.largeHeader,
+        title: 'Confirm Bulk Subportal Creation',
+        subText: 'Review your selections before creating subportals',
+      }}
+      modalProps={{
+        isBlocking: true,
+      }}
+    >
+      <div>
+        {selectedEngagements.map((engagement) => (
+          <div key={engagement.ID}>{engagement.Title}</div>
+        ))}
+      </div>
+      <DialogFooter>
+        <PrimaryButton text="Create Portals" onClick={onCreate} />
+        <DefaultButton text="Back" onClick={onBack} />
+        <DefaultButton text="Cancel" onClick={onDismiss} />
+      </DialogFooter>
+    </Dialog>
   );
 };
 
-export default ConfirmDialog
+export default ConfirmDialog;
