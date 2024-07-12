@@ -9,6 +9,7 @@ const hubSite = Web(GlobalValues.HubSiteURL);
 
 export interface MatterAndRolloverData {
   ID: string;
+  engListID: string;
   newMatterNumber: string;
   rolloverMatterNumber: string;
   newMatterId: string;
@@ -16,11 +17,8 @@ export interface MatterAndRolloverData {
   newMatterSiteUrl: string;
   rolloverMatterSiteUrl: string;
   templateType: string;
-  // rolloverMatterTemplateType: string;
   newMatterPortalId: string;
-  // rolloverMatterPortalId: string;
   newMatterEngagementName: string;
-  // rolloverMatterEngagementName: string;
   rollover: boolean;
   clientNumber: string;
   team: string;
@@ -31,6 +29,7 @@ export interface MatterAndRolloverData {
   industryType?: string;
   supplemental: string;
   newMatterPortalExpirationDate: string;
+  newMatterFileExpirationDate: string;
   isNotificationEmail: boolean;
   siteOwner: string | ISiteUserInfo | number; // needs to be email address
 }
@@ -43,7 +42,15 @@ export const createDate18MonthsFromNow = (): Date => {
   return date;
 };
 
+// func to create the initial date for the file expiration date (12 months from now)
+const createFileExpirationDate = (): Date => {
+  // console.log("createDate18MonthsFromNow fired::");
+  const date = new Date();
+  date.setMonth(date.getMonth() + 12);
+  return date;
+};
 
+// bulk of the logic to get the rollover data for the client site. Differences for -00 matters and regular matters
 const getRolloverEngagementPortalItems = async (
   mattersData,
   clientNumber: string
@@ -57,6 +64,7 @@ const getRolloverEngagementPortalItems = async (
   // define new object to hold the rollover data and matter number matching data
   let rolloverData: MatterAndRolloverData = {
     ID: "",
+    engListID: "",
     newMatterNumber: "",
     rolloverMatterNumber: "",
     newMatterId: "",
@@ -75,6 +83,7 @@ const getRolloverEngagementPortalItems = async (
     industryType: "",
     supplemental: "",
     newMatterPortalExpirationDate: "",
+    newMatterFileExpirationDate: createFileExpirationDate().toString(),
     isNotificationEmail: true,
     siteOwner: "",
   };
@@ -96,7 +105,7 @@ const getRolloverEngagementPortalItems = async (
     // WORKING
 
     // factor logic for regular matter numbers that contain a work year
-    if (workYear !== "" && portalsCreated === "") {
+    if (workYear !== "" && !portalsCreated.includes('WF')) {
       previousYear = (parseInt(workYear, 10) - 1).toString();
       let lastTwoDigitsOfYear = previousYear.slice(-2);
       let matterNumberArray = matterNumber.split("-");
@@ -168,11 +177,6 @@ const getRolloverEngagementPortalItems = async (
 
       const rowData = engagementPortalList.Row;
 
-      // console.log('Matter Number Title::', matter.Title);
-      // console.log('Matter Number Work Year::', workYear);
-      // console.log('Team::', matter.Team);
-      // console.log("Previous Portal Year Matter Number::", previousPortalYearMatterNumber);
-      // console.log(engagementPortalList.Row);
 
       if (rowData.length > 0 && rowData[0].Team === "Tax") {
         // taxRolloverArr.push(rowData[0]);
@@ -205,6 +209,7 @@ const getRolloverEngagementPortalItems = async (
 
         // assign all necessary data to the rolloverData object
         rolloverData.ID = rowData[0].ID;
+        rolloverData.engListID = matter.ID;
         rolloverData.newMatterNumber = matterNumber;
         rolloverData.rolloverMatterNumber = previousPortalYearMatterNumber;
         rolloverData.newMatterId = rowData[0].ID;
@@ -254,6 +259,7 @@ const getRolloverEngagementPortalItems = async (
 
         // assign all necessary data to the rolloverData object
         rolloverData.ID = rowData[0].ID;
+        rolloverData.engListID = matter.ID;
         rolloverData.newMatterNumber = matterNumber;
         rolloverData.rolloverMatterNumber = previousPortalYearMatterNumber;
         rolloverData.newMatterId = rowData[0].ID;
@@ -386,6 +392,7 @@ const getRolloverEngagementPortalItems = async (
 
       // assign all necessary data to the rolloverData object
       rolloverData.ID = latestYearPortalItem[0].ID;
+      rolloverData.engListID = matter.ID;
       rolloverData.newMatterNumber = updatedMatterNumber;
       rolloverData.rolloverMatterNumber = latestYearPortalItem[0].Title;
       rolloverData.newMatterId = latestYearPortalItem[0].ID;
@@ -427,7 +434,6 @@ const getRolloverEngagementPortalItems = async (
 
   return { taxRolloverArr, audRolloverArr };
 };
-
 
 // Get the list of matters for the client site, filter for client number and portals created
 export const getMatterNumbersForClientSite = async (
@@ -471,7 +477,7 @@ export const getMatterNumbersForClientSite = async (
               </View>`,
     });
 
-  // console.table(engagementListMatters.Row);
+  console.table(engagementListMatters.Row);
 
   const rolloverPortalItems = await getRolloverEngagementPortalItems(
     engagementListMatters.Row,
