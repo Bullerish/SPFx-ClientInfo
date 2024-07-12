@@ -296,8 +296,14 @@ const BulkCreation = ({
   };
 
   const submitPortalCreationData = () => {
+    let mattersToUpdatePC = [];
     // Step 1: Iterate over itemsStaged to handle each staged item
     Promise.all(itemsStaged.map(stagedItem => {
+
+      // check if regular matter number or -00 matter number
+      if (stagedItem.engagementNumberEndZero === "") {
+        mattersToUpdatePC.push(stagedItem.engListID);
+      }
       // console.log("logging stagedItem::", stagedItem);
       // Step 2: Prepare the item data to be submitted
       const itemData = {
@@ -325,6 +331,7 @@ const BulkCreation = ({
         Supplemental: stagedItem.supplemental,
         SiteOwnerId: stagedItem.siteOwner["Id"],
         PortalExpiration: new Date(stagedItem.newMatterPortalExpirationDate),
+        FileExpiration: new Date(stagedItem.newMatterFileExpirationDate),
         isNotificationEmail: true,
       };
 
@@ -339,13 +346,47 @@ const BulkCreation = ({
     .then((results) => {
       console.log('setting isDataSubmitted to true::');
       setIsDataSubmitted(true);
+      console.log('logging mattersToUpdatePC::', mattersToUpdatePC);
+
+      if (mattersToUpdatePC.length > 0) {
+        mattersToUpdatePC.forEach((matterToUpdate) => {
+          updateEngListRegularMatter(matterToUpdate);
+        });
+      }
+
+
 
     })
     .catch((error) => {
       console.error("An error occurred while adding items:", error);
     });
 
+  };
 
+  // function to update the Engagement List with the added value of 'WF' in the Portals Created field
+  const updateEngListRegularMatter = async (matterToUpdate) => {
+     const item = await hubSite.lists
+       .getByTitle("Engagement List")
+       .items.getById(matterToUpdate)
+       .select("Portals_x0020_Created").get();
+
+       console.log('logging item from updateEngListRegularMatter::', item);
+
+       if (item.Portals_x0020_Created === null) {
+         await hubSite.lists
+           .getByTitle("Engagement List")
+           .items.getById(matterToUpdate)
+           .update({
+             Portals_x0020_Created: "WF",
+           });
+       } else {
+         await hubSite.lists
+           .getByTitle("Engagement List")
+           .items.getById(matterToUpdate)
+           .update({
+             Portals_x0020_Created: item.Portals_x0020_Created + ",WF",
+           });
+       }
 
   };
 
@@ -509,7 +550,7 @@ const BulkCreation = ({
     },
     {
       name: "newMatterPortalExpirationDate",
-      displayName: "Expiration Date",
+      displayName: "Portal Expiration Date",
       sorting: false,
       minWidth: 125,
       maxWidth: 250,
@@ -535,6 +576,7 @@ const BulkCreation = ({
               initialPickerDate={new Date()}
               onSelectDate={(dateToSend) => onSelectDate(dateToSend, rowItem)}
               formatDate={onFormatDate}
+              maxDate={createDate18MonthsFromNow()}
             />
           </div>
         );
@@ -651,7 +693,7 @@ const BulkCreation = ({
             <div className={styles.choiceGroupContainer}>
               <ChoiceGroup
                 className={styles.innerChoice}
-                // defaultSelectedKey="B"
+                defaultSelectedKey={team}
                 label="Team"
                 required={true}
                 options={[
@@ -704,6 +746,12 @@ const BulkCreation = ({
               Enter a Site Owner and Expiration Date for each portal to
               creation. No permissions will be rolled over to the new portals.
             </span>
+            <br />
+            <span><i>
+              The portal will be available for future creation until the
+              expiration date below. All files will be deleted from the portal
+              12 months from today's date.
+            </i></span>
 
             {/* ListView component to hold staged portals */}
             <ListView
