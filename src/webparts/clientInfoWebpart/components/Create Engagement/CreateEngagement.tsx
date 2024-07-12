@@ -27,6 +27,7 @@ import { UserAction } from "../../Dataprovider/ActionEnums";
 import { ISiteUser } from "@pnp/sp/site-users";
 import { K1ImportCheck } from "../../Dataprovider/K1ImportCheck";
 import BulkRollover from "../BulkRollover/BulkRollover";
+import BulkCreation from "../BulkCreation/BulkCreation";
 initializeIcons();
 
 const Teamoptions: IChoiceGroupOption[] = [
@@ -405,6 +406,9 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
   // event handlers to show hide Client Profile Information
   public onBulkRolloverModalHide = () => {
     this.showHideBulkRolloverModal(false);
+  }
+  public onBulkCreationModalHide = () =>{
+    this.showHideBulkCreationModal(false);
   }
   public showHideBulkCreationModal = (isVisible: boolean) => {
     this.setState({ isBulkCreationOpen: isVisible });
@@ -4163,6 +4167,11 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
           spContext={this.props.spContext}
           isBulkRolloverOpen={this.state.isBulkRolloverOpen}
           onBulkRolloverModalHide={this.onBulkRolloverModalHide}
+        />
+        <BulkCreation 
+          spContext={this.props.spContext}
+          isBulkCreationOpen={this.state.isBulkCreationOpen}
+          onBulkCreationModalHide={this.onBulkCreationModalHide}
         />
       </>
     );

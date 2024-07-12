@@ -337,85 +337,85 @@ const getCreationEngagementPortalItems = async (
 
       const rowData = engagementPortalList.Row;
       // console.log("logging rowData for -00 matters::", rowData);
+      if (rowData.length > 0) {
+        const latestYear = rowData.reduce(
+          (max, obj) => (obj.WorkYear > max ? obj.WorkYear : max),
+          rowData[0].WorkYear
+        );
 
-      const latestYear = rowData.reduce(
-        (max, obj) => (obj.WorkYear > max ? obj.WorkYear : max),
-        rowData[0].WorkYear
-      );
+        const latestYearPortalItem = rowData.filter(
+          (obj) => obj.WorkYear === latestYear
+        );
 
-      const latestYearPortalItem = rowData.filter(
-        (obj) => obj.WorkYear === latestYear
-      );
+        // console.log("Most recent portal by year::", latestYearPortalItem);
 
-      // console.log("Most recent portal by year::", latestYearPortalItem);
+        // factor logic for matter numbers that do not contain a work year (-00)
+        // factor newMatterSiteUrl
+        let creationPortalId = rowData[0].PortalId;
 
-      // factor logic for matter numbers that do not contain a work year (-00)
-      // factor newMatterSiteUrl
-      let creationPortalId = rowData[0].PortalId;
+        let incrementedWorkYear = parseInt(latestYearPortalItem[0].WorkYear) + 1;
 
-      let incrementedWorkYear = parseInt(latestYearPortalItem[0].WorkYear) + 1;
+        // console.log('logging incrementedWorkYear::', incrementedWorkYear);
 
-      // console.log('logging incrementedWorkYear::', incrementedWorkYear);
+        const lastTwoDigitsOfWorkYear =
+          incrementedWorkYear.toString().slice(-2);
+        let segments = creationPortalId.split("-");
+        segments[segments.length - 1] = lastTwoDigitsOfWorkYear;
+        creationPortalId = segments.join("-");
 
-      const lastTwoDigitsOfWorkYear =
-      incrementedWorkYear.toString().slice(-2);
-      let segments = creationPortalId.split("-");
-      segments[segments.length - 1] = lastTwoDigitsOfWorkYear;
-      creationPortalId = segments.join("-");
+        let newPortalId = creationPortalId;
 
-      let newPortalId = creationPortalId;
+        // TODO: create new matter number based on the engagement number end zero and the incremented work year
+        let matterNumberSegments = engagementNumberEndZero.split("-");
+        matterNumberSegments[matterNumberSegments.length - 1] = lastTwoDigitsOfWorkYear;
+        let updatedMatterNumber = matterNumberSegments.join("-");
 
-      // TODO: create new matter number based on the engagement number end zero and the incremented work year
-      let matterNumberSegments = engagementNumberEndZero.split("-");
-      matterNumberSegments[matterNumberSegments.length - 1] = lastTwoDigitsOfWorkYear;
-      let updatedMatterNumber = matterNumberSegments.join("-");
+        // console.log("Previous Portal ID::", rowData[0].PortalId);
+        // console.log("New Portal ID::", newPortalId);
 
-      // console.log("Previous Portal ID::", rowData[0].PortalId);
-      // console.log("New Portal ID::", newPortalId);
+        // factor new newMatterSiteUrl
+        let siteUrl = latestYearPortalItem[0]["SiteUrl.desc"];
 
-      // factor new newMatterSiteUrl
-      let siteUrl = latestYearPortalItem[0]["SiteUrl.desc"];
+        const siteUrlSegments = siteUrl.split("/");
+        siteUrlSegments[siteUrlSegments.length - 1] = newPortalId;
+        siteUrl = siteUrlSegments.join("/");
+        let newMatterSiteUrl = siteUrl;
 
-      const siteUrlSegments = siteUrl.split("/");
-      siteUrlSegments[siteUrlSegments.length - 1] = newPortalId;
-      siteUrl = siteUrlSegments.join("/");
-      let newMatterSiteUrl = siteUrl;
+        // console.log("Previous Site URL::", rowData[0]["SiteUrl.desc"]);
+        // console.log("New Site URL::", newMatterSiteUrl);
 
-      // console.log("Previous Site URL::", rowData[0]["SiteUrl.desc"]);
-      // console.log("New Site URL::", newMatterSiteUrl);
-
-      // assign all necessary data to the creationData object
-      creationData.ID = latestYearPortalItem[0].ID;
-      creationData.newMatterNumber = updatedMatterNumber;
-      creationData.creationMatterNumber = latestYearPortalItem[0].Title;
-      creationData.newMatterId = latestYearPortalItem[0].ID;
-      creationData.newMatterSiteUrl = newMatterSiteUrl;
-      creationData.creationMatterSiteUrl =
-        latestYearPortalItem[0]["SiteUrl.desc"];
-      creationData.newMatterPortalId = newPortalId;
-      creationData.newMatterEngagementName = matter.EngagementName;
-      creationData.clientNumber = clientNumber;
-      creationData.team = latestYearPortalItem[0].Team;
-      creationData.newMatterWorkYear = incrementedWorkYear.toString();
-      creationData.creationMatterWorkYear = latestYearPortalItem[0].WorkYear;
-      creationData.portalType = latestYearPortalItem[0].PortalType;
-      creationData.engagementNumberEndZero = rowData[0].EngagementNumberEndZero;
-      creationData.templateType = latestYearPortalItem[0].TemplateType;
-      creationData.industryType = latestYearPortalItem[0].IndustryType;
-      creationData.supplemental = latestYearPortalItem[0].Supplemental;
-      creationData.newMatterPortalExpirationDate =
-        createDate18MonthsFromNow().toString(); // TODO: take user's input for newMatterPortalExpirationDate from the UI
+        // assign all necessary data to the creationData object
+        creationData.ID = latestYearPortalItem[0].ID;
+        creationData.newMatterNumber = updatedMatterNumber;
+        creationData.creationMatterNumber = latestYearPortalItem[0].Title;
+        creationData.newMatterId = latestYearPortalItem[0].ID;
+        creationData.newMatterSiteUrl = newMatterSiteUrl;
+        creationData.creationMatterSiteUrl =
+          latestYearPortalItem[0]["SiteUrl.desc"];
+        creationData.newMatterPortalId = newPortalId;
+        creationData.newMatterEngagementName = matter.EngagementName;
+        creationData.clientNumber = clientNumber;
+        creationData.team = latestYearPortalItem[0].Team;
+        creationData.newMatterWorkYear = incrementedWorkYear.toString();
+        creationData.creationMatterWorkYear = latestYearPortalItem[0].WorkYear;
+        creationData.portalType = latestYearPortalItem[0].PortalType;
+        creationData.engagementNumberEndZero = rowData[0].EngagementNumberEndZero;
+        creationData.templateType = latestYearPortalItem[0].TemplateType;
+        creationData.industryType = latestYearPortalItem[0].IndustryType;
+        creationData.supplemental = latestYearPortalItem[0].Supplemental;
+        creationData.newMatterPortalExpirationDate =
+          createDate18MonthsFromNow().toString(); // TODO: take user's input for newMatterPortalExpirationDate from the UI
 
 
-      // console.log("-00 Creation Data::", {...creationData});
+        // console.log("-00 Creation Data::", {...creationData});
 
-      if (latestYearPortalItem[0].Team === "Tax") {
-        taxCreationArr.push({ ...creationData });
-      } else if (latestYearPortalItem[0].Team === "Assurance") {
-        audCreationArr.push({ ...creationData });
+        if (latestYearPortalItem[0].Team === "Tax") {
+          taxCreationArr.push({ ...creationData });
+        } else if (latestYearPortalItem[0].Team === "Assurance") {
+          audCreationArr.push({ ...creationData });
+        }
+
       }
-
-
       // audCreationArr.push({ ...creationData });
     }
 

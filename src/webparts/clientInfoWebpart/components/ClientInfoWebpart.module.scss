@@ -1091,6 +1091,86 @@
 }
 
 
+.bulkCreation {
+  // border-top: 4px solid #f57b20;
+
+  [class^="ms-Dialog-header"] {
+    border-top: 4px solid #f57b20;
+  }
+
+  .choiceGroupContainer {
+    margin-bottom: 15px;
+  }
+
+  .guidanceText {
+    margin-bottom: 15px;
+    font-weight: bold;
+    font-size: 0.9rem;
+  }
+
+  .listViewPortsForRollover {
+    margin-bottom: 15px;
+  }
+  .listViewPortsForCreation {
+    margin-bottom: 15px;
+  }
+
+  .trashCan {
+    color: #ff0000;
+    font-size: 16pt;
+    cursor: pointer;
+  }
+
+  .innerChoice {
+    width: 100%;
+    margin-top: 15px;
+
+    [class^="ms-ChoiceFieldGroup"] {
+      width: 100%;
+
+      [class^="ms-Label"] {
+        font-weight: bold;
+        font-size: 12px;
+        padding-top: 0px;
+      }
+
+      [class^="ms-ChoiceFieldGroup-flexContainer"] {
+        column-count: 2;
+        width: 60%;
+
+        [class^="ms-ChoiceField"] {
+          margin: 0;
+        }
+      }
+    }
+  }
+
+
+  [class^="ms-MessageBar-innerText"] {
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+
+
+  .dialogFooterButtonContainer {
+    display: flex;
+    justify-content: space-between;
+
+    .primaryButton {
+        background-color: #0078d4;
+      }
+
+    .defaultButton {
+      background-color: #f4f4f4;
+    }
+
+
+  }
+
+
+
+}
 
 .clientProfileInfo {
 
