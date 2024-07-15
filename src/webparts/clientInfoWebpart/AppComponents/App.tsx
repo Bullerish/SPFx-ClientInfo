@@ -200,6 +200,7 @@ class App extends React.Component<IApp> {
                             this.props.spContext.pageContext.web.absoluteUrl +
                             GlobalValues.PermissionPage
                           }
+                          style={{ marginRight: "10px" }}
                         >
                           Manage Portal
                         </Link>
@@ -219,6 +220,7 @@ class App extends React.Component<IApp> {
                             this.props.spContext.pageContext.web.absoluteUrl +
                             GlobalValues.PermissionPage
                           }
+                          style={{ marginRight: "10px" }}
                         >
                           Manage Portal
                         </Link>
@@ -238,8 +240,19 @@ class App extends React.Component<IApp> {
           </div>
         </div>
         {/* Manage Alerts component */}
-        <ManageAlerts spContext={this.props.spContext} isAlertModalOpen={this.state.isAlertModalOpen} onAlertModalHide={this.onAlertModalHide} />
-        <ClientProfileInfo spContext={this.props.spContext} isClientProfileInfoModalOpen={this.state.isClientProfileInfoModalOpen} onClientProfileInfoModalHide={this.onClientProfileInfoModalHide} showHideAlertIcon={this.showHideAlertIcon} showHideToast={this.showHideToast} isDontRemind={this.state.isDontRemind} />
+        <ManageAlerts
+          spContext={this.props.spContext}
+          isAlertModalOpen={this.state.isAlertModalOpen}
+          onAlertModalHide={this.onAlertModalHide}
+        />
+        <ClientProfileInfo
+          spContext={this.props.spContext}
+          isClientProfileInfoModalOpen={this.state.isClientProfileInfoModalOpen}
+          onClientProfileInfoModalHide={this.onClientProfileInfoModalHide}
+          showHideAlertIcon={this.showHideAlertIcon}
+          showHideToast={this.showHideToast}
+          isDontRemind={this.state.isDontRemind}
+        />
         <ErrorDialog
           OnModalHide={this.OnModalHide}
           isModalOpen={this.state.isModalOpen}
