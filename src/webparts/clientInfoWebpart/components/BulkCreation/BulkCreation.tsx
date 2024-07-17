@@ -1,132 +1,566 @@
-import React, { useState } from 'react';
-import { DefaultButton, PrimaryButton, Dialog, DialogType, DialogFooter, Dropdown, IDropdownOption } from 'office-ui-fabric-react';
-import { getMatterNumbersForClientSite, createEngagementSubportals } from './creationLogic';
+import * as React from 'react';
+import { useState, useEffect, useLayoutEffect } from "react";
+import {
+  Dialog,
+  DialogType,
+  DialogFooter,
+} from "office-ui-fabric-react/lib/Dialog";
+import {
+  DefaultButton,
+  PrimaryButton,
+} from "office-ui-fabric-react/lib/Button";
+import {
+  ChoiceGroup,
+  IChoiceGroupOption,
+} from "office-ui-fabric-react/lib/ChoiceGroup";
+import {
+  MessageBar,
+  MessageBarType,
+} from "office-ui-fabric-react/lib/MessageBar";
+import { TextField } from "office-ui-fabric-react/lib/TextField";
+import { Text } from "office-ui-fabric-react/lib/Text";
+import { sp } from "@pnp/sp";
+import "@pnp/sp/site-users";
+import { IWeb, Web } from "@pnp/sp/webs";
+import "@pnp/sp/lists";
+import "@pnp/sp/fields";
+import "@pnp/sp/items";
+import { Spinner, SpinnerSize } from "office-ui-fabric-react/lib/Spinner";
+import { ISiteUserInfo } from "@pnp/sp/site-users/types";
+import styles from "../ClientInfoWebpart.module.scss";
+import { GlobalValues } from "../../Dataprovider/GlobalValue";
+import { IItemAddResult } from "@pnp/sp/items";
+import {
+  DatePicker,
+  DayOfWeek,
+  IDatePickerStrings,
+} from "office-ui-fabric-react/lib/DatePicker";
+import {
+  PeoplePicker,
+  PrincipalType,
+} from "@pnp/spfx-controls-react/lib/PeoplePicker";
+import {
+  ListView,
+  IViewField,
+  SelectionMode,
+} from "@pnp/spfx-controls-react/lib/ListView";
+import { getMatterNumbersForClientSite, MatterAndCreationData, createDate18MonthsFromNow } from './creationLogic';
+import { Icon } from "office-ui-fabric-react/lib/Icon";
 
-const BulkCreation: React.FC = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [portalType, setPortalType] = useState<string>('');
-  const [team, setTeam] = useState<string>('');
-  const [selectedEngagements, setSelectedEngagements] = useState<any[]>([]);
-  const [step, setStep] = useState<number>(1);
+export interface IDatePickerFormatExampleState {
+  firstDayOfWeek?: DayOfWeek;
+  value?: Date | null;
+}
 
-  const portalTypeOptions: IDropdownOption[] = [
-    { key: 'workflow', text: 'Workflow' },
-    { key: 'fileExchange', text: 'File Exchange' },
-  ];
+const BulkCreation = ({
+  spContext,
+  isBulkCreationOpen,
+  onBulkCreationModalHide,
+}): React.ReactElement => {
+  const [team, setTeam] = useState<string>("");
+  const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false);
+  const [taxCreationData, setTaxCreationData] = useState<MatterAndCreationData[]>([]);
+  const [AudCreationData, setAudCreationData] = useState<MatterAndCreationData[]>([]);
+  const [items, setItems] = useState<MatterAndCreationData[]>([]);
+  const [itemsStaged, setItemsStaged] = useState<MatterAndCreationData[]>([]);
+  const [portalSelected, setPortalSelected] = useState([]);
+  const [enableNextButton, setEnableNextButton] = useState<boolean>(false);
+  const [isConfirmationScreen, setIsConfirmationScreen] = useState<boolean>(false);
+  const [isDataSubmitted, setIsDataSubmitted] = useState<boolean>(false);
 
-  const teamOptions: IDropdownOption[] = [
-    { key: 'assurance', text: 'Assurance' },
-    { key: 'tax', text: 'Tax' },
-    { key: 'advisory', text: 'Advisory' },
-  ];
+  const clientSiteAbsoluteUrl = spContext._pageContext._web.absoluteUrl;
+  const hubSite = Web(GlobalValues.HubSiteURL);
+  const clientSiteServerRelativeUrl = spContext._pageContext._web.serverRelativeUrl;
+  const relativeUrlArr = clientSiteServerRelativeUrl.split("/");
+  const clientSiteNumber = relativeUrlArr[relativeUrlArr.length - 1];
 
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
-  
-  const handlePortalTypeChange = (event: React.FormEvent<HTMLDivElement>, item: IDropdownOption) => {
-    setPortalType(item.key as string);
+  const resetState = () => {
+    onBulkCreationModalHide(false);
+    setTeam("");
+    setIsDataLoaded(false);
+    setTaxCreationData([]);
+    setAudCreationData([]);
+    setItems([]);
+    setItemsStaged([]);
+    setPortalSelected([]);
+    setEnableNextButton(false);
+    setIsConfirmationScreen(false);
+    setIsDataSubmitted(false);
   };
 
-  const handleTeamChange = (event: React.FormEvent<HTMLDivElement>, item: IDropdownOption) => {
-    setTeam(item.key as string);
+  const onTeamChange = (ev: React.FormEvent<HTMLInputElement>, option: any): void => {
+    setTeam(option.key);
   };
 
-  const handleEngagementSelection = (engagement: any) => {
-    const index = selectedEngagements.findIndex((e) => e.ID === engagement.ID);
-    if (index === -1) {
-      setSelectedEngagements([...selectedEngagements, engagement]);
+  const onFormatDate = (date: Date): string => {
+    return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+  };
+
+  const onSelectDate = (date: Date | null | undefined, rowItemToUpdate: MatterAndCreationData): void => {
+    const updatedItemsStaged = itemsStaged.map((item) => {
+      if (item.ID === rowItemToUpdate.ID) {
+        return {
+          ...item,
+          newMatterPortalExpirationDate: date.toString(),
+        };
+      }
+      return item;
+    });
+    setItemsStaged(updatedItemsStaged);
+  };
+
+  const getPeoplePickerItems = (itemsArr: any[], itemRow: MatterAndCreationData) => {
+    const currSite = Web(GlobalValues.HubSiteURL);
+    itemsArr.forEach((e) => {
+      currSite.siteUsers.getByLoginName(e.loginName).get().then((user) => {
+        const updatedItemsStaged = itemsStaged.map((item) => {
+          if (item.ID === itemRow.ID) {
+            return {
+              ...item,
+              siteOwner: user,
+            };
+          }
+          return item;
+        });
+        setItemsStaged(updatedItemsStaged);
+      });
+    });
+  };
+
+  const validateSiteOwner = (itemsSiteOwner: any[], rowItemToUpdate) => {
+    if (itemsSiteOwner.length > 0) {
+      let userEmail = itemsSiteOwner[0].secondaryText.toLowerCase();
+      if (userEmail.includes("cohnreznick.com") || userEmail.includes("cohnreznickdev")) {
+        getPeoplePickerItems(itemsSiteOwner, rowItemToUpdate);
+      }
     } else {
-      const newSelections = [...selectedEngagements];
-      newSelections.splice(index, 1);
-      setSelectedEngagements(newSelections);
+      const updatedItemsStaged = itemsStaged.map((item) => {
+        if (item.ID === rowItemToUpdate.ID) {
+          return {
+            ...item,
+            siteOwner: "",
+          };
+        }
+        return item;
+      });
+      setItemsStaged(updatedItemsStaged);
     }
   };
 
-  const handleNextStep = () => {
-    setStep(step + 1);
+  const moveSelectedToStaged = () => {
+    portalSelected.forEach((selectedItem) => {
+      const newItems = items.filter((item) => item.ID !== selectedItem.ID);
+      setItems(newItems);
+      const isAlreadyStaged = itemsStaged.some((item) => item.ID === selectedItem.ID);
+      if (!isAlreadyStaged) {
+        setItemsStaged((prevItemsStaged) => [...prevItemsStaged, selectedItem]);
+      }
+    });
   };
 
-  const handlePrevStep = () => {
-    setStep(step - 1);
+  const unstageItem = (ev, itemRowToRemove) => {
+    const newItemsStaged = itemsStaged.filter((item) => item.ID !== itemRowToRemove.ID);
+    setItemsStaged(newItemsStaged);
+    const isAlreadyInItems = items.some((item) => item.ID === itemRowToRemove.ID);
+    if (!isAlreadyInItems) {
+      itemRowToRemove.siteOwner = "";
+      setItems((prevItems) => [...prevItems, itemRowToRemove]);
+    }
   };
 
-  const handleCreatePortals = async () => {
-    await createEngagementSubportals(selectedEngagements, portalType, team);
-    closeModal();
-    alert('Thank you. Your portals are in the process of being created. You will receive an email confirmation shortly when your portals are active. Please close this window.');
+  const checkItemsStagedForSiteOwner = () => {
+    return itemsStaged.every((item) => item.siteOwner && item.siteOwner !== "");
   };
+
+  const submitPortalCreationData = () => {
+    let mattersToUpdatePC = [];
+    Promise.all(itemsStaged.map(stagedItem => {
+      if (stagedItem.engagementNumberEndZero === "") {
+        mattersToUpdatePC.push(stagedItem.engListID);
+      }
+      const itemData = {
+        Title: stagedItem.newMatterNumber,
+        EngagementName: stagedItem.newMatterEngagementName,
+        ClientNumber: stagedItem.clientNumber,
+        EngagementNumberEndZero: stagedItem.engagementNumberEndZero,
+        WorkYear: stagedItem.newMatterWorkYear,
+        Team: stagedItem.team,
+        PortalType: stagedItem.portalType,
+        SiteUrl: {
+          __metadata: { type: "SP.FieldUrlValue" },
+          Description: stagedItem.newMatterSiteUrl,
+          Url: stagedItem.newMatterSiteUrl,
+        },
+        CreationUrl: {
+          __metadata: { type: "SP.FieldUrlValue" },
+          Description: stagedItem.creationMatterSiteUrl,
+          Url: stagedItem.creationMatterSiteUrl,
+        },
+        Creation: stagedItem.creation,
+        PortalId: stagedItem.newMatterPortalId,
+        TemplateType: stagedItem.templateType,
+        IndustryType: stagedItem.industryType,
+        Supplemental: stagedItem.supplemental,
+        SiteOwnerId: stagedItem.siteOwner["Id"],
+        PortalExpiration: new Date(stagedItem.newMatterPortalExpirationDate),
+        FileExpiration: new Date(stagedItem.newMatterFileExpirationDate),
+        isNotificationEmail: true,
+      };
+
+      return hubSite.lists.getByTitle("Engagement Portal List").items.add(itemData);
+    }))
+    .then((results) => {
+      setIsDataSubmitted(true);
+      if (mattersToUpdatePC.length > 0) {
+        mattersToUpdatePC.forEach((matterToUpdate) => {
+          updateEngListRegularMatter(matterToUpdate);
+        });
+      }
+    })
+    .catch((error) => {
+      console.error("An error occurred while adding items:", error);
+    });
+  };
+
+  const updateEngListRegularMatter = async (matterToUpdate) => {
+    const item = await hubSite.lists.getByTitle("Engagement List").items.getById(matterToUpdate).select("Portals_x0020_Created").get();
+    if (item.Portals_x0020_Created === null) {
+      await hubSite.lists.getByTitle("Engagement List").items.getById(matterToUpdate).update({
+        Portals_x0020_Created: "WF",
+      });
+    } else {
+      await hubSite.lists.getByTitle("Engagement List").items.getById(matterToUpdate).update({
+        Portals_x0020_Created: item.Portals_x0020_Created + ",WF",
+      });
+    }
+  };
+
+  useEffect(() => {
+    setEnableNextButton(checkItemsStagedForSiteOwner());
+  }, [itemsStaged]);
+
+  useEffect(() => {
+    setItemsStaged([]);
+    if (team === "tax") {
+      setItems(taxCreationData);
+    } else if (team === "assurance") {
+      setItems(AudCreationData);
+    }
+  }, [team]);
+
+  useEffect(() => {
+    if (portalSelected.length > 0) {
+      moveSelectedToStaged();
+    }
+  }, [portalSelected]);
+
+  useLayoutEffect(() => {
+    if (isBulkCreationOpen) {
+      getMatterNumbersForClientSite(clientSiteNumber).then((response) => {
+        setAudCreationData(response.audMatters);
+        setTaxCreationData(response.taxMatters);
+        setIsDataLoaded(response.audMatters.length > 0 || response.taxMatters.length > 0);
+      });
+    }
+  }, [isBulkCreationOpen]);
+
+  const viewFields: IViewField[] = [
+    {
+      name: "newMatterEngagementName",
+      displayName: "Engagement Name",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 250,
+      isResizable: true,
+    },
+    {
+      name: "newMatterNumber",
+      displayName: "Matter #",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 250,
+      isResizable: true,
+    },
+    {
+      name: "templateType",
+      displayName: "Template Type",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 225,
+      isResizable: true,
+    },
+  ];
+
+  const viewFieldsStaged: IViewField[] = [
+    {
+      name: "newMatterEngagementName",
+      displayName: "Engagement Name",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 250,
+      isResizable: true,
+    },
+    {
+      name: "newMatterNumber",
+      displayName: "Matter #",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 250,
+      isResizable: true,
+    },
+    {
+      name: "templateType",
+      displayName: "Template Type",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 225,
+      isResizable: true,
+    },
+    {
+      name: "SiteOwner",
+      displayName: "Site Owner",
+      sorting: false,
+      minWidth: 180,
+      maxWidth: 250,
+      isResizable: true,
+      render: (rowItem, index, column) => (
+        <PeoplePicker
+          context={spContext}
+          showtooltip={false}
+          required={true}
+          onChange={(item) => validateSiteOwner(item, rowItem)}
+          showHiddenInUI={false}
+          principalTypes={[PrincipalType.User]}
+          ensureUser={true}
+          personSelectionLimit={1}
+          placeholder="Enter name or email"
+          defaultSelectedUsers={rowItem["siteOwner.Email"] ? [rowItem["siteOwner.Email"]] : []}
+        />
+      ),
+    },
+    {
+      name: "newMatterPortalExpirationDate",
+      displayName: "Portal Expiration Date",
+      sorting: false,
+      minWidth: 125,
+      maxWidth: 250,
+      isResizable: false,
+      render: (rowItem, index, column) => (
+        <DatePicker
+          allowTextInput={false}
+          value={new Date(rowItem.newMatterPortalExpirationDate)}
+          initialPickerDate={new Date()}
+          onSelectDate={(dateToSend) => onSelectDate(dateToSend, rowItem)}
+          formatDate={onFormatDate}
+          maxDate={createDate18MonthsFromNow()}
+        />
+      ),
+    },
+    {
+      name: "",
+      displayName: "",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 100,
+      isResizable: false,
+      render: (rowItem, index, column) => (
+        <Icon iconName='Delete' className={styles.trashCan} onClick={(ev) => unstageItem(ev, rowItem)} />
+      ),
+    },
+  ];
+
+  const confirmationViewFields: IViewField[] = [
+    {
+      name: "newMatterEngagementName",
+      displayName: "Engagement Name",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 250,
+      isResizable: true,
+    },
+    {
+      name: "newMatterNumber",
+      displayName: "Matter #",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 250,
+      isResizable: true,
+    },
+    {
+      name: "templateType",
+      displayName: "Template Type",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 225,
+      isResizable: true,
+    },
+    {
+      name: "siteOwner",
+      displayName: "Site Owner",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 100,
+      isResizable: false,
+      render: (rowItem, index, column) => (
+        <span>{rowItem["siteOwner.Title"]}</span>
+      ),
+    },
+    {
+      name: "newMatterPortalExpirationDate",
+      displayName: "Expiration Date",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 100,
+      isResizable: false,
+      render: (rowItem, index, column) => (
+        <span>{onFormatDate(new Date(rowItem.newMatterPortalExpirationDate)).toString()}</span>
+      ),
+    },
+  ];
 
   return (
-    <div>
-      <DefaultButton text="Bulk subportal creation" onClick={openModal} />
+    <>
       <Dialog
-        hidden={!isModalOpen}
-        onDismiss={closeModal}
+        hidden={!isBulkCreationOpen}
+        onDismiss={resetState}
+        minWidth={1200}
         dialogContentProps={{
-          type: DialogType.largeHeader,
-          title: 'Bulk Subportal Creation',
-          subText: 'Select Portal Type, Team, and Engagements for bulk creation',
+          type: DialogType.normal,
+          title: "Bulk Subportal Creation",
+          showCloseButton: true,
         }}
         modalProps={{
           isBlocking: true,
+          className: styles.bulkCreation,
         }}
       >
-        {step === 1 && (
-          <div>
-            <Dropdown
-              label="Portal Type"
-              options={portalTypeOptions}
-              onChange={handlePortalTypeChange}
-              selectedKey={portalType}
-            />
-            <Dropdown
-              label="Team"
-              options={teamOptions}
-              onChange={handleTeamChange}
-              selectedKey={team}
-            />
-            <div>
-              {/* List of engagements with multi-select functionality */}
-              {/* Example engagement list rendering */}
-              {mockEngagements.map((engagement) => (
-                <div
-                  key={engagement.ID}
-                  onClick={() => handleEngagementSelection(engagement)}
-                  style={{ background: selectedEngagements.includes(engagement) ? '#eaeaea' : 'white' }}
-                >
-                  {engagement.Title}
-                </div>
-              ))}
+        {isDataLoaded && !isConfirmationScreen && (
+          <>
+            <span className={styles.guidanceText}>
+              Choose a team to see WF portals that are available for creation
+            </span>
+            <div className={styles.choiceGroupContainer}>
+              <ChoiceGroup
+                className={styles.innerChoice}
+                defaultSelectedKey={team}
+                label="Team"
+                required={true}
+                options={[
+                  { key: "assurance", text: "Assurance" },
+                  { key: "tax", text: "Tax" },
+                ]}
+                onChange={onTeamChange}
+              />
             </div>
-            <DialogFooter>
-              <PrimaryButton text="Next" onClick={handleNextStep} />
-              <DefaultButton text="Cancel" onClick={closeModal} />
-            </DialogFooter>
-          </div>
+          </>
         )}
-        {step === 2 && (
-          <div>
-            <p>Review your selections:</p>
-            {/* Display selected engagements and other details */}
-            {selectedEngagements.map((engagement) => (
-              <div key={engagement.ID}>{engagement.Title}</div>
-            ))}
-            <DialogFooter>
-              <PrimaryButton text="Create Portals" onClick={handleCreatePortals} />
-              <DefaultButton text="Back" onClick={handlePrevStep} />
-            </DialogFooter>
-          </div>
+
+        {!isDataLoaded && !isConfirmationScreen && (
+          <Spinner
+            size={SpinnerSize.large}
+            label="Loading Eligible Creation Portals...this could take some time depending on the amount of portals."
+          />
         )}
+
+        {isDataLoaded && team !== "" && !isConfirmationScreen && (
+          <>
+            <span className={styles.guidanceText}>
+              Select engagements below to bulk creation. No permissions will be created over to the new portals.
+            </span>
+            <div className={styles.listViewPortsForCreation}>
+              <ListView
+                items={items}
+                viewFields={viewFields}
+                compact={true}
+                selectionMode={SelectionMode.single}
+                selection={(selectionItem) => setPortalSelected(selectionItem)}
+                showFilter={false}
+                key="engagementPortals"
+              />
+            </div>
+            <span className={styles.guidanceText}>
+              Enter a Site Owner and Expiration Date for each portal to creation. No permissions will be created over to the new portals.
+            </span>
+            <br />
+            <span><i>
+              The portal will be available for future creation until the expiration date below. All files will be deleted from the portal 12 months from today's date.
+            </i></span>
+            <ListView
+              items={itemsStaged}
+              viewFields={viewFieldsStaged}
+              compact={true}
+              selectionMode={SelectionMode.none}
+              showFilter={false}
+              key="engagementPortalsStaged"
+            />
+          </>
+        )}
+
+        {isConfirmationScreen && (
+          <>
+            <span className={styles.guidanceText}>
+              Selected engagements will be created over from previous year. No Permissions will be created over to the new portals.
+            </span>
+            <div className={styles.listViewPortsForCreation}>
+              <ListView
+                items={itemsStaged}
+                viewFields={confirmationViewFields}
+                compact={true}
+                selectionMode={SelectionMode.none}
+                showFilter={false}
+                key="confirmationCreations"
+              />
+            </div>
+            {isDataSubmitted && (
+              <MessageBar
+                messageBarType={MessageBarType.success}
+                isMultiline={true}
+                className={styles.successMsg}
+              >
+                Thank you. Your portals are in the process of being created. You will receive an email confirmation shortly when your portals are active. Please close this window.
+              </MessageBar>
+            )}
+          </>
+        )}
+
+        <DialogFooter>
+          {isDataLoaded && team !== "" && (
+            <div className={styles.dialogFooterButtonContainer}>
+              <DefaultButton
+                className={styles.defaultButton}
+                onClick={resetState}
+                text="Cancel"
+              />
+              <div>
+                {isConfirmationScreen && (
+                  <DefaultButton
+                    className={styles.defaultButton}
+                    onClick={() => setIsConfirmationScreen(false)}
+                    style={{ marginRight: "8px" }}
+                    text="Back"
+                  />
+                )}
+                {enableNextButton && !isConfirmationScreen && (
+                  <PrimaryButton
+                    className={styles.primaryButton}
+                    onClick={() => setIsConfirmationScreen(true)}
+                    text="Next"
+                  />
+                )}
+                {isConfirmationScreen && (
+                  <PrimaryButton
+                    className={styles.primaryButton}
+                    onClick={submitPortalCreationData}
+                    text="Create Portals"
+                  />
+                )}
+              </div>
+            </div>
+          )}
+        </DialogFooter>
       </Dialog>
-    </div>
+    </>
   );
 };
-
-// Example data, replace with actual data fetching logic
-const mockEngagements = [
-  { ID: '1', Title: 'Engagement 1' },
-  { ID: '2', Title: 'Engagement 2' },
-  { ID: '3', Title: 'Engagement 3' },
-];
 
 export default BulkCreation;
