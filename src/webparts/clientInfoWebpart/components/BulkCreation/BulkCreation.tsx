@@ -61,6 +61,7 @@ const BulkCreation = ({
   const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false);
   const [taxCreationData, setTaxCreationData] = useState<MatterAndCreationData[]>([]);
   const [AudCreationData, setAudCreationData] = useState<MatterAndCreationData[]>([]);
+  const [advCreationData, setAdvCreationData] = useState<MatterAndCreationData[]>([]);
   const [items, setItems] = useState<MatterAndCreationData[]>([]);
   const [itemsStaged, setItemsStaged] = useState<MatterAndCreationData[]>([]);
   const [portalSelected, setPortalSelected] = useState([]);
@@ -80,6 +81,7 @@ const BulkCreation = ({
     setIsDataLoaded(false);
     setTaxCreationData([]);
     setAudCreationData([]);
+    setAdvCreationData([]);
     setItems([]);
     setItemsStaged([]);
     setPortalSelected([]);
@@ -245,6 +247,8 @@ const BulkCreation = ({
       setItems(taxCreationData);
     } else if (team === "assurance") {
       setItems(AudCreationData);
+    } else if (team === "advisory"){
+      setItems(advCreationData);
     }
   }, [team]);
 
@@ -259,7 +263,8 @@ const BulkCreation = ({
       getMatterNumbersForClientSite(clientSiteNumber).then((response) => {
         setAudCreationData(response.audMatters);
         setTaxCreationData(response.taxMatters);
-        setIsDataLoaded(response.audMatters.length > 0 || response.taxMatters.length > 0);
+        setAdvCreationData(response.advMatters);
+        setIsDataLoaded(response.audMatters.length > 0 || response.taxMatters.length > 0 || response.advMatters.length > 0);
       });
     }
   }, [isBulkCreationOpen]);
@@ -448,6 +453,7 @@ const BulkCreation = ({
                 options={[
                   { key: "assurance", text: "Assurance" },
                   { key: "tax", text: "Tax" },
+                  { key: "advistory", text: "Advisory"}
                 ]}
                 onChange={onTeamChange}
               />

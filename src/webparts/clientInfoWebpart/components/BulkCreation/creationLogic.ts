@@ -51,10 +51,12 @@ const getCreationEngagementPortalItems = async (
 ): Promise<{
   taxCreationArr: MatterAndCreationData[];
   audCreationArr: MatterAndCreationData[];
+  advCreationArr: MatterAndCreationData[];
 }> => {
   console.log("getCreationEngagementPortalItems firing::");
   let audCreationArr = [];
   let taxCreationArr = [];
+  let advCreationArr = [];
   let creationData: MatterAndCreationData = {
     ID: "",
     engListID: "",
@@ -202,7 +204,12 @@ const getCreationEngagementPortalItems = async (
 
         if (rowData[0].Team === "Tax") {
           taxCreationArr.push({ ...creationData });
-        } else if (rowData[0].Team === "Assurance") {
+        }
+        else if
+          (rowData[0].Team === "Advisory") { 
+            advCreationArr.push({...creationData});
+          }
+        else if (rowData[0].Team === "Assurance") {
           audCreationArr.push({ ...creationData });
         }
       }
@@ -316,7 +323,7 @@ const getCreationEngagementPortalItems = async (
     }
   }
 
-  return { taxCreationArr, audCreationArr };
+  return { taxCreationArr, audCreationArr, advCreationArr };
 };
 
 export const getMatterNumbersForClientSite = async (
@@ -324,10 +331,12 @@ export const getMatterNumbersForClientSite = async (
 ): Promise<{
   taxMatters: MatterAndCreationData[];
   audMatters: MatterAndCreationData[];
+  advMatters: MatterAndCreationData[];
 }> => {
   let taxMatters = [];
   let audMatters = [];
-
+  let advMatters = [];
+  
   console.log("getMatterNumbersForClientSite firing::", clientSiteNumber);
 
   let engagementListMatters = await hubSite.lists
@@ -369,6 +378,7 @@ export const getMatterNumbersForClientSite = async (
 
   taxMatters = creationPortalItems.taxCreationArr;
   audMatters = creationPortalItems.audCreationArr;
+  advMatters = creationPortalItems.advCreationArr;
 
-  return { taxMatters, audMatters };
+  return { taxMatters, audMatters, advMatters };
 };
