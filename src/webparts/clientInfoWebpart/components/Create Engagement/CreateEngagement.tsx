@@ -2408,8 +2408,8 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
                           className={styles.innerChoice}
                           options={
                             this.state.isRollover
-                              ? PortalChoiceOptions1
-                              : PortalChoiceOptions
+                              ? PortalChoiceOptions
+                              : PortalChoiceOptions1
                           }
                           onChange={this._onChangePortalChoice}
                           selectedKey={this.state.PortalChoiceSelected}
