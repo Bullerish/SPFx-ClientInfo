@@ -1315,70 +1315,52 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
         this.state.EngagementNumberSelected.slice(0, -2) + e1.toString();
       // console.log('logging str1 value:: ', str1);
 
-      await hubWeb.lists
-        .getByTitle(GlobalValues.EngagementPortalList)
-        .items.filter("Title eq '" + str1 + "'")
-        .getAll()
-        .then((data) => {
-          console.log(
-            "logging data from call to Engagement Portal List:: ",
-            data
-          );
-          data = data.filter(
-            (e) =>
-              e.PortalExist == true &&
-              e.ClientNumber == CRN &&
-              e.PortalType == PortalType &&
-              e.Team == Team
-          );
-          if (data.length != 0) {
-            let WorkYear = parseInt(data[0].WorkYear);
-            let Year = parseInt(this.state.Year);
-            if (Year == WorkYear + 1) {
-              this.setState({
-                Rollover: true,
-                ServiceTypeSelected: data[0].TemplateType,
-                IndustryTypeSelected: data[0].IndustryType,
-                SupplementalSelected: data[0].Supplemental,
-                RolloverURL: str1,
-              });
+            await hubWeb.lists.getByTitle(GlobalValues.EngagementPortalList).items.filter("Title eq '" + str1 + "'").getAll().then((data) => {
+                console.log('logging data from call to Engagement Portal List:: ', data);
+                data = data.filter(e => e.PortalExist == true && e.ClientNumber == CRN && e.PortalType == PortalType && e.Team == Team);
+                if (data.length != 0) {
+                    let WorkYear = parseInt(data[0].WorkYear);
+                    let Year = parseInt(this.state.Year);
+                    if (Year == WorkYear + 1) {
+                        this.setState({
+                            Rollover: true,
+                            isRollover: true,
+                            ServiceTypeSelected: data[0].TemplateType,
+                            IndustryTypeSelected: data[0].IndustryType,
+                            SupplementalSelected: data[0].Supplemental,
+                            RolloverURL: str1
+                        });
 
-              if (
-                this.state.CRUserList.length > 0 &&
-                data[0].EngagementMembers &&
-                data[0].EngagementMembers.length > 0
-              ) {
-                this.state.CRUserList.forEach((e) => {
-                  if (data[0].EngagementMembers.indexOf(e.email) > -1) {
-                    e.checked = true;
-                  }
-                });
-              }
+                        if (this.state.CRUserList.length > 0 && data[0].EngagementMembers && data[0].EngagementMembers.length > 0) {
+                            this.state.CRUserList.forEach((e) => {
+                                if (data[0].EngagementMembers.indexOf(e.email) > -1) {
+                                    e.checked = true;
+                                }
+                            });
+                        }
 
-              if (
-                this.state.CLUserList.length > 0 &&
-                data[0].ClientMembers &&
-                data[0].ClientMembers.length > 0
-              ) {
-                this.state.CLUserList.forEach((e) => {
-                  if (data[0].ClientMembers.indexOf(e.email) > -1) {
-                    e.checked = true;
-                  }
-                });
-              }
+                        if (this.state.CLUserList.length > 0 && data[0].ClientMembers && data[0].ClientMembers.length > 0) {
+                            this.state.CLUserList.forEach((e) => {
+                                if (data[0].ClientMembers.indexOf(e.email) > -1) {
+                                    e.checked = true;
+                                }
+                            });
+                        }
 
-              if (this.state.AssuranceSplitRollover.length == 0) {
-                this._getUserList();
-              }
-            } else {
-              this.setState({ isRollover: true });
-            }
-          } else {
-            this.setState({ isRollover: true });
-          }
-        });
+                        if (this.state.AssuranceSplitRollover.length == 0) {
+                            this._getUserList();
+                        }
+                    }
+                    else {
+                        this.setState({ isRollover: false });
+                    }
+                } else {
+                    this.setState({ isRollover: false });
+                }
+            });
+        }
+
     }
-  }
 
   public _onChangePortalChoice = (
     event: React.FormEvent<HTMLDivElement>,
@@ -4270,53 +4252,40 @@ class CreateEngagement extends React.Component<ICreateEngagement> {
               defaultFileExpDate = maxDate;
             } // 12 months
 
-            if (
-              this.state.TeamSelected == "Tax" &&
-              this.state.PortalTypeSelected == "Workflow"
-            ) {
-              this.Rollover();
+                        if (this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'Workflow') {
+                            this.Rollover();
+                        }
+                        if (this.state.TeamSelected == 'Tax' && this.state.PortalTypeSelected == 'File Exchange') {
+                            this.Rollover();
+                        }
+                        else if (this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'Workflow') {
+                            this.Rollover();
+                        }
+                        else if (this.state.TeamSelected == 'Assurance' && this.state.PortalTypeSelected == 'File Exchange') {
+                            this.Rollover();
+                        }
+                        else if (this.state.TeamSelected == 'Advisory' && this.state.PortalTypeSelected == 'Workflow') {
+                            this.Rollover();
+                        }
+                        else if (this.state.TeamSelected == 'Advisory' && this.state.PortalTypeSelected == 'File Exchange') {
+                            this.Rollover();
+                        }
+                        else {
+                            this.setState({ isRollover: false });
+                        }
+                        this.setState({
+                            validate: false,
+                            currentScreen: "screen2",
+                            dialogbuttonname: "Next",
+                            fileExpiration: defaultFileExpDate,
+                            portalExpiration: defaultPortalExpDate,
+                            titleText: "- Rollover - Create New",
+                        });
+                    }
+                }
             }
-            if (
-              this.state.TeamSelected == "Tax" &&
-              this.state.PortalTypeSelected == "File Exchange"
-            ) {
-              this.Rollover();
-            } else if (
-              this.state.TeamSelected == "Assurance" &&
-              this.state.PortalTypeSelected == "Workflow"
-            ) {
-              this.Rollover();
-            } else if (
-              this.state.TeamSelected == "Assurance" &&
-              this.state.PortalTypeSelected == "File Exchange"
-            ) {
-              this.Rollover();
-            } else if (
-              this.state.TeamSelected == "Advisory" &&
-              this.state.PortalTypeSelected == "Workflow"
-            ) {
-              this.Rollover();
-            } else if (
-              this.state.TeamSelected == "Advisory" &&
-              this.state.PortalTypeSelected == "File Exchange"
-            ) {
-              this.Rollover();
-            } else {
-              this.setState({ isRollover: true });
-            }
-            this.setState({
-              validate: false,
-              currentScreen: "screen2",
-              dialogbuttonname: "Next",
-              fileExpiration: defaultFileExpDate,
-              portalExpiration: defaultPortalExpDate,
-              titleText: "- Rollover - Create New",
-            });
-          }
-        }
-      }
-    } else if (this.state.currentScreen == "screen2") {
-      console.log("in submitDialog screen2 ::");
+        } else if (this.state.currentScreen == "screen2") {
+            console.log('in submitDialog screen2 ::');
 
       if (
         this.state.addusers.length == 0 ||
