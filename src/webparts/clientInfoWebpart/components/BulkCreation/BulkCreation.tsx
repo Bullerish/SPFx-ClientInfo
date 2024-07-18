@@ -29,7 +29,6 @@ import { Spinner, SpinnerSize } from "office-ui-fabric-react/lib/Spinner";
 import { ISiteUserInfo } from "@pnp/sp/site-users/types";
 import styles from "../ClientInfoWebpart.module.scss";
 import { GlobalValues } from "../../Dataprovider/GlobalValue";
-import { IItemAddResult } from "@pnp/sp/items";
 import {
   DatePicker,
   DayOfWeek,
@@ -58,10 +57,8 @@ const BulkCreation = ({
   onBulkCreationModalHide,
 }): React.ReactElement => {
   const [team, setTeam] = useState<string>("");
+  const [portalType, setPortalType] = useState<string>("");
   const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false);
-  const [taxCreationData, setTaxCreationData] = useState<MatterAndCreationData[]>([]);
-  const [AudCreationData, setAudCreationData] = useState<MatterAndCreationData[]>([]);
-  const [advCreationData, setAdvCreationData] = useState<MatterAndCreationData[]>([]);
   const [items, setItems] = useState<MatterAndCreationData[]>([]);
   const [itemsStaged, setItemsStaged] = useState<MatterAndCreationData[]>([]);
   const [portalSelected, setPortalSelected] = useState([]);
@@ -70,18 +67,16 @@ const BulkCreation = ({
   const [isDataSubmitted, setIsDataSubmitted] = useState<boolean>(false);
 
   const clientSiteAbsoluteUrl = spContext._pageContext._web.absoluteUrl;
-  const hubSite = Web(GlobalValues.HubSiteURL);
   const clientSiteServerRelativeUrl = spContext._pageContext._web.serverRelativeUrl;
   const relativeUrlArr = clientSiteServerRelativeUrl.split("/");
   const clientSiteNumber = relativeUrlArr[relativeUrlArr.length - 1];
+  const hubSite = Web(GlobalValues.HubSiteURL);
 
   const resetState = () => {
     onBulkCreationModalHide(false);
     setTeam("");
+    setPortalType("");
     setIsDataLoaded(false);
-    setTaxCreationData([]);
-    setAudCreationData([]);
-    setAdvCreationData([]);
     setItems([]);
     setItemsStaged([]);
     setPortalSelected([]);
@@ -92,6 +87,10 @@ const BulkCreation = ({
 
   const onTeamChange = (ev: React.FormEvent<HTMLInputElement>, option: any): void => {
     setTeam(option.key);
+  };
+
+  const onPortalTypeChange = (ev: React.FormEvent<HTMLInputElement>, option: any): void => {
+    setPortalType(option.key);
   };
 
   const onFormatDate = (date: Date): string => {
@@ -241,30 +240,11 @@ const BulkCreation = ({
     setEnableNextButton(checkItemsStagedForSiteOwner());
   }, [itemsStaged]);
 
-  useEffect(() => {
-    setItemsStaged([]);
-    if (team === "tax") {
-      setItems(taxCreationData);
-    } else if (team === "assurance") {
-      setItems(AudCreationData);
-    } else if (team === "advisory"){
-      setItems(advCreationData);
-    }
-  }, [team]);
-
-  useEffect(() => {
-    if (portalSelected.length > 0) {
-      moveSelectedToStaged();
-    }
-  }, [portalSelected]);
-
   useLayoutEffect(() => {
     if (isBulkCreationOpen) {
       getMatterNumbersForClientSite(clientSiteNumber).then((response) => {
-        setAudCreationData(response.audMatters);
-        setTaxCreationData(response.taxMatters);
-        setAdvCreationData(response.advMatters);
-        setIsDataLoaded(response.audMatters.length > 0 || response.taxMatters.length > 0 || response.advMatters.length > 0);
+        setItems(response.engagementListMatters);
+        setIsDataLoaded(response.engagementListMatters.length > 0);
       });
     }
   }, [isBulkCreationOpen]);
@@ -423,6 +403,14 @@ const BulkCreation = ({
     },
   ];
 
+  const filterItems = (selectedTeam: string, selectedPortalType: string) => {
+    return items.filter(item => {
+      const matchesTeam = item.team.toLowerCase() === selectedTeam.toLowerCase();
+      const hasPortalType = item.Portals_x0020_Created ? item.Portals_x0020_Created.includes(selectedPortalType === "workflow" ? "WF" : "FE") : false;
+      return matchesTeam && !hasPortalType;
+    });
+  };
+
   return (
     <>
       <Dialog
@@ -453,11 +441,31 @@ const BulkCreation = ({
                 options={[
                   { key: "assurance", text: "Assurance" },
                   { key: "tax", text: "Tax" },
-                  { key: "advistory", text: "Advisory"}
+                  { key: "advisory", text: "Advisory"}
                 ]}
                 onChange={onTeamChange}
               />
             </div>
+            {team && (
+              <>
+                <span className={styles.guidanceText}>
+                  Choose the type of portal
+                </span>
+                <div className={styles.choiceGroupContainer}>
+                  <ChoiceGroup
+                    className={styles.innerChoice}
+                    defaultSelectedKey={portalType}
+                    label="Portal Type"
+                    required={true}
+                    options={[
+                      { key: "workflow", text: "Workflow" },
+                      { key: "fileexchange", text: "File Exchange" }
+                    ]}
+                    onChange={onPortalTypeChange}
+                  />
+                </div>
+              </>
+            )}
           </>
         )}
 
@@ -468,14 +476,14 @@ const BulkCreation = ({
           />
         )}
 
-        {isDataLoaded && team !== "" && !isConfirmationScreen && (
+        {isDataLoaded && team !== "" && portalType !== "" && !isConfirmationScreen && (
           <>
             <span className={styles.guidanceText}>
-              Select engagements below to bulk creation. No permissions will be created over to the new portals.
+              Select engagements below for bulk creation.
             </span>
             <div className={styles.listViewPortsForCreation}>
               <ListView
-                items={items}
+                items={filterItems(team, portalType)}
                 viewFields={viewFields}
                 compact={true}
                 selectionMode={SelectionMode.single}
@@ -485,7 +493,7 @@ const BulkCreation = ({
               />
             </div>
             <span className={styles.guidanceText}>
-              Enter a Site Owner and Expiration Date for each portal to creation. No permissions will be created over to the new portals.
+              Enter a Site Owner and Expiration Date for each portal to creation.
             </span>
             <br />
             <span><i>
@@ -530,7 +538,7 @@ const BulkCreation = ({
         )}
 
         <DialogFooter>
-          {isDataLoaded && team !== "" && (
+          {isDataLoaded && team !== "" && portalType !== "" && (
             <div className={styles.dialogFooterButtonContainer}>
               <DefaultButton
                 className={styles.defaultButton}
