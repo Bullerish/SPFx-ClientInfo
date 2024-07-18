@@ -6,50 +6,31 @@ import {
   DialogFooter,
 } from "office-ui-fabric-react/lib/Dialog";
 import {
-  DefaultButton,
-  PrimaryButton,
+  DefaultButton, PrimaryButton,
 } from "office-ui-fabric-react/lib/Button";
 import {
   ChoiceGroup,
-  IChoiceGroupOption,
 } from "office-ui-fabric-react/lib/ChoiceGroup";
 import {
   MessageBar,
   MessageBarType,
 } from "office-ui-fabric-react/lib/MessageBar";
-import { TextField } from "office-ui-fabric-react/lib/TextField";
-import { Text } from "office-ui-fabric-react/lib/Text";
-import { sp } from "@pnp/sp";
-import "@pnp/sp/site-users";
-import { IWeb, Web } from "@pnp/sp/webs";
-import "@pnp/sp/lists";
-import "@pnp/sp/fields";
-import "@pnp/sp/items";
+import { Web } from '@pnp/sp/webs';
 import { Spinner, SpinnerSize } from "office-ui-fabric-react/lib/Spinner";
 import { ISiteUserInfo } from "@pnp/sp/site-users/types";
 import styles from "../ClientInfoWebpart.module.scss";
 import { GlobalValues } from "../../Dataprovider/GlobalValue";
 import {
   DatePicker,
-  DayOfWeek,
-  IDatePickerStrings,
 } from "office-ui-fabric-react/lib/DatePicker";
 import {
-  PeoplePicker,
-  PrincipalType,
+  PeoplePicker, PrincipalType,
 } from "@pnp/spfx-controls-react/lib/PeoplePicker";
 import {
-  ListView,
-  IViewField,
-  SelectionMode,
+  ListView, IViewField, SelectionMode,
 } from "@pnp/spfx-controls-react/lib/ListView";
 import { getMatterNumbersForClientSite, MatterAndCreationData, createDate18MonthsFromNow } from './creationLogic';
 import { Icon } from "office-ui-fabric-react/lib/Icon";
-
-export interface IDatePickerFormatExampleState {
-  firstDayOfWeek?: DayOfWeek;
-  value?: Date | null;
-}
 
 const BulkCreation = ({
   spContext,
