@@ -54,10 +54,20 @@ export const getMatterNumbersForClientSite = async (
 
   console.log("getMatterNumbersForClientSite firing::", clientSiteNumber);
 
-  let items = await hubSite.lists.getByTitle("Engagement List")
-    .items.filter(`ClientNumber eq '${clientSiteNumber}'`)
-    .select("Title", "ClientNumber", "EngagementName", "ID", "WorkYear", "Team", "Portals_x0020_Created")
-    .get();
+  const batchSize = 5000;
+  let items: any[] = [];
+  let currentPageItems: any[];
+
+  do {
+    currentPageItems = await hubSite.lists.getByTitle("Engagement List")
+      .items.filter(`ClientNumber eq '${clientSiteNumber}'`)
+      .select("Title", "ClientNumber", "EngagementName", "ID", "WorkYear", "Team", "Portals_x0020_Created")
+      .top(batchSize)
+      .skip(items.length)
+      .get();
+
+    items = items.concat(currentPageItems);
+  } while (currentPageItems.length === batchSize);
 
   items.forEach((item: any) => {
     engagementListMatters.push({
@@ -73,7 +83,7 @@ export const getMatterNumbersForClientSite = async (
       newMatterEngagementName: item.EngagementName,
       creation: false,
       clientNumber: item.ClientNumber,
-      team: item.Team === "TAX" ? "Tax" : "Assurance",
+      team: item.Team,
       newMatterWorkYear: item.WorkYear,
       creationMatterWorkYear: "",
       portalType: "",
@@ -83,7 +93,8 @@ export const getMatterNumbersForClientSite = async (
       newMatterPortalExpirationDate: createDate18MonthsFromNow().toISOString(),
       newMatterFileExpirationDate: createFileExpirationDate().toISOString(),
       isNotificationEmail: false,
-      siteOwner: ""
+      siteOwner: "",
+      Portals_x0020_Created: item.Portals_x0020_Created,
     });
   });
 

@@ -29,8 +29,9 @@ import {
 import {
   ListView, IViewField, SelectionMode,
 } from "@pnp/spfx-controls-react/lib/ListView";
-import { getMatterNumbersForClientSite, MatterAndCreationData, createDate18MonthsFromNow } from './creationLogic';
+import { getMatterNumbersForClientSite, MatterAndCreationData, createDate18MonthsFromNow } from './CreationLogic';
 import { Icon } from "office-ui-fabric-react/lib/Icon";
+import { ClientInfoClass } from '../../Dataprovider/ClientInfoClass'; // Make sure this import path is correct
 
 const BulkCreation = ({
   spContext,
@@ -46,6 +47,9 @@ const BulkCreation = ({
   const [enableNextButton, setEnableNextButton] = useState<boolean>(false);
   const [isConfirmationScreen, setIsConfirmationScreen] = useState<boolean>(false);
   const [isDataSubmitted, setIsDataSubmitted] = useState<boolean>(false);
+  const [industryTypes, setIndustryTypes] = useState<any[]>([]);
+  const [supplementals, setSupplementals] = useState<any[]>([]);
+  const [templateTypes, setTemplateTypes] = useState<any[]>([]);
 
   const clientSiteAbsoluteUrl = spContext._pageContext._web.absoluteUrl;
   const clientSiteServerRelativeUrl = spContext._pageContext._web.serverRelativeUrl;
@@ -66,8 +70,93 @@ const BulkCreation = ({
     setIsDataSubmitted(false);
   };
 
+  const viewFields: IViewField[] = [
+    {
+      name: "newMatterEngagementName",
+      displayName: "Engagement Name",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 250,
+      isResizable: true,
+    },
+    {
+      name: "newMatterNumber",
+      displayName: "Matter #",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 250,
+      isResizable: true,
+    },
+    {
+      name: "templateType",
+      displayName: "Template Type",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 225,
+      isResizable: true,
+    },
+  ];
+  const confirmationViewFields: IViewField[] = [
+    {
+      name: "newMatterEngagementName",
+      displayName: "Engagement Name",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 250,
+      isResizable: true,
+    },
+    {
+      name: "newMatterNumber",
+      displayName: "Matter #",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 250,
+      isResizable: true,
+    },
+    {
+      name: "templateType",
+      displayName: "Template Type",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 225,
+      isResizable: true,
+    },
+    {
+      name: "siteOwner",
+      displayName: "Site Owner",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 100,
+      isResizable: false,
+      render: (rowItem, index, column) => (
+        <span>{rowItem["siteOwner.Title"]}</span>
+      ),
+    },
+    {
+      name: "newMatterPortalExpirationDate",
+      displayName: "Expiration Date",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 100,
+      isResizable: false,
+      render: (rowItem, index, column) => (
+        <span>{onFormatDate(new Date(rowItem.newMatterPortalExpirationDate)).toString()}</span>
+      ),
+    },
+  ];
+
+
   const onTeamChange = (ev: React.FormEvent<HTMLInputElement>, option: any): void => {
-    setTeam(option.key);
+    const selectedTeam = option.key.toLowerCase();
+    let teamCode = "";
+    if (selectedTeam === "assurance") {
+      teamCode = "AUD";
+    } else if (selectedTeam === "advisory") {
+      teamCode = "ADV";
+    } else if (selectedTeam === "tax") {
+      teamCode = "TAX";
+    }
+    setTeam(teamCode);
   };
 
   const onPortalTypeChange = (ev: React.FormEvent<HTMLInputElement>, option: any): void => {
@@ -191,17 +280,17 @@ const BulkCreation = ({
 
       return hubSite.lists.getByTitle("Engagement Portal List").items.add(itemData);
     }))
-    .then((results) => {
-      setIsDataSubmitted(true);
-      if (mattersToUpdatePC.length > 0) {
-        mattersToUpdatePC.forEach((matterToUpdate) => {
-          updateEngListRegularMatter(matterToUpdate);
-        });
-      }
-    })
-    .catch((error) => {
-      console.error("An error occurred while adding items:", error);
-    });
+      .then((results) => {
+        setIsDataSubmitted(true);
+        if (mattersToUpdatePC.length > 0) {
+          mattersToUpdatePC.forEach((matterToUpdate) => {
+            updateEngListRegularMatter(matterToUpdate);
+          });
+        }
+      })
+      .catch((error) => {
+        console.error("An error occurred while adding items:", error);
+      });
   };
 
   const updateEngListRegularMatter = async (matterToUpdate) => {
@@ -220,42 +309,37 @@ const BulkCreation = ({
   useEffect(() => {
     setEnableNextButton(checkItemsStagedForSiteOwner());
   }, [itemsStaged]);
+  useEffect(() => {
+    console.log("portalSelected::", portalSelected[0]);
 
+    if (portalSelected.length > 0) {
+      moveSelectedToStaged();
+    }
+
+
+  }, [portalSelected]);
   useLayoutEffect(() => {
     if (isBulkCreationOpen) {
       getMatterNumbersForClientSite(clientSiteNumber).then((response) => {
         setItems(response.engagementListMatters);
         setIsDataLoaded(response.engagementListMatters.length > 0);
       });
+      let obj = new ClientInfoClass();
+      // Load dropdown options for industry types, supplementals, and template types
+      obj.GetIndustryTypes().then(data => setIndustryTypes(data.sort((a, b) => a.Title.localeCompare(b.Title))));
+      obj.GetSupplemental().then(data => setSupplementals([{ Title: "N/A" }, ...data.sort((a, b) => a.Title.localeCompare(b.Title))]));
+      obj.GetServiceTypes().then(data => setTemplateTypes(data.sort((a, b) => a.Title.localeCompare(b.Title))));
     }
   }, [isBulkCreationOpen]);
 
-  const viewFields: IViewField[] = [
-    {
-      name: "newMatterEngagementName",
-      displayName: "Engagement Name",
-      sorting: false,
-      minWidth: 100,
-      maxWidth: 250,
-      isResizable: true,
-    },
-    {
-      name: "newMatterNumber",
-      displayName: "Matter #",
-      sorting: false,
-      minWidth: 100,
-      maxWidth: 250,
-      isResizable: true,
-    },
-    {
-      name: "templateType",
-      displayName: "Template Type",
-      sorting: false,
-      minWidth: 100,
-      maxWidth: 225,
-      isResizable: true,
-    },
-  ];
+  const getYearsDropdown = (matterNumber: string) => {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let i = currentYear - 5; i <= currentYear + 5; i++) {
+      years.push(i.toString());
+    }
+    return matterNumber.endsWith("00") ? years : [currentYear.toString()];
+  };
 
   const viewFieldsStaged: IViewField[] = [
     {
@@ -275,15 +359,160 @@ const BulkCreation = ({
       isResizable: true,
     },
     {
-      name: "templateType",
-      displayName: "Template Type",
+      name: "newMatterWorkYear",
+      displayName: "Year",
       sorting: false,
       minWidth: 100,
-      maxWidth: 225,
+      maxWidth: 150,
       isResizable: true,
+      render: (rowItem, index, column) => (
+        rowItem.newMatterNumber.endsWith("00") ? (
+          <select
+            value={rowItem.newMatterWorkYear}
+            onChange={(e) => {
+              const updatedItemsStaged = itemsStaged.map((item) => {
+                if (item.ID === rowItem.ID) {
+                  return {
+                    ...item,
+                    newMatterWorkYear: e.target.value,
+                  };
+                }
+                return item;
+              });
+              setItemsStaged(updatedItemsStaged);
+            }}
+          >
+            {getYearsDropdown(rowItem.newMatterNumber).map((year) => (
+              <option key={year} value={year}>{year}</option>
+            ))}
+          </select>
+        ) : (
+          <span>{rowItem.newMatterWorkYear}</span>
+        )
+      ),
     },
+    ...(team === "AUD" && portalType === "workflow" ? [
+      {
+        name: "industryType",
+        displayName: "Industry Type",
+        sorting: false,
+        minWidth: 100,
+        maxWidth: 250,
+        isResizable: true,
+        render: (rowItem, index, column) => (
+          <select
+            value={rowItem.industryType || ""}
+            onChange={(e) => {
+              const updatedItemsStaged = itemsStaged.map((item) => {
+                if (item.ID === rowItem.ID) {
+                  return {
+                    ...item,
+                    industryType: e.target.value,
+                  };
+                }
+                return item;
+              });
+              setItemsStaged(updatedItemsStaged);
+            }}
+          >
+            {industryTypes.map((type) => (
+              <option key={type.Title} value={type.Title}>{type.Title}</option>
+            ))}
+          </select>
+        ),
+      },
+      {
+        name: "supplemental",
+        displayName: "Supplemental",
+        sorting: false,
+        minWidth: 100,
+        maxWidth: 250,
+        isResizable: true,
+        render: (rowItem, index, column) => (
+          <select
+            value={rowItem.supplemental || ""}
+            onChange={(e) => {
+              const updatedItemsStaged = itemsStaged.map((item) => {
+                if (item.ID === rowItem.ID) {
+                  return {
+                    ...item,
+                    supplemental: e.target.value,
+                  };
+                }
+                return item;
+              });
+              setItemsStaged(updatedItemsStaged);
+            }}
+          >
+            {supplementals.map((supp) => (
+              <option key={supp.Title} value={supp.Title}>{supp.Title}</option>
+            ))}
+          </select>
+        ),
+      },
+    ] : []),
+    ...(team === "TAX" && portalType === "workflow" ? [
+      {
+        name: "templateType",
+        displayName: "Template Type",
+        sorting: false,
+        minWidth: 100,
+        maxWidth: 250,
+        isResizable: true,
+        render: (rowItem, index, column) => (
+          <select
+            value={rowItem.templateType || ""}
+            onChange={(e) => {
+              const updatedItemsStaged = itemsStaged.map((item) => {
+                if (item.ID === rowItem.ID) {
+                  return {
+                    ...item,
+                    templateType: e.target.value,
+                  };
+                }
+                return item;
+              });
+              setItemsStaged(updatedItemsStaged);
+            }}
+          >
+            {templateTypes.map((type) => (
+              <option key={type.Title} value={type.Title}>{type.Title}</option>
+            ))}
+          </select>
+        ),
+      },
+      {
+        name: "industryType",
+        displayName: "Industry Type",
+        sorting: false,
+        minWidth: 100,
+        maxWidth: 250,
+        isResizable: true,
+        render: (rowItem, index, column) => (
+          <select
+            value={rowItem.industryType || ""}
+            onChange={(e) => {
+              const updatedItemsStaged = itemsStaged.map((item) => {
+                if (item.ID === rowItem.ID) {
+                  return {
+                    ...item,
+                    industryType: e.target.value,
+                  };
+                }
+                return item;
+              });
+              setItemsStaged(updatedItemsStaged);
+            }}
+          >
+            {industryTypes.map((type) => (
+              <option key={type.Title} value={type.Title}>{type.Title}</option>
+            ))}
+          </select>
+        ),
+      },
+    ] : []),
     {
-      name: "SiteOwner",
+      name: "siteOwner",
       displayName: "Site Owner",
       sorting: false,
       minWidth: 180,
@@ -335,58 +564,9 @@ const BulkCreation = ({
     },
   ];
 
-  const confirmationViewFields: IViewField[] = [
-    {
-      name: "newMatterEngagementName",
-      displayName: "Engagement Name",
-      sorting: false,
-      minWidth: 100,
-      maxWidth: 250,
-      isResizable: true,
-    },
-    {
-      name: "newMatterNumber",
-      displayName: "Matter #",
-      sorting: false,
-      minWidth: 100,
-      maxWidth: 250,
-      isResizable: true,
-    },
-    {
-      name: "templateType",
-      displayName: "Template Type",
-      sorting: false,
-      minWidth: 100,
-      maxWidth: 225,
-      isResizable: true,
-    },
-    {
-      name: "siteOwner",
-      displayName: "Site Owner",
-      sorting: false,
-      minWidth: 100,
-      maxWidth: 100,
-      isResizable: false,
-      render: (rowItem, index, column) => (
-        <span>{rowItem["siteOwner.Title"]}</span>
-      ),
-    },
-    {
-      name: "newMatterPortalExpirationDate",
-      displayName: "Expiration Date",
-      sorting: false,
-      minWidth: 100,
-      maxWidth: 100,
-      isResizable: false,
-      render: (rowItem, index, column) => (
-        <span>{onFormatDate(new Date(rowItem.newMatterPortalExpirationDate)).toString()}</span>
-      ),
-    },
-  ];
-
   const filterItems = (selectedTeam: string, selectedPortalType: string) => {
     return items.filter(item => {
-      const matchesTeam = item.team.toLowerCase() === selectedTeam.toLowerCase();
+      const matchesTeam = item.team === selectedTeam;
       const hasPortalType = item.Portals_x0020_Created ? item.Portals_x0020_Created.includes(selectedPortalType === "workflow" ? "WF" : "FE") : false;
       return matchesTeam && !hasPortalType;
     });
@@ -422,7 +602,7 @@ const BulkCreation = ({
                 options={[
                   { key: "assurance", text: "Assurance" },
                   { key: "tax", text: "Tax" },
-                  { key: "advisory", text: "Advisory"}
+                  { key: "advisory", text: "Advisory" }
                 ]}
                 onChange={onTeamChange}
               />
@@ -473,21 +653,25 @@ const BulkCreation = ({
                 key="engagementPortals"
               />
             </div>
-            <span className={styles.guidanceText}>
-              Enter a Site Owner and Expiration Date for each portal to creation.
-            </span>
-            <br />
-            <span><i>
-              The portal will be available for future creation until the expiration date below. All files will be deleted from the portal 12 months from today's date.
-            </i></span>
-            <ListView
-              items={itemsStaged}
-              viewFields={viewFieldsStaged}
-              compact={true}
-              selectionMode={SelectionMode.none}
-              showFilter={false}
-              key="engagementPortalsStaged"
-            />
+            {itemsStaged.length > 0 && (
+              <>
+                <span className={styles.guidanceText}>
+                  Enter a Site Owner and Expiration Date for each portal to creation.
+                </span>
+                <br />
+                <span><i>
+                  The portal will be available for future creation until the expiration date below. All files will be deleted from the portal 12 months from today's date.
+                </i></span>
+                <ListView
+                  items={itemsStaged}
+                  viewFields={viewFieldsStaged}
+                  compact={true}
+                  selectionMode={SelectionMode.none}
+                  showFilter={false}
+                  key="engagementPortalsStaged"
+                />
+              </>
+            )}
           </>
         )}
 
@@ -535,7 +719,7 @@ const BulkCreation = ({
                     text="Back"
                   />
                 )}
-                {enableNextButton && !isConfirmationScreen && (
+                {enableNextButton && !isConfirmationScreen && itemsStaged.length > 0 && (
                   <PrimaryButton
                     className={styles.primaryButton}
                     onClick={() => setIsConfirmationScreen(true)}
