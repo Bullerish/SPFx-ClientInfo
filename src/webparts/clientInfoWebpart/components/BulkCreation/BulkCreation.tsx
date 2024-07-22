@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useState, useEffect, useLayoutEffect } from "react";
+import { Dropdown, IDropdownOption } from "office-ui-fabric-react/lib/Dropdown";
 import {
   Dialog,
   DialogType,
@@ -50,7 +51,7 @@ const BulkCreation = ({
   const [industryTypes, setIndustryTypes] = useState<any[]>([]);
   const [supplementals, setSupplementals] = useState<any[]>([]);
   const [templateTypes, setTemplateTypes] = useState<any[]>([]);
-
+  const [isTeamAndPortalDisabled, setIsTeamAndPortalDisabled] = useState<boolean>(false);
   const clientSiteAbsoluteUrl = spContext._pageContext._web.absoluteUrl;
   const clientSiteServerRelativeUrl = spContext._pageContext._web.serverRelativeUrl;
   const relativeUrlArr = clientSiteServerRelativeUrl.split("/");
@@ -87,47 +88,87 @@ const BulkCreation = ({
       maxWidth: 250,
       isResizable: true,
     },
-    {
-      name: "templateType",
-      displayName: "Template Type",
-      sorting: false,
-      minWidth: 100,
-      maxWidth: 225,
-      isResizable: true,
-    },
   ];
   const confirmationViewFields: IViewField[] = [
     {
       name: "newMatterEngagementName",
       displayName: "Engagement Name",
       sorting: false,
-      minWidth: 100,
-      maxWidth: 250,
+      minWidth: 150,
+      maxWidth: 300,
       isResizable: true,
     },
     {
       name: "newMatterNumber",
       displayName: "Matter #",
       sorting: false,
-      minWidth: 100,
-      maxWidth: 250,
+      minWidth: 150,
+      maxWidth: 300,
       isResizable: true,
     },
     {
-      name: "templateType",
-      displayName: "Template Type",
+      name: "newMatterWorkYear",
+      displayName: "Year",
       sorting: false,
       minWidth: 100,
-      maxWidth: 225,
+      maxWidth: 150,
       isResizable: true,
     },
+    ...(team === "AUD" && portalType === "workflow" ? [
+      {
+        name: "industryType",
+        displayName: "Industry Type",
+        sorting: false,
+        minWidth: 150,
+        maxWidth: 300,
+        isResizable: true,
+        render: (rowItem, index, column) => (
+          <span>{rowItem.industryType}</span>
+        ),
+      },
+      {
+        name: "supplemental",
+        displayName: "Supplemental",
+        sorting: false,
+        minWidth: 150,
+        maxWidth: 300,
+        isResizable: true,
+        render: (rowItem, index, column) => (
+          <span>{rowItem.supplemental}</span>
+        ),
+      },
+    ] : []),
+    ...(team === "TAX" && portalType === "workflow" ? [
+      {
+        name: "templateType",
+        displayName: "Template Type",
+        sorting: false,
+        minWidth: 150,
+        maxWidth: 300,
+        isResizable: true,
+        render: (rowItem, index, column) => (
+          <span>{rowItem.templateType}</span>
+        ),
+      },
+      {
+        name: "industryType",
+        displayName: "Industry Type",
+        sorting: false,
+        minWidth: 150,
+        maxWidth: 300,
+        isResizable: true,
+        render: (rowItem, index, column) => (
+          <span>{rowItem.industryType}</span>
+        ),
+      },
+    ] : []),
     {
       name: "siteOwner",
       displayName: "Site Owner",
       sorting: false,
       minWidth: 100,
-      maxWidth: 100,
-      isResizable: false,
+      maxWidth: 225,
+      isResizable: true,
       render: (rowItem, index, column) => (
         <span>{rowItem["siteOwner.Title"]}</span>
       ),
@@ -137,13 +178,14 @@ const BulkCreation = ({
       displayName: "Expiration Date",
       sorting: false,
       minWidth: 100,
-      maxWidth: 100,
-      isResizable: false,
+      maxWidth: 225,
+      isResizable: true,
       render: (rowItem, index, column) => (
         <span>{onFormatDate(new Date(rowItem.newMatterPortalExpirationDate)).toString()}</span>
       ),
     },
   ];
+
 
 
   const onTeamChange = (ev: React.FormEvent<HTMLInputElement>, option: any): void => {
@@ -249,25 +291,28 @@ const BulkCreation = ({
       if (stagedItem.engagementNumberEndZero === "") {
         mattersToUpdatePC.push(stagedItem.engListID);
       }
+      let selectedTeamName;
+      if (team === "AUD") {
+        selectedTeamName = "Assurance";
+      } else if (team === "TAX") {
+        selectedTeamName = "Tax";
+      } else if (team === "ADV") {
+        selectedTeamName = "Advisory";
+      }
+      let selelctedPortalType = portalType === "workflow" ? "WF" : "FE";
       const itemData = {
         Title: stagedItem.newMatterNumber,
         EngagementName: stagedItem.newMatterEngagementName,
         ClientNumber: stagedItem.clientNumber,
         EngagementNumberEndZero: stagedItem.engagementNumberEndZero,
         WorkYear: stagedItem.newMatterWorkYear,
-        Team: stagedItem.team,
-        PortalType: stagedItem.portalType,
+        Team: selectedTeamName,
+        PortalType: selelctedPortalType,
         SiteUrl: {
           __metadata: { type: "SP.FieldUrlValue" },
           Description: stagedItem.newMatterSiteUrl,
           Url: stagedItem.newMatterSiteUrl,
         },
-        CreationUrl: {
-          __metadata: { type: "SP.FieldUrlValue" },
-          Description: stagedItem.creationMatterSiteUrl,
-          Url: stagedItem.creationMatterSiteUrl,
-        },
-        Creation: stagedItem.creation,
         PortalId: stagedItem.newMatterPortalId,
         TemplateType: stagedItem.templateType,
         IndustryType: stagedItem.industryType,
@@ -305,6 +350,13 @@ const BulkCreation = ({
       });
     }
   };
+  useEffect(() => {
+    if (itemsStaged.length > 0) {
+      setIsTeamAndPortalDisabled(true);
+    } else {
+      setIsTeamAndPortalDisabled(false);
+    }
+  }, [itemsStaged]);
 
   useEffect(() => {
     setEnableNextButton(checkItemsStagedForSiteOwner());
@@ -346,16 +398,16 @@ const BulkCreation = ({
       name: "newMatterEngagementName",
       displayName: "Engagement Name",
       sorting: false,
-      minWidth: 100,
-      maxWidth: 250,
+      minWidth: 150,  // Increased minWidth
+      maxWidth: 300,  // Increased maxWidth
       isResizable: true,
     },
     {
       name: "newMatterNumber",
       displayName: "Matter #",
       sorting: false,
-      minWidth: 100,
-      maxWidth: 250,
+      minWidth: 150,  // Increased minWidth
+      maxWidth: 300,  // Increased maxWidth
       isResizable: true,
     },
     {
@@ -365,90 +417,111 @@ const BulkCreation = ({
       minWidth: 100,
       maxWidth: 150,
       isResizable: true,
-      render: (rowItem, index, column) => (
-        rowItem.newMatterNumber.endsWith("00") ? (
-          <select
-            value={rowItem.newMatterWorkYear}
-            onChange={(e) => {
+      render: (rowItem, index, column) => {
+        const currentYear = new Date().getFullYear();
+        const options: IDropdownOption[] = getYearsDropdown(rowItem.newMatterNumber).map((year) => ({
+          key: year,
+          text: year,
+        }));
+
+        return rowItem.newMatterNumber.endsWith("00") ? (
+          <Dropdown
+            selectedKey={rowItem.newMatterWorkYear || currentYear.toString()}
+            onChange={(event, option) => {
               const updatedItemsStaged = itemsStaged.map((item) => {
                 if (item.ID === rowItem.ID) {
                   return {
                     ...item,
-                    newMatterWorkYear: e.target.value,
+                    newMatterWorkYear: option.key as string,
                   };
                 }
                 return item;
               });
               setItemsStaged(updatedItemsStaged);
             }}
-          >
-            {getYearsDropdown(rowItem.newMatterNumber).map((year) => (
-              <option key={year} value={year}>{year}</option>
-            ))}
-          </select>
+            options={options}
+            calloutProps={{ className: styles.wideDropdown }}
+            className={styles.smallFont}
+          />
         ) : (
-          <span>{rowItem.newMatterWorkYear}</span>
-        )
-      ),
+          <span style={{ fontSize: '12px' }}>{rowItem.newMatterWorkYear}</span>
+        );
+      },
     },
+
     ...(team === "AUD" && portalType === "workflow" ? [
       {
         name: "industryType",
         displayName: "Industry Type",
         sorting: false,
-        minWidth: 100,
-        maxWidth: 250,
+        minWidth: 150,  // Increased minWidth
+        maxWidth: 300,  // Increased maxWidth
         isResizable: true,
-        render: (rowItem, index, column) => (
-          <select
-            value={rowItem.industryType || ""}
-            onChange={(e) => {
-              const updatedItemsStaged = itemsStaged.map((item) => {
-                if (item.ID === rowItem.ID) {
-                  return {
-                    ...item,
-                    industryType: e.target.value,
-                  };
-                }
-                return item;
-              });
-              setItemsStaged(updatedItemsStaged);
-            }}
-          >
-            {industryTypes.map((type) => (
-              <option key={type.Title} value={type.Title}>{type.Title}</option>
-            ))}
-          </select>
-        ),
+        render: (rowItem, index, column) => {
+          const options: IDropdownOption[] = [{ key: "N/A", text: "N/A" }, ...industryTypes
+            .filter(type => type.Title === "Assurance")
+            .map((type) => ({
+              key: type.IndustryType,
+              text: type.IndustryType,
+            }))];
+
+          return (
+            <Dropdown
+              selectedKey={rowItem.industryType || "N/A"}
+              onChange={(event, option) => {
+                const updatedItemsStaged = itemsStaged.map((item) => {
+                  if (item.ID === rowItem.ID) {
+                    return {
+                      ...item,
+                      industryType: option.key as string,
+                    };
+                  }
+                  return item;
+                });
+                setItemsStaged(updatedItemsStaged);
+              }}
+              options={options}
+              calloutProps={{ className: styles.wideDropdown }}
+              className={styles.smallFont}
+            />
+          );
+        },
       },
       {
         name: "supplemental",
         displayName: "Supplemental",
         sorting: false,
-        minWidth: 100,
-        maxWidth: 250,
+        minWidth: 150,
+        maxWidth: 300,
         isResizable: true,
-        render: (rowItem, index, column) => (
-          <select
-            value={rowItem.supplemental || ""}
-            onChange={(e) => {
-              const updatedItemsStaged = itemsStaged.map((item) => {
-                if (item.ID === rowItem.ID) {
-                  return {
-                    ...item,
-                    supplemental: e.target.value,
-                  };
-                }
-                return item;
-              });
-              setItemsStaged(updatedItemsStaged);
-            }}
-          >
-            {supplementals.map((supp) => (
-              <option key={supp.Title} value={supp.Title}>{supp.Title}</option>
-            ))}
-          </select>
-        ),
+        render: (rowItem, index, column) => {
+          const distinctSupplementals = Array.from(new Set(supplementals.map(supp => supp.Title)));
+          const options: IDropdownOption[] = distinctSupplementals.map((supp) => ({
+            key: supp,
+            text: supp,
+          }));
+
+          return (
+            <Dropdown
+              selectedKey={rowItem.supplemental || "N/A"}
+              onChange={(event, option) => {
+                const updatedItemsStaged = itemsStaged.map((item) => {
+                  if (item.ID === rowItem.ID) {
+                    return {
+                      ...item,
+                      supplemental: option.key as string,
+                    };
+                  }
+                  return item;
+                });
+                setItemsStaged(updatedItemsStaged);
+              }}
+              options={options}
+              calloutProps={{ className: styles.wideDropdown }}
+              className={styles.smallFont}
+            />
+          );
+        },
       },
     ] : []),
     ...(team === "TAX" && portalType === "workflow" ? [
@@ -456,59 +529,75 @@ const BulkCreation = ({
         name: "templateType",
         displayName: "Template Type",
         sorting: false,
-        minWidth: 100,
-        maxWidth: 250,
+        minWidth: 150,  // Increased minWidth
+        maxWidth: 300,  // Increased maxWidth
         isResizable: true,
-        render: (rowItem, index, column) => (
-          <select
-            value={rowItem.templateType || ""}
-            onChange={(e) => {
-              const updatedItemsStaged = itemsStaged.map((item) => {
-                if (item.ID === rowItem.ID) {
-                  return {
-                    ...item,
-                    templateType: e.target.value,
-                  };
-                }
-                return item;
-              });
-              setItemsStaged(updatedItemsStaged);
-            }}
-          >
-            {templateTypes.map((type) => (
-              <option key={type.Title} value={type.Title}>{type.Title}</option>
-            ))}
-          </select>
-        ),
+        render: (rowItem, index, column) => {
+          const options: IDropdownOption[] = [{ key: "N/A", text: "N/A" }, ...templateTypes
+            .filter(type => type.Title === "TAX")
+            .map((type) => ({
+              key: type.ServiceType,
+              text: type.ServiceType,
+            }))];
+
+          return (
+            <Dropdown
+              selectedKey={rowItem.templateType || "N/A"}
+              onChange={(event, option) => {
+                const updatedItemsStaged = itemsStaged.map((item) => {
+                  if (item.ID === rowItem.ID) {
+                    return {
+                      ...item,
+                      templateType: option.key as string,
+                    };
+                  }
+                  return item;
+                });
+                setItemsStaged(updatedItemsStaged);
+              }}
+              options={options}
+              calloutProps={{ className: styles.wideDropdown }}
+              className={styles.smallFont}
+            />
+          );
+        },
       },
       {
         name: "industryType",
         displayName: "Industry Type",
         sorting: false,
-        minWidth: 100,
-        maxWidth: 250,
+        minWidth: 150,  // Increased minWidth
+        maxWidth: 300,  // Increased maxWidth
         isResizable: true,
-        render: (rowItem, index, column) => (
-          <select
-            value={rowItem.industryType || ""}
-            onChange={(e) => {
-              const updatedItemsStaged = itemsStaged.map((item) => {
-                if (item.ID === rowItem.ID) {
-                  return {
-                    ...item,
-                    industryType: e.target.value,
-                  };
-                }
-                return item;
-              });
-              setItemsStaged(updatedItemsStaged);
-            }}
-          >
-            {industryTypes.map((type) => (
-              <option key={type.Title} value={type.Title}>{type.Title}</option>
-            ))}
-          </select>
-        ),
+        render: (rowItem, index, column) => {
+          const options: IDropdownOption[] = [{ key: "N/A", text: "N/A" }, ...industryTypes
+            .filter(type => type.Title === "Tax")
+            .map((type) => ({
+              key: type.IndustryType,
+              text: type.IndustryType,
+            }))];
+
+          return (
+            <Dropdown
+              selectedKey={rowItem.industryType || "N/A"}
+              onChange={(event, option) => {
+                const updatedItemsStaged = itemsStaged.map((item) => {
+                  if (item.ID === rowItem.ID) {
+                    return {
+                      ...item,
+                      industryType: option.key as string,
+                    };
+                  }
+                  return item;
+                });
+                setItemsStaged(updatedItemsStaged);
+              }}
+              options={options}
+              calloutProps={{ className: styles.wideDropdown }}
+              className={styles.smallFont}
+            />
+          );
+        },
       },
     ] : []),
     {
@@ -537,19 +626,26 @@ const BulkCreation = ({
       name: "newMatterPortalExpirationDate",
       displayName: "Portal Expiration Date",
       sorting: false,
-      minWidth: 125,
-      maxWidth: 250,
+      minWidth: 150,  // Increased minWidth
+      maxWidth: 300,  // Increased maxWidth
       isResizable: false,
-      render: (rowItem, index, column) => (
-        <DatePicker
-          allowTextInput={false}
-          value={new Date(rowItem.newMatterPortalExpirationDate)}
-          initialPickerDate={new Date()}
-          onSelectDate={(dateToSend) => onSelectDate(dateToSend, rowItem)}
-          formatDate={onFormatDate}
-          maxDate={createDate18MonthsFromNow()}
-        />
-      ),
+      render: (rowItem, index, column) => {
+        const defaultDate = portalType === "workflow"
+          ? new Date(new Date().setMonth(new Date().getMonth() + 18))
+          : new Date(new Date().setMonth(new Date().getMonth() + 12));
+
+        return (
+          <DatePicker
+            allowTextInput={false}
+            value={defaultDate}
+            initialPickerDate={defaultDate}
+            onSelectDate={(dateToSend) => onSelectDate(dateToSend, rowItem)}
+            formatDate={onFormatDate}
+            maxDate={createDate18MonthsFromNow()}
+            className={styles.smallFont}
+          />
+        );
+      },
     },
     {
       name: "",
@@ -564,6 +660,8 @@ const BulkCreation = ({
     },
   ];
 
+
+
   const filterItems = (selectedTeam: string, selectedPortalType: string) => {
     return items.filter(item => {
       const matchesTeam = item.team === selectedTeam;
@@ -577,7 +675,7 @@ const BulkCreation = ({
       <Dialog
         hidden={!isBulkCreationOpen}
         onDismiss={resetState}
-        minWidth={1200}
+        minWidth={1400}
         dialogContentProps={{
           type: DialogType.normal,
           title: "Bulk Subportal Creation",
@@ -605,6 +703,7 @@ const BulkCreation = ({
                   { key: "advisory", text: "Advisory" }
                 ]}
                 onChange={onTeamChange}
+                disabled={isTeamAndPortalDisabled}  // Disable when rows are staged
               />
             </div>
             {team && (
@@ -623,6 +722,7 @@ const BulkCreation = ({
                       { key: "fileexchange", text: "File Exchange" }
                     ]}
                     onChange={onPortalTypeChange}
+                    disabled={isTeamAndPortalDisabled}  // Disable when rows are staged
                   />
                 </div>
               </>
