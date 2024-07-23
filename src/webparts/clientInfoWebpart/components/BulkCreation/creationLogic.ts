@@ -7,6 +7,7 @@ import { ISiteUserInfo } from "@pnp/sp/site-users/types";
 const hubSite = Web(GlobalValues.HubSiteURL);
 
 export interface MatterAndCreationData {
+  Title?: string;
   ID: string;
   engListID: string;
   newMatterNumber: string;

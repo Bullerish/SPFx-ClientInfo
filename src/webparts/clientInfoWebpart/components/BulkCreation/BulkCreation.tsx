@@ -40,6 +40,8 @@ const BulkCreation = ({
   onBulkCreationModalHide,
 }): React.ReactElement => {
   const [team, setTeam] = useState<string>("");
+  const [teamKey, setTeamKey] = useState<string>("");
+  const [selectedDates, setSelectedDates] = useState({});
   const [portalType, setPortalType] = useState<string>("");
   const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false);
   const [items, setItems] = useState<MatterAndCreationData[]>([]);
@@ -199,6 +201,7 @@ const BulkCreation = ({
       teamCode = "TAX";
     }
     setTeam(teamCode);
+    setTeamKey(selectedTeam);
   };
 
   const onPortalTypeChange = (ev: React.FormEvent<HTMLInputElement>, option: any): void => {
@@ -214,7 +217,7 @@ const BulkCreation = ({
       if (item.ID === rowItemToUpdate.ID) {
         return {
           ...item,
-          newMatterPortalExpirationDate: date.toString(),
+          newMatterPortalExpirationDate: date ? date.toISOString() : null,
         };
       }
       return item;
@@ -261,12 +264,29 @@ const BulkCreation = ({
   };
 
   const moveSelectedToStaged = () => {
+    const currentYearLastTwoDigits = new Date().getFullYear().toString().slice(-2);
+
     portalSelected.forEach((selectedItem) => {
       const newItems = items.filter((item) => item.ID !== selectedItem.ID);
       setItems(newItems);
+
       const isAlreadyStaged = itemsStaged.some((item) => item.ID === selectedItem.ID);
       if (!isAlreadyStaged) {
-        setItemsStaged((prevItemsStaged) => [...prevItemsStaged, selectedItem]);
+        let newMatterNumber = selectedItem.newMatterNumber;
+        let engagementNumberEndZero = selectedItem.engagementNumberEndZero;
+
+        if (selectedItem.newMatterNumber.endsWith("00")) {
+          newMatterNumber = selectedItem.newMatterNumber.slice(0, -2) + currentYearLastTwoDigits;
+          engagementNumberEndZero = selectedItem.newMatterNumber;
+        }
+
+        const updatedSelectedItem = {
+          ...selectedItem,
+          newMatterNumber,
+          engagementNumberEndZero,
+        };
+
+        setItemsStaged((prevItemsStaged) => [...prevItemsStaged, updatedSelectedItem]);
       }
     });
   };
@@ -299,7 +319,12 @@ const BulkCreation = ({
       } else if (team === "ADV") {
         selectedTeamName = "Advisory";
       }
-      let selelctedPortalType = portalType === "workflow" ? "WF" : "FE";
+      let selectedPortalType = portalType === "workflow" ? "WF" : "FE";
+
+      // Construct the newMatterSiteUrl and PortalId
+      const newMatterSiteUrl = `${GlobalValues.SiteURL}/${stagedItem.clientNumber}/${team}-${selectedPortalType}-${stagedItem.newMatterNumber}`;
+      const portalId = `${team}-${selectedPortalType}-${stagedItem.newMatterNumber}`;
+
       const itemData = {
         Title: stagedItem.newMatterNumber,
         EngagementName: stagedItem.newMatterEngagementName,
@@ -307,13 +332,13 @@ const BulkCreation = ({
         EngagementNumberEndZero: stagedItem.engagementNumberEndZero,
         WorkYear: stagedItem.newMatterWorkYear,
         Team: selectedTeamName,
-        PortalType: selelctedPortalType,
+        PortalType: selectedPortalType,
         SiteUrl: {
           __metadata: { type: "SP.FieldUrlValue" },
-          Description: stagedItem.newMatterSiteUrl,
-          Url: stagedItem.newMatterSiteUrl,
+          Description: newMatterSiteUrl,
+          Url: newMatterSiteUrl,
         },
-        PortalId: stagedItem.newMatterPortalId,
+        PortalId: portalId,
         TemplateType: stagedItem.templateType,
         IndustryType: stagedItem.industryType,
         Supplemental: stagedItem.supplemental,
@@ -322,7 +347,6 @@ const BulkCreation = ({
         FileExpiration: new Date(stagedItem.newMatterFileExpirationDate),
         isNotificationEmail: true,
       };
-
       return hubSite.lists.getByTitle("Engagement Portal List").items.add(itemData);
     }))
       .then((results) => {
@@ -372,10 +396,35 @@ const BulkCreation = ({
   }, [portalSelected]);
   useLayoutEffect(() => {
     if (isBulkCreationOpen) {
-      getMatterNumbersForClientSite(clientSiteNumber).then((response) => {
-        setItems(response.engagementListMatters);
-        setIsDataLoaded(response.engagementListMatters.length > 0);
+      const clientInfo = new ClientInfoClass();
+      const clientSiteNumber = spContext._pageContext._web.serverRelativeUrl.split("/").pop();
+
+      Promise.all([
+        getMatterNumbersForClientSite(clientSiteNumber),
+        clientInfo.GetEngagementPortalsByClientID(clientSiteNumber)
+      ]).then(([matterNumbersResponse, engagementPortals]) => {
+        const engagementListMatters = matterNumbersResponse.engagementListMatters;
+
+        // Create a set of titles from engagementListMatters for quick lookup
+        const engagementTitles = new Set(engagementListMatters.map(item => item.Title));
+
+        // Filter engagementPortals based on the condition
+        const filteredEngagementPortals = engagementPortals.filter(item => {
+          const title = item.Title;
+          // Include the item if the title ends in "00" or if it does not exist in engagementTitles
+          return title.endsWith("00") || !engagementTitles.has(title);
+        });
+
+        // Combine the engagementListMatters and filteredEngagementPortals
+        const combinedEngagementItems = [
+          ...engagementListMatters,
+          ...filteredEngagementPortals
+        ];
+
+        setItems(combinedEngagementItems);
+        setIsDataLoaded(combinedEngagementItems.length > 0);
       });
+
       let obj = new ClientInfoClass();
       // Load dropdown options for industry types, supplementals, and template types
       obj.GetIndustryTypes().then(data => setIndustryTypes(data.sort((a, b) => a.Title.localeCompare(b.Title))));
@@ -383,7 +432,6 @@ const BulkCreation = ({
       obj.GetServiceTypes().then(data => setTemplateTypes(data.sort((a, b) => a.Title.localeCompare(b.Title))));
     }
   }, [isBulkCreationOpen]);
-
   const getYearsDropdown = (matterNumber: string) => {
     const currentYear = new Date().getFullYear();
     const years = [];
@@ -419,24 +467,35 @@ const BulkCreation = ({
       isResizable: true,
       render: (rowItem, index, column) => {
         const currentYear = new Date().getFullYear();
-        const options: IDropdownOption[] = getYearsDropdown(rowItem.newMatterNumber).map((year) => ({
+        let newMatterNumber = rowItem.newMatterNumber;
+        if (rowItem.engagementNumberEndZero !== undefined) {
+          newMatterNumber = rowItem.engagementNumberEndZero;
+        }
+        const options: IDropdownOption[] = getYearsDropdown(newMatterNumber).map((year) => ({
           key: year,
           text: year,
         }));
-
-        return rowItem.newMatterNumber.endsWith("00") ? (
+        const endsWithZeroZero = (number: string | undefined) => number && number.endsWith("00");
+        return endsWithZeroZero(rowItem.newMatterNumber) || endsWithZeroZero(rowItem.engagementNumberEndZero) ? (
           <Dropdown
             selectedKey={rowItem.newMatterWorkYear || currentYear.toString()}
             onChange={(event, option) => {
+              const selectedKey = option.key as string;
+              const lastTwoDigits = selectedKey.slice(-2);
+
               const updatedItemsStaged = itemsStaged.map((item) => {
                 if (item.ID === rowItem.ID) {
+                  const updatedNewMatterNumber = item.newMatterNumber.slice(0, -2) + lastTwoDigits;
                   return {
                     ...item,
-                    newMatterWorkYear: option.key as string,
+                    newMatterWorkYear: selectedKey,
+                    newMatterNumber: updatedNewMatterNumber,
+                    engagementNumberEndZero: item.newMatterNumber.endsWith("00") ? item.newMatterNumber : item.engagementNumberEndZero,
                   };
                 }
                 return item;
               });
+
               setItemsStaged(updatedItemsStaged);
             }}
             options={options}
@@ -626,18 +685,23 @@ const BulkCreation = ({
       name: "newMatterPortalExpirationDate",
       displayName: "Portal Expiration Date",
       sorting: false,
-      minWidth: 150,  // Increased minWidth
-      maxWidth: 300,  // Increased maxWidth
+      minWidth: 150,
+      maxWidth: 300,
       isResizable: false,
       render: (rowItem, index, column) => {
         const defaultDate = portalType === "workflow"
           ? new Date(new Date().setMonth(new Date().getMonth() + 18))
           : new Date(new Date().setMonth(new Date().getMonth() + 12));
 
+        const stagedItem = itemsStaged.find(item => item.ID === rowItem.ID);
+        const selectedDate = stagedItem && stagedItem.newMatterPortalExpirationDate
+          ? new Date(stagedItem.newMatterPortalExpirationDate)
+          : defaultDate;
+
         return (
           <DatePicker
             allowTextInput={false}
-            value={defaultDate}
+            value={selectedDate}
             initialPickerDate={defaultDate}
             onSelectDate={(dateToSend) => onSelectDate(dateToSend, rowItem)}
             formatDate={onFormatDate}
@@ -694,7 +758,7 @@ const BulkCreation = ({
             <div className={styles.choiceGroupContainer}>
               <ChoiceGroup
                 className={styles.innerChoice}
-                defaultSelectedKey={team}
+                defaultSelectedKey={teamKey}
                 label="Team"
                 required={true}
                 options={[

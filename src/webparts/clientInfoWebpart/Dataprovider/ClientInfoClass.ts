@@ -51,6 +51,17 @@ export class ClientInfoClass {
     return Engagementdata;
   }
 
+  public GetEngagementPortalsByClientID = async (clientNumber: string) => {
+    const hubWeb = Web(GlobalValues.HubSiteURL);
+    const engagementPortals = await hubWeb.lists
+      .getByTitle(GlobalValues.EngagementPortalList)
+      .items.filter(`ClientNumber eq '${clientNumber}'`).getAll()
+      .then((results) => {
+        return results;
+      });
+    return engagementPortals;
+  };
+
   public GetEngPortalListItemID = async (_currPortalId) => {
     const caml: ICamlQuery = {
       ViewXml: "<View><Query><Where><Eq><FieldRef Name='PortalId'/><Value Type='Text'>" + _currPortalId + "</Value></Eq></Where></Query></View>",
