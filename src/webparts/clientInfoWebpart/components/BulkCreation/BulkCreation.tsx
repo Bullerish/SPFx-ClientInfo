@@ -362,12 +362,12 @@ const BulkCreation = ({
           });
         }
       })
-      .catch((error) => {
-        console.error("An error occurred while adding items:", error);
-        if (error.message.includes("Microsoft.SharePoint.SPDuplicateValuesFoundException")) {
+      .catch((err) => { // Renamed 'error' to 'err'
+        console.error("An error occurred while adding items:", err);
+        if (err.message.includes("Microsoft.SharePoint.SPDuplicateValuesFoundException")) {
           setError("This portal already exists, please go back and try again.");
         } else {
-          setError("An unexpected error occurred: " + error.message);
+          setError("An unexpected error occurred: " + err.message);
         }
       });
   };
@@ -407,11 +407,11 @@ const BulkCreation = ({
   useLayoutEffect(() => {
     if (isBulkCreationOpen) {
       const clientInfo = new ClientInfoClass();
-      const clientSiteNumber = spContext._pageContext._web.serverRelativeUrl.split("/").pop();
+      const siteClientNumber = spContext._pageContext._web.serverRelativeUrl.split("/").pop(); // Renamed 'clientSiteNumber' to 'siteClientNumber'
 
       Promise.all([
-        getMatterNumbersForClientSite(clientSiteNumber),
-        clientInfo.GetEngagementPortalsByClientID(clientSiteNumber)
+        getMatterNumbersForClientSite(siteClientNumber),
+        clientInfo.GetEngagementPortalsByClientID(siteClientNumber)
       ]).then(([matterNumbersResponse, engagementPortals]) => {
         const engagementListMatters = matterNumbersResponse.engagementListMatters;
 
@@ -431,8 +431,11 @@ const BulkCreation = ({
           ...filteredEngagementPortals
         ];
 
-        setItems(combinedEngagementItems);
-        setIsDataLoaded(combinedEngagementItems.length > 0);
+        // Sort the combined items alphabetically by title
+        const sortedEngagementItems = combinedEngagementItems.sort((a, b) => a.Title.localeCompare(b.Title));
+
+        setItems(sortedEngagementItems);
+        setIsDataLoaded(sortedEngagementItems.length > 0);
       });
 
       let obj = new ClientInfoClass();
@@ -442,6 +445,7 @@ const BulkCreation = ({
       obj.GetServiceTypes().then(data => setTemplateTypes(data.sort((a, b) => a.Title.localeCompare(b.Title))));
     }
   }, [isBulkCreationOpen]);
+
 
   const getYearsDropdown = (matterNumber: string, workYearsToExclude: string[]) => {
     const currentYear = new Date().getFullYear();
