@@ -30,7 +30,7 @@ import {
 import {
   ListView, IViewField, SelectionMode,
 } from "@pnp/spfx-controls-react/lib/ListView";
-import { getMatterNumbersForClientSite, MatterAndCreationData, createDate18MonthsFromNow } from './CreationLogic';
+import { getMatterNumbersForClientSite, MatterAndCreationData, createDate18MonthsFromNow } from './creationLogic';
 import { Icon } from "office-ui-fabric-react/lib/Icon";
 import { ClientInfoClass } from '../../Dataprovider/ClientInfoClass'; // Make sure this import path is correct
 
