@@ -324,7 +324,7 @@ const BulkCreation = ({
       } else if (team === "ADV") {
         selectedTeamName = "Advisory";
       }
-      let selectedPortalType = portalType === "workflow" ? "WF" : "FE";
+      let selectedPortalType = portalType === "workflow" ? "Workflow" : "File Exchange";
 
       // Construct the newMatterSiteUrl and PortalId
       const newMatterSiteUrl = `${GlobalValues.SiteURL}/${team}-${selectedPortalType}-${stagedItem.newMatterNumber}`;
