@@ -1,6 +1,6 @@
 {
   "name": "client-info-webpart",
-  "version": "1.0.2",
+  "version": "1.2.0",
   "private": true,
   "main": "lib/index.js",
   "engines": {

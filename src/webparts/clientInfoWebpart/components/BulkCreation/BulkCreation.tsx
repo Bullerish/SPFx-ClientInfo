@@ -40,6 +40,7 @@ const BulkCreation = ({
   onBulkCreationModalHide,
 }): React.ReactElement => {
   const [team, setTeam] = useState<string>("");
+  const [error, setError] = useState<string>("");
   const [teamKey, setTeamKey] = useState<string>("");
   const [selectedDates, setSelectedDates] = useState({});
   const [portalType, setPortalType] = useState<string>("");
@@ -274,10 +275,11 @@ const BulkCreation = ({
       if (!isAlreadyStaged) {
         let newMatterNumber = selectedItem.newMatterNumber;
         let engagementNumberEndZero = selectedItem.engagementNumberEndZero;
-
+        let currentYear = new Date().getFullYear().toString();
         if (selectedItem.newMatterNumber.endsWith("00")) {
           newMatterNumber = selectedItem.newMatterNumber.slice(0, -2) + currentYearLastTwoDigits;
           engagementNumberEndZero = selectedItem.newMatterNumber;
+          selectedItem.newMatterWorkYear = currentYear;
         }
 
         const updatedSelectedItem = {
@@ -297,6 +299,9 @@ const BulkCreation = ({
     const isAlreadyInItems = items.some((item) => item.ID === itemRowToRemove.ID);
     if (!isAlreadyInItems) {
       itemRowToRemove.siteOwner = "";
+      if (itemRowToRemove.engagementNumberEndZero) {
+        itemRowToRemove.newMatterNumber = itemRowToRemove.engagementNumberEndZero;
+      }
       setItems((prevItems) => [...prevItems, itemRowToRemove]);
     }
   };
@@ -322,7 +327,7 @@ const BulkCreation = ({
       let selectedPortalType = portalType === "workflow" ? "WF" : "FE";
 
       // Construct the newMatterSiteUrl and PortalId
-      const newMatterSiteUrl = `${GlobalValues.SiteURL}/${stagedItem.clientNumber}/${team}-${selectedPortalType}-${stagedItem.newMatterNumber}`;
+      const newMatterSiteUrl = `${GlobalValues.SiteURL}/${team}-${selectedPortalType}-${stagedItem.newMatterNumber}`;
       const portalId = `${team}-${selectedPortalType}-${stagedItem.newMatterNumber}`;
 
       const itemData = {
@@ -359,6 +364,11 @@ const BulkCreation = ({
       })
       .catch((error) => {
         console.error("An error occurred while adding items:", error);
+        if (error.message.includes("Microsoft.SharePoint.SPDuplicateValuesFoundException")) {
+          setError("This portal already exists, please go back and try again.");
+        } else {
+          setError("An unexpected error occurred: " + error.message);
+        }
       });
   };
 
@@ -432,13 +442,14 @@ const BulkCreation = ({
       obj.GetServiceTypes().then(data => setTemplateTypes(data.sort((a, b) => a.Title.localeCompare(b.Title))));
     }
   }, [isBulkCreationOpen]);
-  const getYearsDropdown = (matterNumber: string) => {
+
+  const getYearsDropdown = (matterNumber: string, workYearsToExclude: string[]) => {
     const currentYear = new Date().getFullYear();
     const years = [];
     for (let i = currentYear - 5; i <= currentYear + 5; i++) {
       years.push(i.toString());
     }
-    return matterNumber.endsWith("00") ? years : [currentYear.toString()];
+    return matterNumber.endsWith("00") ? years.filter(year => !workYearsToExclude.includes(year)) : [currentYear.toString()];
   };
 
   const viewFieldsStaged: IViewField[] = [
@@ -471,7 +482,13 @@ const BulkCreation = ({
         if (rowItem.engagementNumberEndZero !== undefined) {
           newMatterNumber = rowItem.engagementNumberEndZero;
         }
-        const options: IDropdownOption[] = getYearsDropdown(newMatterNumber).map((year) => ({
+        // Filter engagement items based on EngagementNumberEndZero
+        const filteredEngagementItems = items.filter(item => item.engagementNumberEndZero === rowItem.engagementNumberEndZero);
+
+        // Get work years to exclude
+        const workYearsToExclude = filteredEngagementItems.map(item => item.WorkYear);
+
+        const options: IDropdownOption[] = getYearsDropdown(newMatterNumber, workYearsToExclude).map((year) => ({
           key: year,
           text: year,
         }));
@@ -731,7 +748,7 @@ const BulkCreation = ({
       const matchesTeam = item.team === selectedTeam;
       const hasPortalType = item.Portals_x0020_Created ? item.Portals_x0020_Created.includes(selectedPortalType === "workflow" ? "WF" : "FE") : false;
       return matchesTeam && !hasPortalType;
-    });
+    }).sort((a, b) => a.newMatterEngagementName.localeCompare(b.newMatterEngagementName));
   };
 
   return (
@@ -861,6 +878,11 @@ const BulkCreation = ({
                 className={styles.successMsg}
               >
                 Thank you. Your portals are in the process of being created. You will receive an email confirmation shortly when your portals are active. Please close this window.
+              </MessageBar>
+            )}
+            {error && (
+              <MessageBar messageBarType={MessageBarType.error} isMultiline={true}>
+                {error}
               </MessageBar>
             )}
           </>

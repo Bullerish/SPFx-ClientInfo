@@ -8,6 +8,7 @@ const hubSite = Web(GlobalValues.HubSiteURL);
 
 export interface MatterAndCreationData {
   Title?: string;
+  WorkYear?: string;
   ID: string;
   engListID: string;
   newMatterNumber: string;
