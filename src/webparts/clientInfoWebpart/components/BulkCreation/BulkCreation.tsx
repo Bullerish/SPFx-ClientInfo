@@ -325,10 +325,10 @@ const BulkCreation = ({
         selectedTeamName = "Advisory";
       }
       let selectedPortalType = portalType === "workflow" ? "Workflow" : "File Exchange";
-
+      let selectedPortalTypeShortHand = portalType === "workflow" ? "WF" : "FE";
       // Construct the newMatterSiteUrl and PortalId
-      const newMatterSiteUrl = `${GlobalValues.SiteURL}/${team}-${selectedPortalType}-${stagedItem.newMatterNumber}`;
-      const portalId = `${team}-${selectedPortalType}-${stagedItem.newMatterNumber}`;
+      const newMatterSiteUrl = `${GlobalValues.SiteURL}/${team}-${selectedPortalTypeShortHand}-${stagedItem.newMatterNumber}`;
+      const portalId = `${team}-${selectedPortalTypeShortHand}-${stagedItem.newMatterNumber}`;
 
       const itemData = {
         Title: stagedItem.newMatterNumber,
