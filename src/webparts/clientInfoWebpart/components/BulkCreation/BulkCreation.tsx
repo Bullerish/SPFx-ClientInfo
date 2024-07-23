@@ -410,29 +410,16 @@ const BulkCreation = ({
       const siteClientNumber = spContext._pageContext._web.serverRelativeUrl.split("/").pop(); // Renamed 'clientSiteNumber' to 'siteClientNumber'
 
       Promise.all([
-        getMatterNumbersForClientSite(siteClientNumber),
-        clientInfo.GetEngagementPortalsByClientID(siteClientNumber)
-      ]).then(([matterNumbersResponse, engagementPortals]) => {
+        getMatterNumbersForClientSite(siteClientNumber)
+      ]).then(([matterNumbersResponse]) => {
         const engagementListMatters = matterNumbersResponse.engagementListMatters;
 
         // Create a set of titles from engagementListMatters for quick lookup
         const engagementTitles = new Set(engagementListMatters.map(item => item.Title));
 
-        // Filter engagementPortals based on the condition
-        const filteredEngagementPortals = engagementPortals.filter(item => {
-          const title = item.Title;
-          // Include the item if the title ends in "00" or if it does not exist in engagementTitles
-          return title.endsWith("00") || !engagementTitles.has(title);
-        });
-
-        // Combine the engagementListMatters and filteredEngagementPortals
-        const combinedEngagementItems = [
-          ...engagementListMatters,
-          ...filteredEngagementPortals
-        ];
-
+        
         // Sort the combined items alphabetically by title
-        const sortedEngagementItems = combinedEngagementItems.sort((a, b) => a.Title.localeCompare(b.Title));
+        const sortedEngagementItems = engagementListMatters.sort((a, b) => a.newMatterEngagementName.localeCompare(b.newMatterEngagementName));
 
         setItems(sortedEngagementItems);
         setIsDataLoaded(sortedEngagementItems.length > 0);
