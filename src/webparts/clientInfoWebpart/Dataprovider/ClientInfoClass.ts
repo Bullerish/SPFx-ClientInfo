@@ -60,7 +60,7 @@ export class ClientInfoClass {
         return results;
       });
     return engagementPortals;
-  };
+  }
 
   public GetEngPortalListItemID = async (_currPortalId) => {
     const caml: ICamlQuery = {
