@@ -26,7 +26,7 @@ import "@pnp/sp/lists";
 import "@pnp/sp/fields";
 import "@pnp/sp/items";
 import { Spinner, SpinnerSize } from "office-ui-fabric-react/lib/Spinner";
-import { ISiteUserInfo } from "@pnp/sp/site-users/types";
+// import { ISiteUserInfo } from "@pnp/sp/site-users/types";
 import styles from "../ClientInfoWebpart.module.scss";
 import { GlobalValues } from "../../Dataprovider/GlobalValue";
 import { setBaseUrl } from "office-ui-fabric-react";
@@ -70,7 +70,10 @@ const BulkRollover = ({
   // all state variables
   const [team, setTeam] = useState<string>("");
   const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false);
-  const [taxRolloverData, setTaxRolloverData] = useState<MatterAndRolloverData[]>([]);
+  const [noDataAvailable, setNoDataAvailable] = useState<boolean>(false);
+  const [taxRolloverData, setTaxRolloverData] = useState<
+    MatterAndRolloverData[]
+  >([]);
   const [AudRolloverData, setAudRolloverData] = useState<
     MatterAndRolloverData[]
   >([]);
@@ -82,8 +85,10 @@ const BulkRollover = ({
   const [portalSelected, setPortalSelected] = useState([]);
   const [dateSelections, setDateSelections] = useState({});
   const [enableNextButton, setEnableNextButton] = useState<boolean>(false);
-  const [isConfirmationScreen, setIsConfirmationScreen] = useState<boolean>(false);
+  const [isConfirmationScreen, setIsConfirmationScreen] =
+    useState<boolean>(false);
   const [isDataSubmitted, setIsDataSubmitted] = useState<boolean>(false);
+  const [disableButtons, setDisableButtons] = useState<boolean>(false);
 
   // store the current site's absolute URL (should be a client site URL)
   const clientSiteAbsoluteUrl = spContext._pageContext._web.absoluteUrl;
@@ -140,9 +145,8 @@ const BulkRollover = ({
     date: Date | null | undefined,
     rowItemToUpdate: MatterAndRolloverData
   ): void => {
-    console.log('logging rowItemToUpdate with new::', rowItemToUpdate);
+    console.log("logging rowItemToUpdate with new::", rowItemToUpdate);
     // let tempItemsStaged = itemsStaged;
-
 
     const updatedItemsStaged = itemsStaged.map((item) => {
       if (item.ID === rowItemToUpdate.ID) {
@@ -154,19 +158,20 @@ const BulkRollover = ({
       return item;
     });
 
-    console.log('logging rowItem after date update::', updatedItemsStaged);
+    console.log("logging rowItem after date update::", updatedItemsStaged);
 
     setItemsStaged(updatedItemsStaged);
-
   };
 
-  const getPeoplePickerItems = (itemsArr: any[], itemRow: MatterAndRolloverData) => {
+  const getPeoplePickerItems = (
+    itemsArr: any[],
+    itemRow: MatterAndRolloverData
+  ) => {
     const currSite = Web(GlobalValues.HubSiteURL);
     let getSelectedUsers = [];
     let getusersEmails = [];
 
     console.log("logging itemsArr::", itemsArr);
-
 
     for (let item in itemsArr) {
       getSelectedUsers.push(itemsArr[item].text);
@@ -183,7 +188,7 @@ const BulkRollover = ({
           //   emailaddress: getusersEmails,
           // });
           console.log("logging user info:: ", user);
-          console.log('logging itemRow::', itemRow);
+          console.log("logging itemRow::", itemRow);
 
           const updatedItemsStaged = itemsStaged.map((item) => {
             if (item.ID === itemRow.ID) {
@@ -196,19 +201,13 @@ const BulkRollover = ({
           });
 
           setItemsStaged(updatedItemsStaged);
-
         });
     });
-
-
-
-
-
   };
 
   const validateSiteOwner = (itemsSiteOwner: any[], rowItemToUpdate) => {
-    console.log('logging itemsSiteOwner::', itemsSiteOwner);
-    console.log('logging rowItemToUpdate::', rowItemToUpdate);
+    console.log("logging itemsSiteOwner::", itemsSiteOwner);
+    console.log("logging rowItemToUpdate::", rowItemToUpdate);
     let tempItemsStaged = itemsStaged;
     // show error message if this is a guest user
     if (itemsSiteOwner.length > 0) {
@@ -236,10 +235,6 @@ const BulkRollover = ({
       });
 
       setItemsStaged(updatedItemsStaged);
-
-
-
-
     }
   };
 
@@ -264,7 +259,7 @@ const BulkRollover = ({
   };
 
   const unstageItem = (ev, itemRowToRemove) => {
-    console.log('logging itemRowToRemove::', itemRowToRemove);
+    console.log("logging itemRowToRemove::", itemRowToRemove);
     // Step 1: Remove the selected item from 'itemsStaged'
     const newItemsStaged = itemsStaged.filter(
       (item) => item.ID !== itemRowToRemove.ID
@@ -274,14 +269,14 @@ const BulkRollover = ({
 
     // Step 2: Add the selected item to 'items'
     // Check if the item is already in 'items' to avoid duplicates
-    const isAlreadyInItems = items.some((item) => item.ID === itemRowToRemove.ID);
+    const isAlreadyInItems = items.some(
+      (item) => item.ID === itemRowToRemove.ID
+    );
     if (!isAlreadyInItems) {
-
       itemRowToRemove.siteOwner = "";
 
       setItems((prevItems) => [...prevItems, itemRowToRemove]);
     }
-
   };
 
   // function to check if all items in the itemsStaged array contain a site owner
@@ -298,96 +293,93 @@ const BulkRollover = ({
   const submitPortalRolloverData = () => {
     let mattersToUpdatePC = [];
     // Step 1: Iterate over itemsStaged to handle each staged item
-    Promise.all(itemsStaged.map(stagedItem => {
+    Promise.all(
+      itemsStaged.map((stagedItem) => {
+        // check if regular matter number or -00 matter number
+        if (stagedItem.engagementNumberEndZero === "") {
+          mattersToUpdatePC.push(stagedItem.engListID);
+        }
+        // console.log("logging stagedItem::", stagedItem);
+        // Step 2: Prepare the item data to be submitted
+        const itemData = {
+          Title: stagedItem.newMatterNumber,
+          EngagementName: stagedItem.newMatterEngagementName,
+          ClientNumber: stagedItem.clientNumber,
+          EngagementNumberEndZero: stagedItem.engagementNumberEndZero,
+          WorkYear: stagedItem.newMatterWorkYear,
+          Team: stagedItem.team,
+          PortalType: stagedItem.portalType,
+          SiteUrl: {
+            __metadata: { type: "SP.FieldUrlValue" },
+            Description: stagedItem.newMatterSiteUrl,
+            Url: stagedItem.newMatterSiteUrl,
+          },
+          RolloverUrl: {
+            __metadata: { type: "SP.FieldUrlValue" },
+            Description: stagedItem.rolloverMatterSiteUrl,
+            Url: stagedItem.rolloverMatterSiteUrl,
+          },
+          Rollover: stagedItem.rollover,
+          PortalId: stagedItem.newMatterPortalId,
+          TemplateType: stagedItem.templateType,
+          IndustryType: stagedItem.industryType,
+          Supplemental: stagedItem.supplemental,
+          SiteOwnerId: stagedItem.siteOwner["Id"],
+          PortalExpiration: new Date(stagedItem.newMatterPortalExpirationDate),
+          FileExpiration: new Date(stagedItem.newMatterFileExpirationDate),
+          isNotificationEmail: true,
+        };
 
-      // check if regular matter number or -00 matter number
-      if (stagedItem.engagementNumberEndZero === "") {
-        mattersToUpdatePC.push(stagedItem.engListID);
-      }
-      // console.log("logging stagedItem::", stagedItem);
-      // Step 2: Prepare the item data to be submitted
-      const itemData = {
-        Title: stagedItem.newMatterNumber,
-        EngagementName: stagedItem.newMatterEngagementName,
-        ClientNumber: stagedItem.clientNumber,
-        EngagementNumberEndZero: stagedItem.engagementNumberEndZero,
-        WorkYear: stagedItem.newMatterWorkYear,
-        Team: stagedItem.team,
-        PortalType: stagedItem.portalType,
-        SiteUrl: {
-          __metadata: { type: "SP.FieldUrlValue" },
-          Description: stagedItem.newMatterSiteUrl,
-          Url: stagedItem.newMatterSiteUrl,
-        },
-        RolloverUrl: {
-          __metadata: { type: "SP.FieldUrlValue" },
-          Description: stagedItem.rolloverMatterSiteUrl,
-          Url: stagedItem.rolloverMatterSiteUrl,
-        },
-        Rollover: stagedItem.rollover,
-        PortalId: stagedItem.newMatterPortalId,
-        TemplateType: stagedItem.templateType,
-        IndustryType: stagedItem.industryType,
-        Supplemental: stagedItem.supplemental,
-        SiteOwnerId: stagedItem.siteOwner["Id"],
-        PortalExpiration: new Date(stagedItem.newMatterPortalExpirationDate),
-        FileExpiration: new Date(stagedItem.newMatterFileExpirationDate),
-        isNotificationEmail: true,
-      };
-
-      // Step 3: Submit the item data to the list
-      return hubSite.lists
-        .getByTitle("Engagement Portal List")
-        .items.add(itemData);
+        // Step 3: Submit the item data to the list
+        return hubSite.lists
+          .getByTitle("Engagement Portal List")
+          .items.add(itemData);
         // .then((result: IItemAddResult) => {
         //   console.log(`Item with ID: ${result.data.ID} added successfully`);
         // });
-    }))
-    .then((results) => {
-      console.log('setting isDataSubmitted to true::');
-      setIsDataSubmitted(true);
-      console.log('logging mattersToUpdatePC::', mattersToUpdatePC);
+      })
+    )
+      .then((results) => {
+        console.log("setting isDataSubmitted to true::");
+        setIsDataSubmitted(true);
+        console.log("logging mattersToUpdatePC::", mattersToUpdatePC);
 
-      if (mattersToUpdatePC.length > 0) {
-        mattersToUpdatePC.forEach((matterToUpdate) => {
-          updateEngListRegularMatter(matterToUpdate);
-        });
-      }
-
-
-
-    })
-    .catch((error) => {
-      console.error("An error occurred while adding items:", error);
-    });
-
+        if (mattersToUpdatePC.length > 0) {
+          mattersToUpdatePC.forEach((matterToUpdate) => {
+            updateEngListRegularMatter(matterToUpdate);
+          });
+        }
+      })
+      .catch((error) => {
+        console.error("An error occurred while adding items:", error);
+      });
   };
 
   // function to update the Engagement List with the added value of 'WF' in the Portals Created field
   const updateEngListRegularMatter = async (matterToUpdate) => {
-     const item = await hubSite.lists
-       .getByTitle("Engagement List")
-       .items.getById(matterToUpdate)
-       .select("Portals_x0020_Created").get();
+    const item = await hubSite.lists
+      .getByTitle("Engagement List")
+      .items.getById(matterToUpdate)
+      .select("Portals_x0020_Created")
+      .get();
 
-       console.log('logging item from updateEngListRegularMatter::', item);
+    console.log("logging item from updateEngListRegularMatter::", item);
 
-       if (item.Portals_x0020_Created === null) {
-         await hubSite.lists
-           .getByTitle("Engagement List")
-           .items.getById(matterToUpdate)
-           .update({
-             Portals_x0020_Created: "WF",
-           });
-       } else {
-         await hubSite.lists
-           .getByTitle("Engagement List")
-           .items.getById(matterToUpdate)
-           .update({
-             Portals_x0020_Created: item.Portals_x0020_Created + ",WF",
-           });
-       }
-
+    if (item.Portals_x0020_Created === null) {
+      await hubSite.lists
+        .getByTitle("Engagement List")
+        .items.getById(matterToUpdate)
+        .update({
+          Portals_x0020_Created: "WF",
+        });
+    } else {
+      await hubSite.lists
+        .getByTitle("Engagement List")
+        .items.getById(matterToUpdate)
+        .update({
+          Portals_x0020_Created: item.Portals_x0020_Created + ",WF",
+        });
+    }
   };
 
   useEffect(() => {
@@ -400,7 +392,6 @@ const BulkRollover = ({
       setEnableNextButton(checkItemsStagedForSiteOwner());
     }
   }, [itemsStaged]);
-
 
   useEffect(() => {
     console.log("team selected::", team);
@@ -424,8 +415,6 @@ const BulkRollover = ({
     if (portalSelected.length > 0) {
       moveSelectedToStaged();
     }
-
-
   }, [portalSelected]);
 
   useEffect(() => {
@@ -437,29 +426,31 @@ const BulkRollover = ({
   }, [enableNextButton]);
 
   useLayoutEffect(() => {
-
     if (isBulkRolloverOpen) {
       console.log(
         "useLayoutEffect fired, calling getMatterNumbersForClientSite::"
       );
 
       getMatterNumbersForClientSite(clientSiteNumber).then((response) => {
-        console.log("logging response from getMatterNumbersForClientSite::", response);
+        console.log(
+          "logging response from getMatterNumbersForClientSite::",
+          response
+        );
 
         setAudRolloverData(response.audMatters);
         setTaxRolloverData(response.taxMatters);
 
         if (response.audMatters.length > 0 || response.taxMatters.length > 0) {
           setIsDataLoaded(true);
+        } else {
+          setNoDataAvailable(true);
         }
-
 
         // setItems(response);
         // setItemsStaged(response);
       });
 
       // console.log('logging taxAndAudMatters from BulkRollover useLayoutEffect::', taxAndAudMatters);
-
     }
   }, [isBulkRolloverOpen]);
 
@@ -525,7 +516,6 @@ const BulkRollover = ({
       maxWidth: 250,
       isResizable: true,
       render: (rowItem, index, column) => {
-
         console.log("logging rowItem from viewFieldsStaged::", rowItem);
 
         // console.log('logging rowItem siteOwner Email::', (rowItem as ISiteUserInfo)["siteOwner.Email"]);
@@ -542,7 +532,9 @@ const BulkRollover = ({
               ensureUser={true}
               personSelectionLimit={1}
               placeholder="Enter name or email"
-              defaultSelectedUsers={rowItem["siteOwner.Email"] ? [rowItem["siteOwner.Email"]] : []}
+              defaultSelectedUsers={
+                rowItem["siteOwner.Email"] ? [rowItem["siteOwner.Email"]] : []
+              }
             />
           </div>
         );
@@ -590,11 +582,13 @@ const BulkRollover = ({
       maxWidth: 100,
       isResizable: false,
       render: (rowItem, index, column) => {
-
-
         return (
           <div>
-            <Icon iconName='Delete' className={styles.trashCan} onClick={(ev) => unstageItem(ev, rowItem)} />
+            <Icon
+              iconName="Delete"
+              className={styles.trashCan}
+              onClick={(ev) => unstageItem(ev, rowItem)}
+            />
           </div>
         );
       },
@@ -666,6 +660,212 @@ const BulkRollover = ({
     },
   ];
 
+  // define columns/viewfields so the ListView component knows what to render
+  const viewFieldsAud: IViewField[] = [
+    {
+      name: "newMatterEngagementName",
+      displayName: "Engagement Name",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 250,
+      isResizable: true,
+    },
+    {
+      name: "newMatterNumber",
+      displayName: "Matter #",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 250,
+      isResizable: true,
+    },
+    {
+      name: "industryType",
+      displayName: "Industry Type",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 225,
+      isResizable: true,
+    },
+  ];
+
+  // define columns/viewfieldsStaged so the ListView component knows what to render (is for staged portals)
+  const viewFieldsStagedAud: IViewField[] = [
+    {
+      name: "newMatterEngagementName",
+      displayName: "Engagement Name",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 250,
+      isResizable: true,
+    },
+    {
+      name: "newMatterNumber",
+      displayName: "Matter #",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 250,
+      isResizable: true,
+    },
+    {
+      name: "industryType",
+      displayName: "Industry Type",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 225,
+      isResizable: true,
+    },
+    {
+      name: "SiteOwner",
+      displayName: "Site Owner",
+      sorting: false,
+      minWidth: 180,
+      maxWidth: 250,
+      isResizable: true,
+      render: (rowItem, index, column) => {
+        console.log("logging rowItem from viewFieldsStaged::", rowItem);
+
+        // console.log('logging rowItem siteOwner Email::', (rowItem as ISiteUserInfo)["siteOwner.Email"]);
+
+        return (
+          <div>
+            <PeoplePicker
+              context={spContext}
+              showtooltip={false}
+              required={true}
+              onChange={(item) => validateSiteOwner(item, rowItem)}
+              showHiddenInUI={false}
+              principalTypes={[PrincipalType.User]}
+              ensureUser={true}
+              personSelectionLimit={1}
+              placeholder="Enter name or email"
+              defaultSelectedUsers={
+                rowItem["siteOwner.Email"] ? [rowItem["siteOwner.Email"]] : []
+              }
+            />
+          </div>
+        );
+      },
+    },
+    {
+      name: "newMatterPortalExpirationDate",
+      displayName: "Portal Expiration Date",
+      sorting: false,
+      minWidth: 125,
+      maxWidth: 250,
+      isResizable: false,
+      render: (rowItem, index, column) => {
+        // console.log("rowItem::", rowItem);
+
+        // const onDateChange = (date: Date | null | undefined): void => {
+        //   setDateSelections((prevSelections) => ({
+        //     ...prevSelections,
+        //     [rowItem.ID]: date, // Use a unique identifier from your row data
+        //   }));
+        // };
+
+        return (
+          <div>
+            <DatePicker
+              // label="DateTime Picker - 24h"
+              // dateConvention={DateConvention.DateTime}
+              // timeConvention={TimeConvention.Hours24}
+              allowTextInput={false}
+              value={new Date(rowItem.newMatterPortalExpirationDate)}
+              initialPickerDate={new Date()}
+              onSelectDate={(dateToSend) => onSelectDate(dateToSend, rowItem)}
+              formatDate={onFormatDate}
+              maxDate={createDate18MonthsFromNow()}
+            />
+          </div>
+        );
+      },
+    },
+    {
+      name: "",
+      displayName: "",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 100,
+      isResizable: false,
+      render: (rowItem, index, column) => {
+        return (
+          <div>
+            <Icon
+              iconName="Delete"
+              className={styles.trashCan}
+              onClick={(ev) => unstageItem(ev, rowItem)}
+            />
+          </div>
+        );
+      },
+    },
+  ];
+
+  const confirmationViewFieldsAud: IViewField[] = [
+    {
+      name: "newMatterEngagementName",
+      displayName: "Engagement Name",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 250,
+      isResizable: true,
+    },
+    {
+      name: "newMatterNumber",
+      displayName: "Matter #",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 250,
+      isResizable: true,
+    },
+    {
+      name: "industryType",
+      displayName: "Industry Type",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 225,
+      isResizable: true,
+    },
+    {
+      name: "siteOwner",
+      displayName: "Site Owner",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 100,
+      isResizable: false,
+      render: (rowItem, index, column) => {
+        // console.log("logging rowItem from confirmationViewFields::", rowItem);
+
+        return (
+          <div>
+            <span>{rowItem["siteOwner.Title"]}</span>
+          </div>
+        );
+      },
+    },
+    {
+      name: "newMatterPortalExpirationDate",
+      displayName: "Expiration Date",
+      sorting: false,
+      minWidth: 100,
+      maxWidth: 100,
+      isResizable: false,
+      render: (rowItem, index, column) => {
+        // console.log("logging rowItem from confirmationViewFields::", rowItem);
+
+        return (
+          <div>
+            <span>
+              {onFormatDate(
+                new Date(rowItem.newMatterPortalExpirationDate)
+              ).toString()}
+            </span>
+          </div>
+        );
+      },
+    },
+  ];
+
   return (
     <>
       <Dialog
@@ -688,7 +888,8 @@ const BulkRollover = ({
         {isDataLoaded && !isConfirmationScreen && (
           <>
             <span className={styles.guidanceText}>
-              Choose a team to see WF portals that are available for rollover
+              Choose a team to see workflow portals that are available for
+              rollover
             </span>
             <div className={styles.choiceGroupContainer}>
               <ChoiceGroup
@@ -712,11 +913,21 @@ const BulkRollover = ({
           </>
         )}
 
-        {!isDataLoaded && !isConfirmationScreen && (
+        {!isDataLoaded && !isConfirmationScreen && !noDataAvailable && (
           <Spinner
             size={SpinnerSize.large}
             label="Loading Eligible Rollover Portals...this could take some time depending on the amount of portals."
           />
+        )}
+
+        {noDataAvailable && !isConfirmationScreen && (
+          <MessageBar
+            messageBarType={MessageBarType.warning}
+            isMultiline={false}
+            className={styles.successMsg}
+          >
+            There are no eligible portals available for rollover at this time.
+          </MessageBar>
         )}
 
         {/* ListView component to display list of portals */}
@@ -731,7 +942,7 @@ const BulkRollover = ({
             <div className={styles.listViewPortsForRollover}>
               <ListView
                 items={items}
-                viewFields={viewFields}
+                viewFields={team === "tax" ? viewFields : viewFieldsAud}
                 // iconFieldName="FileRef"
                 compact={true}
                 selectionMode={SelectionMode.single}
@@ -747,16 +958,20 @@ const BulkRollover = ({
               rollover. No permissions will be rolled over to the new portals.
             </span>
             <br />
-            <span><i>
-              The portal will be available for future rollover until the
-              expiration date below. All files will be deleted from the portal
-              12 months from today's date.
-            </i></span>
+            <span>
+              <i>
+                The portal will be available for future rollover until the
+                expiration date below. All files will be deleted from the portal
+                12 months from today's date.
+              </i>
+            </span>
 
             {/* ListView component to hold staged portals */}
             <ListView
               items={itemsStaged}
-              viewFields={viewFieldsStaged}
+              viewFields={
+                team === "tax" ? viewFieldsStaged : viewFieldsStagedAud
+              }
               // iconFieldName="FileRef"
               compact={true}
               selectionMode={SelectionMode.none}
@@ -779,7 +994,11 @@ const BulkRollover = ({
             <div className={styles.listViewPortsForRollover}>
               <ListView
                 items={itemsStaged}
-                viewFields={confirmationViewFields}
+                viewFields={
+                  team === "tax"
+                    ? confirmationViewFields
+                    : confirmationViewFieldsAud
+                }
                 // iconFieldName="FileRef"
                 compact={true}
                 selectionMode={SelectionMode.none}
@@ -813,6 +1032,7 @@ const BulkRollover = ({
                   className={styles.defaultButton}
                   onClick={resetState}
                   text="Cancel"
+                  disabled={disableButtons}
                 />
 
                 <div>
@@ -822,6 +1042,7 @@ const BulkRollover = ({
                       onClick={() => setIsConfirmationScreen(false)}
                       style={{ marginRight: "8px" }}
                       text="Back"
+                      disabled={disableButtons}
                     />
                   )}
 
@@ -837,9 +1058,12 @@ const BulkRollover = ({
                   {isConfirmationScreen && (
                     <PrimaryButton
                       className={styles.primaryButton}
-                      onClick={submitPortalRolloverData}
+                      onClick={() => {
+                        setDisableButtons(true);
+                        submitPortalRolloverData();
+                      }}
                       text="Create Portals"
-                      // disabled={!enableNextButton}
+                      disabled={disableButtons}
                     />
                   )}
                 </div>

@@ -176,7 +176,7 @@ const getRolloverEngagementPortalItems = async (
         });
 
       const rowData = engagementPortalList.Row;
-
+        // console.log("logging rowData for regular matters::", rowData);
 
       if (rowData.length > 0 && rowData[0].Team === "Tax") {
         // taxRolloverArr.push(rowData[0]);
@@ -281,6 +281,9 @@ const getRolloverEngagementPortalItems = async (
           createDate18MonthsFromNow().toString(); // TODO: take user's input for newMatterPortalExpirationDate from the UI
 
         audRolloverArr.push({ ...rolloverData });
+
+
+
       }
     } else if (workYear === "" && portalsCreated.includes("WF") === true) {
       // console.log("Inside -00 else block::");
@@ -342,7 +345,9 @@ const getRolloverEngagementPortalItems = async (
         });
 
       const rowData = engagementPortalList.Row;
-      // console.log("logging rowData for -00 matters::", rowData);
+      // console.log("logging rowData for -00 matters::", rowData.length);
+
+      if (rowData.length > 0) {
 
       const latestYear = rowData.reduce(
         (max, obj) => (obj.WorkYear > max ? obj.WorkYear : max),
@@ -422,7 +427,7 @@ const getRolloverEngagementPortalItems = async (
         audRolloverArr.push({ ...rolloverData });
       }
 
-
+    }
       // audRolloverArr.push({ ...rolloverData });
     }
 
