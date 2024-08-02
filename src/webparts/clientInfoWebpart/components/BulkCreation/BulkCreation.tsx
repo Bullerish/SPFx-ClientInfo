@@ -761,7 +761,7 @@ const BulkCreation = ({
         {isDataLoaded && !isConfirmationScreen && (
           <>
             <span className={styles.guidanceText}>
-              Choose a team to see WF portals that are available for creation
+              Choose a team to see portals that are available for creation
             </span>
             <div className={styles.choiceGroupContainer}>
               <ChoiceGroup
@@ -885,10 +885,10 @@ const BulkCreation = ({
               <DefaultButton
                 className={styles.defaultButton}
                 onClick={resetState}
-                text="Cancel"
+                text={isDataSubmitted ? "Close" : "Cancel"}
               />
               <div>
-                {isConfirmationScreen && (
+                {isConfirmationScreen && !isDataSubmitted && (
                   <DefaultButton
                     className={styles.defaultButton}
                     onClick={() => setIsConfirmationScreen(false)}
@@ -903,7 +903,7 @@ const BulkCreation = ({
                     text="Next"
                   />
                 )}
-                {isConfirmationScreen && (
+                {isConfirmationScreen && !isDataSubmitted && (
                   <PrimaryButton
                     className={styles.primaryButton}
                     onClick={submitPortalCreationData}
