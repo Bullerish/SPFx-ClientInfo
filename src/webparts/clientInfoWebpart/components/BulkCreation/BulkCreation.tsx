@@ -185,14 +185,16 @@ const BulkCreation = ({
     },
     {
       name: "newMatterPortalExpirationDate",
-      displayName: "Expiration Date",
+      displayName: "Portal Expiration Date",
       sorting: false,
-      minWidth: 100,
-      maxWidth: 225,
-      isResizable: true,
-      render: (rowItem, index, column) => (
-        <span>{onFormatDate(new Date(rowItem.newMatterPortalExpirationDate)).toString()}</span>
-      ),
+      minWidth: 150,
+      maxWidth: 300,
+      isResizable: false,
+      render: (rowItem, index, column) => {
+        return (
+          <span>{new Date(rowItem.newMatterPortalExpirationDate).toLocaleDateString()}</span>
+        );
+      },
     },
   ];
 
@@ -709,10 +711,10 @@ const BulkCreation = ({
           : new Date(new Date().setMonth(new Date().getMonth() + 12));
 
         const stagedItem = itemsStaged.find(item => item.ID === rowItem.ID);
-        const selectedDate = stagedItem && stagedItem.newMatterPortalExpirationDate
+        const selectedDate = stagedItem && stagedItem.newMatterPortalExpirationDate !== ""
           ? new Date(stagedItem.newMatterPortalExpirationDate)
           : defaultDate;
-
+        stagedItem.newMatterPortalExpirationDate = selectedDate.toISOString();
         return (
           <DatePicker
             allowTextInput={false}
@@ -769,7 +771,7 @@ const BulkCreation = ({
           <>
 
             <span className={styles.guidanceText}>
-              Choose the type of portal
+             Choose the type of portal
             </span>
             <div className={styles.choiceGroupContainer}>
               <ChoiceGroup
