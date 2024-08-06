@@ -92,7 +92,7 @@ export const getMatterNumbersForClientSite = async (
       engagementNumberEndZero: item.WorkYear === "" ? item.Title : undefined,
       industryType: "",
       supplemental: "",
-      newMatterPortalExpirationDate: createDate18MonthsFromNow().toISOString(),
+      newMatterPortalExpirationDate: "",
       newMatterFileExpirationDate: createFileExpirationDate().toISOString(),
       isNotificationEmail: false,
       siteOwner: "",

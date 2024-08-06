@@ -33,6 +33,7 @@ import {
 import { getMatterNumbersForClientSite, MatterAndCreationData, createDate18MonthsFromNow } from './creationLogic';
 import { Icon } from "office-ui-fabric-react/lib/Icon";
 import { ClientInfoClass } from '../../Dataprovider/ClientInfoClass'; // Make sure this import path is correct
+import { set } from '@microsoft/sp-lodash-subset';
 
 const BulkCreation = ({
   spContext,
@@ -64,6 +65,8 @@ const BulkCreation = ({
   const resetState = () => {
     onBulkCreationModalHide(false);
     setTeam("");
+    setError("");
+    setTeamKey("");
     setPortalType("");
     setIsDataLoaded(false);
     setItems([]);
@@ -72,6 +75,10 @@ const BulkCreation = ({
     setEnableNextButton(false);
     setIsConfirmationScreen(false);
     setIsDataSubmitted(false);
+    setIndustryTypes([]);
+    setSupplementals([]);
+    setTemplateTypes([]);
+    setIsTeamAndPortalDisabled(false);
   };
 
   const viewFields: IViewField[] = [
@@ -178,14 +185,16 @@ const BulkCreation = ({
     },
     {
       name: "newMatterPortalExpirationDate",
-      displayName: "Expiration Date",
+      displayName: "Portal Expiration Date",
       sorting: false,
-      minWidth: 100,
-      maxWidth: 225,
-      isResizable: true,
-      render: (rowItem, index, column) => (
-        <span>{onFormatDate(new Date(rowItem.newMatterPortalExpirationDate)).toString()}</span>
-      ),
+      minWidth: 150,
+      maxWidth: 300,
+      isResizable: false,
+      render: (rowItem, index, column) => {
+        return (
+          <span>{new Date(rowItem.newMatterPortalExpirationDate).toLocaleDateString()}</span>
+        );
+      },
     },
   ];
 
@@ -417,7 +426,7 @@ const BulkCreation = ({
         // Create a set of titles from engagementListMatters for quick lookup
         const engagementTitles = new Set(engagementListMatters.map(item => item.Title));
 
-        
+
         // Sort the combined items alphabetically by title
         const sortedEngagementItems = engagementListMatters.sort((a, b) => a.newMatterEngagementName.localeCompare(b.newMatterEngagementName));
 
@@ -702,10 +711,10 @@ const BulkCreation = ({
           : new Date(new Date().setMonth(new Date().getMonth() + 12));
 
         const stagedItem = itemsStaged.find(item => item.ID === rowItem.ID);
-        const selectedDate = stagedItem && stagedItem.newMatterPortalExpirationDate
+        const selectedDate = stagedItem && stagedItem.newMatterPortalExpirationDate !== ""
           ? new Date(stagedItem.newMatterPortalExpirationDate)
           : defaultDate;
-
+        stagedItem.newMatterPortalExpirationDate = selectedDate.toISOString();
         return (
           <DatePicker
             allowTextInput={false}
@@ -747,7 +756,7 @@ const BulkCreation = ({
       <Dialog
         hidden={!isBulkCreationOpen}
         onDismiss={resetState}
-        minWidth={1400}
+        minWidth={1200}
         dialogContentProps={{
           type: DialogType.normal,
           title: "Bulk Subportal Creation",
@@ -760,40 +769,41 @@ const BulkCreation = ({
       >
         {isDataLoaded && !isConfirmationScreen && (
           <>
+
             <span className={styles.guidanceText}>
-              Choose a team to see portals that are available for creation
+             Choose the type of portal
             </span>
             <div className={styles.choiceGroupContainer}>
               <ChoiceGroup
                 className={styles.innerChoice}
-                defaultSelectedKey={teamKey}
-                label="Team"
+                defaultSelectedKey={portalType}
+                label="Portal Type"
                 required={true}
                 options={[
-                  { key: "assurance", text: "Assurance" },
-                  { key: "tax", text: "Tax" },
-                  { key: "advisory", text: "Advisory" }
+                  { key: "workflow", text: "Workflow" },
+                  { key: "fileexchange", text: "File Exchange" }
                 ]}
-                onChange={onTeamChange}
+                onChange={onPortalTypeChange}
                 disabled={isTeamAndPortalDisabled}  // Disable when rows are staged
               />
             </div>
-            {team && (
+            {portalType && (
               <>
                 <span className={styles.guidanceText}>
-                  Choose the type of portal
+                  Choose a team to see portals that are available for creation
                 </span>
                 <div className={styles.choiceGroupContainer}>
                   <ChoiceGroup
                     className={styles.innerChoice}
-                    defaultSelectedKey={portalType}
-                    label="Portal Type"
+                    defaultSelectedKey={teamKey}
+                    label="Team"
                     required={true}
                     options={[
-                      { key: "workflow", text: "Workflow" },
-                      { key: "fileexchange", text: "File Exchange" }
+                      { key: "assurance", text: "Assurance" },
+                      { key: "tax", text: "Tax" },
+                      { key: "advisory", text: "Advisory" }
                     ]}
-                    onChange={onPortalTypeChange}
+                    onChange={onTeamChange}
                     disabled={isTeamAndPortalDisabled}  // Disable when rows are staged
                   />
                 </div>
@@ -888,12 +898,13 @@ const BulkCreation = ({
                 text={isDataSubmitted ? "Close" : "Cancel"}
               />
               <div>
-                {isConfirmationScreen && !isDataSubmitted && (
+                {isConfirmationScreen && (
                   <DefaultButton
                     className={styles.defaultButton}
                     onClick={() => setIsConfirmationScreen(false)}
                     style={{ marginRight: "8px" }}
                     text="Back"
+                    disabled={isDataSubmitted} // Disable when data is submitted
                   />
                 )}
                 {enableNextButton && !isConfirmationScreen && itemsStaged.length > 0 && (
@@ -903,11 +914,12 @@ const BulkCreation = ({
                     text="Next"
                   />
                 )}
-                {isConfirmationScreen && !isDataSubmitted && (
+                {isConfirmationScreen && (
                   <PrimaryButton
                     className={styles.primaryButton}
                     onClick={submitPortalCreationData}
                     text="Create Portals"
+                    disabled={isDataSubmitted}// Disable when data is submitted
                   />
                 )}
               </div>
