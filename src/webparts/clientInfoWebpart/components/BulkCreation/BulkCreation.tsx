@@ -33,6 +33,7 @@ import {
 import { getMatterNumbersForClientSite, MatterAndCreationData, createDate18MonthsFromNow } from './creationLogic';
 import { Icon } from "office-ui-fabric-react/lib/Icon";
 import { ClientInfoClass } from '../../Dataprovider/ClientInfoClass'; // Make sure this import path is correct
+import { set } from '@microsoft/sp-lodash-subset';
 
 const BulkCreation = ({
   spContext,
@@ -64,6 +65,8 @@ const BulkCreation = ({
   const resetState = () => {
     onBulkCreationModalHide(false);
     setTeam("");
+    setError("");
+    setTeamKey("");
     setPortalType("");
     setIsDataLoaded(false);
     setItems([]);
@@ -72,6 +75,10 @@ const BulkCreation = ({
     setEnableNextButton(false);
     setIsConfirmationScreen(false);
     setIsDataSubmitted(false);
+    setIndustryTypes([]);
+    setSupplementals([]);
+    setTemplateTypes([]);
+    setIsTeamAndPortalDisabled(false);
   };
 
   const viewFields: IViewField[] = [
