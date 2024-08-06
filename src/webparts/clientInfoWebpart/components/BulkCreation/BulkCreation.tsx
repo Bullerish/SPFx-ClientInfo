@@ -424,7 +424,7 @@ const BulkCreation = ({
         // Create a set of titles from engagementListMatters for quick lookup
         const engagementTitles = new Set(engagementListMatters.map(item => item.Title));
 
-        
+
         // Sort the combined items alphabetically by title
         const sortedEngagementItems = engagementListMatters.sort((a, b) => a.newMatterEngagementName.localeCompare(b.newMatterEngagementName));
 
@@ -767,40 +767,41 @@ const BulkCreation = ({
       >
         {isDataLoaded && !isConfirmationScreen && (
           <>
+
             <span className={styles.guidanceText}>
-              Choose a team to see portals that are available for creation
+              Choose the type of portal
             </span>
             <div className={styles.choiceGroupContainer}>
               <ChoiceGroup
                 className={styles.innerChoice}
-                defaultSelectedKey={teamKey}
-                label="Team"
+                defaultSelectedKey={portalType}
+                label="Portal Type"
                 required={true}
                 options={[
-                  { key: "assurance", text: "Assurance" },
-                  { key: "tax", text: "Tax" },
-                  { key: "advisory", text: "Advisory" }
+                  { key: "workflow", text: "Workflow" },
+                  { key: "fileexchange", text: "File Exchange" }
                 ]}
-                onChange={onTeamChange}
+                onChange={onPortalTypeChange}
                 disabled={isTeamAndPortalDisabled}  // Disable when rows are staged
               />
             </div>
-            {team && (
+            {portalType && (
               <>
                 <span className={styles.guidanceText}>
-                  Choose the type of portal
+                  Choose a team to see portals that are available for creation
                 </span>
                 <div className={styles.choiceGroupContainer}>
                   <ChoiceGroup
                     className={styles.innerChoice}
-                    defaultSelectedKey={portalType}
-                    label="Portal Type"
+                    defaultSelectedKey={teamKey}
+                    label="Team"
                     required={true}
                     options={[
-                      { key: "workflow", text: "Workflow" },
-                      { key: "fileexchange", text: "File Exchange" }
+                      { key: "assurance", text: "Assurance" },
+                      { key: "tax", text: "Tax" },
+                      { key: "advisory", text: "Advisory" }
                     ]}
-                    onChange={onPortalTypeChange}
+                    onChange={onTeamChange}
                     disabled={isTeamAndPortalDisabled}  // Disable when rows are staged
                   />
                 </div>
