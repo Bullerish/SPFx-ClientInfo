@@ -888,12 +888,13 @@ const BulkCreation = ({
                 text={isDataSubmitted ? "Close" : "Cancel"}
               />
               <div>
-                {isConfirmationScreen && !isDataSubmitted && (
+                {isConfirmationScreen && (
                   <DefaultButton
                     className={styles.defaultButton}
                     onClick={() => setIsConfirmationScreen(false)}
                     style={{ marginRight: "8px" }}
                     text="Back"
+                    disabled={isDataSubmitted}
                   />
                 )}
                 {enableNextButton && !isConfirmationScreen && itemsStaged.length > 0 && (
@@ -903,11 +904,12 @@ const BulkCreation = ({
                     text="Next"
                   />
                 )}
-                {isConfirmationScreen && !isDataSubmitted && (
+                {isConfirmationScreen && (
                   <PrimaryButton
                     className={styles.primaryButton}
                     onClick={submitPortalCreationData}
                     text="Create Portals"
+                    disabled={isDataSubmitted}
                   />
                 )}
               </div>
