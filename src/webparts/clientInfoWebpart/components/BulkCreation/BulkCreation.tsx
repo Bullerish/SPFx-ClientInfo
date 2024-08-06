@@ -747,7 +747,7 @@ const BulkCreation = ({
       <Dialog
         hidden={!isBulkCreationOpen}
         onDismiss={resetState}
-        minWidth={1400}
+        minWidth={1200}
         dialogContentProps={{
           type: DialogType.normal,
           title: "Bulk Subportal Creation",
