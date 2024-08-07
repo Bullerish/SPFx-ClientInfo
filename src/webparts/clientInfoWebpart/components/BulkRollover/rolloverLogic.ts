@@ -31,7 +31,8 @@ export interface MatterAndRolloverData {
   newMatterPortalExpirationDate: string;
   newMatterFileExpirationDate: string;
   isNotificationEmail: boolean;
-  siteOwner: string | ISiteUserInfo | number; // needs to be email address
+  siteOwner: string | ISiteUserInfo | number; // needs to be email address;
+  invalidSiteOwner: boolean;
 }
 
 // function to create the initial date for the DatePicker component
@@ -86,6 +87,7 @@ const getRolloverEngagementPortalItems = async (
     newMatterFileExpirationDate: createFileExpirationDate().toString(),
     isNotificationEmail: true,
     siteOwner: "",
+    invalidSiteOwner: false
   };
 
   for (const matter of mattersData) {

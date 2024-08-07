@@ -53,10 +53,6 @@ import { set } from '@microsoft/sp-lodash-subset';
 import { Icon } from "office-ui-fabric-react/lib/Icon";
 import { createDate18MonthsFromNow } from './rolloverLogic';
 
-
-
-
-
 export interface IDatePickerFormatExampleState {
   firstDayOfWeek?: DayOfWeek;
   value?: Date | null;
@@ -71,24 +67,17 @@ const BulkRollover = ({
   const [team, setTeam] = useState<string>("");
   const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false);
   const [noDataAvailable, setNoDataAvailable] = useState<boolean>(false);
-  const [taxRolloverData, setTaxRolloverData] = useState<
-    MatterAndRolloverData[]
-  >([]);
-  const [AudRolloverData, setAudRolloverData] = useState<
-    MatterAndRolloverData[]
-  >([]);
-
+  const [taxRolloverData, setTaxRolloverData] = useState<MatterAndRolloverData[]>([]);
+  const [AudRolloverData, setAudRolloverData] = useState<MatterAndRolloverData[]>([]);
   const [items, setItems] = useState<MatterAndRolloverData[]>([]);
-
   const [itemsStaged, setItemsStaged] = useState<MatterAndRolloverData[]>([]);
-
   const [portalSelected, setPortalSelected] = useState([]);
   const [dateSelections, setDateSelections] = useState({});
   const [enableNextButton, setEnableNextButton] = useState<boolean>(false);
-  const [isConfirmationScreen, setIsConfirmationScreen] =
-    useState<boolean>(false);
+  const [isConfirmationScreen, setIsConfirmationScreen] = useState<boolean>(false);
   const [isDataSubmitted, setIsDataSubmitted] = useState<boolean>(false);
   const [disableButtons, setDisableButtons] = useState<boolean>(false);
+  const [invalidSiteOwner, setInvalidSiteOwner] = useState<boolean>(false);
 
   // store the current site's absolute URL (should be a client site URL)
   const clientSiteAbsoluteUrl = spContext._pageContext._web.absoluteUrl;
@@ -113,6 +102,7 @@ const BulkRollover = ({
     setEnableNextButton(false);
     setIsConfirmationScreen(false);
     setIsDataSubmitted(false);
+    setInvalidSiteOwner(false);
   };
 
   // onChange event handler to capture the selected team value
@@ -127,14 +117,6 @@ const BulkRollover = ({
 
   // function to format the date for the DatePicker component
   const onFormatDate = (date: Date): string => {
-    // return (
-    //   date.getMonth() +
-    //   1 +
-    //   "/" +
-    //   date.getDate() +
-    //   "/" +
-    //   (date.getFullYear() % 100)
-    // );
     return (
       date.getMonth() + 1 + "/" + date.getDate() + "/" + date.getFullYear()
     );
@@ -159,7 +141,6 @@ const BulkRollover = ({
     });
 
     console.log("logging rowItem after date update::", updatedItemsStaged);
-
     setItemsStaged(updatedItemsStaged);
   };
 
@@ -170,7 +151,6 @@ const BulkRollover = ({
     const currSite = Web(GlobalValues.HubSiteURL);
     let getSelectedUsers = [];
     let getusersEmails = [];
-
     console.log("logging itemsArr::", itemsArr);
 
     for (let item in itemsArr) {
@@ -182,19 +162,15 @@ const BulkRollover = ({
         .getByLoginName(e.loginName)
         .get()
         .then((user) => {
-          // this.setState({
-          //   addusers: getSelectedUsers,
-          //   addusersID: user.Id,
-          //   emailaddress: getusersEmails,
-          // });
           console.log("logging user info:: ", user);
-          console.log("logging itemRow::", itemRow);
-
+          console.log("logging itemRow::", itemRow);          
           const updatedItemsStaged = itemsStaged.map((item) => {
             if (item.ID === itemRow.ID) {
               return {
                 ...item,
                 siteOwner: user,
+                invalidSiteOwner: user.Email.indexOf("cohnreznick.com") == -1 &&
+                user.Email.indexOf("cohnreznickdev") == -1 ? true : false
               };
             }
             return item;
@@ -207,23 +183,11 @@ const BulkRollover = ({
 
   const validateSiteOwner = (itemsSiteOwner: any[], rowItemToUpdate) => {
     console.log("logging itemsSiteOwner::", itemsSiteOwner);
-    console.log("logging rowItemToUpdate::", rowItemToUpdate);
-    let tempItemsStaged = itemsStaged;
+    console.log("logging rowItemToUpdate::", rowItemToUpdate);    
     // show error message if this is a guest user
-    if (itemsSiteOwner.length > 0) {
-      let userEmail = itemsSiteOwner[0].secondaryText.toLowerCase();
-      if (
-        userEmail.indexOf("cohnreznick.com") == -1 &&
-        userEmail.indexOf("cohnreznickdev") == -1
-      ) {
-        // this is a guest user, do not validate
-        // this.setState({ addusers: [] });
-      } else {
+    if (itemsSiteOwner.length > 0) {      
         getPeoplePickerItems(itemsSiteOwner, rowItemToUpdate);
-      }
     } else {
-      // this.setState({ addusers: [] });
-
       const updatedItemsStaged = itemsStaged.map((item) => {
         if (item.ID === rowItemToUpdate.ID) {
           return {
@@ -283,7 +247,7 @@ const BulkRollover = ({
   const checkItemsStagedForSiteOwner = () => {
     let allItemsHaveSiteOwner = true;
     itemsStaged.forEach((item) => {
-      if (item.siteOwner === "" || item.siteOwner === null) {
+      if (item.siteOwner === "" || item.siteOwner === null || item.invalidSiteOwner === true) {
         allItemsHaveSiteOwner = false;
       }
     });
@@ -395,7 +359,6 @@ const BulkRollover = ({
 
   useEffect(() => {
     console.log("team selected::", team);
-
     setItemsStaged([]);
 
     if (team === "tax") {
@@ -424,6 +387,10 @@ const BulkRollover = ({
   useEffect(() => {
     console.log("enableNextButton::", enableNextButton);
   }, [enableNextButton]);
+
+  useEffect(() => {
+    console.log("invalidSiteOwner::", invalidSiteOwner);
+  }, [invalidSiteOwner]);
 
   useLayoutEffect(() => {
     if (isBulkRolloverOpen) {
@@ -517,9 +484,7 @@ const BulkRollover = ({
       isResizable: true,
       render: (rowItem, index, column) => {
         console.log("logging rowItem from viewFieldsStaged::", rowItem);
-
         // console.log('logging rowItem siteOwner Email::', (rowItem as ISiteUserInfo)["siteOwner.Email"]);
-
         return (
           <div>
             <PeoplePicker
@@ -536,6 +501,11 @@ const BulkRollover = ({
                 rowItem["siteOwner.Email"] ? [rowItem["siteOwner.Email"]] : []
               }
             />
+            {rowItem.invalidSiteOwner && (
+              <div className={styles.reqval}>
+                Site Owner must be a CohnReznick employee.
+              </div>
+            )}
           </div>
         );
       },
@@ -548,21 +518,10 @@ const BulkRollover = ({
       maxWidth: 250,
       isResizable: false,
       render: (rowItem, index, column) => {
-        // console.log("rowItem::", rowItem);
-
-        // const onDateChange = (date: Date | null | undefined): void => {
-        //   setDateSelections((prevSelections) => ({
-        //     ...prevSelections,
-        //     [rowItem.ID]: date, // Use a unique identifier from your row data
-        //   }));
-        // };
 
         return (
           <div>
             <DatePicker
-              // label="DateTime Picker - 24h"
-              // dateConvention={DateConvention.DateTime}
-              // timeConvention={TimeConvention.Hours24}
               allowTextInput={false}
               value={new Date(rowItem.newMatterPortalExpirationDate)}
               initialPickerDate={new Date()}
@@ -723,7 +682,7 @@ const BulkRollover = ({
       isResizable: true,
       render: (rowItem, index, column) => {
         console.log("logging rowItem from viewFieldsStaged::", rowItem);
-
+        console.log('site owner is',invalidSiteOwner);
         // console.log('logging rowItem siteOwner Email::', (rowItem as ISiteUserInfo)["siteOwner.Email"]);
 
         return (
@@ -740,8 +699,13 @@ const BulkRollover = ({
               placeholder="Enter name or email"
               defaultSelectedUsers={
                 rowItem["siteOwner.Email"] ? [rowItem["siteOwner.Email"]] : []
-              }
+              }              
             />
+            {rowItem.invalidSiteOwner && (
+              <div className={styles.reqval}>
+                Site Owner must be a CohnReznick employee.
+              </div>
+            )}
           </div>
         );
       },
@@ -882,7 +846,7 @@ const BulkRollover = ({
           // styles: { main: { maxHeight: 700, overflowY: 'scroll' } },
           className: styles.bulkRollover,
         }}
-        // styles={{ root: { maxHeight: 700 } }}
+      // styles={{ root: { maxHeight: 700 } }}
       >
         {/* Team select choice group */}
         {isDataLoaded && !isConfirmationScreen && (
@@ -1051,7 +1015,7 @@ const BulkRollover = ({
                       className={styles.primaryButton}
                       onClick={() => setIsConfirmationScreen(true)}
                       text="Next"
-                      // disabled={!enableNextButton}
+                    // disabled={!enableNextButton}
                     />
                   )}
 
