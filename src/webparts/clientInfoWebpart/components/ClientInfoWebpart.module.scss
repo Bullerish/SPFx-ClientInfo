@@ -1039,6 +1039,10 @@
     cursor: pointer;
   }
 
+  .reqval {
+    color: #ff0000;
+  }
+
   .innerChoice {
     width: 100%;
     margin-top: 15px;
@@ -1336,4 +1340,11 @@
 
 .wideDropdown {
   min-width: 300px;
+}
+
+:global {
+  /* hide New button */
+  div.ms-DetailsRow-cell[data-automation-key="SiteOwner"] {
+      overflow: visible;
+  }
 }
