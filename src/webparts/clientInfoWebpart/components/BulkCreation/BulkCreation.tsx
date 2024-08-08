@@ -321,8 +321,9 @@ const BulkCreation = ({
 
   const submitPortalCreationData = () => {
     let mattersToUpdatePC = [];
+    let selectedPortalTypeShortHand = "";
     Promise.all(itemsStaged.map(stagedItem => {
-      if (stagedItem.engagementNumberEndZero === "") {
+      if (stagedItem.engagementNumberEndZero === "" || stagedItem.engagementNumberEndZero === undefined) {
         mattersToUpdatePC.push(stagedItem.engListID);
       }
       let selectedTeamName;
@@ -334,7 +335,7 @@ const BulkCreation = ({
         selectedTeamName = "Advisory";
       }
       let selectedPortalType = portalType === "workflow" ? "Workflow" : "File Exchange";
-      let selectedPortalTypeShortHand = portalType === "workflow" ? "WF" : "FE";
+      selectedPortalTypeShortHand = portalType === "workflow" ? "WF" : "FE";
       // Construct the newMatterSiteUrl and PortalId
       const newMatterSiteUrl = `${GlobalValues.SiteURL}/${team}-${selectedPortalTypeShortHand}-${stagedItem.newMatterNumber}`;
       const portalId = `${team}-${selectedPortalTypeShortHand}-${stagedItem.newMatterNumber}`;
@@ -367,9 +368,10 @@ const BulkCreation = ({
         setIsDataSubmitted(true);
         if (mattersToUpdatePC.length > 0) {
           mattersToUpdatePC.forEach((matterToUpdate) => {
-            updateEngListRegularMatter(matterToUpdate);
+            updateEngListRegularMatter(matterToUpdate, selectedPortalTypeShortHand);
           });
         }
+        selectedPortalTypeShortHand = "";
       })
       .catch((err) => { // Renamed 'error' to 'err'
         console.error("An error occurred while adding items:", err);
@@ -381,15 +383,15 @@ const BulkCreation = ({
       });
   };
 
-  const updateEngListRegularMatter = async (matterToUpdate) => {
+  const updateEngListRegularMatter = async (matterToUpdate, selectedPortalTypeShortHand) => {
     const item = await hubSite.lists.getByTitle("Engagement List").items.getById(matterToUpdate).select("Portals_x0020_Created").get();
     if (item.Portals_x0020_Created === null) {
       await hubSite.lists.getByTitle("Engagement List").items.getById(matterToUpdate).update({
-        Portals_x0020_Created: "WF",
+        Portals_x0020_Created: selectedPortalTypeShortHand,
       });
     } else {
       await hubSite.lists.getByTitle("Engagement List").items.getById(matterToUpdate).update({
-        Portals_x0020_Created: item.Portals_x0020_Created + ",WF",
+        Portals_x0020_Created: item.Portals_x0020_Created + "," + selectedPortalTypeShortHand,
       });
     }
   };
