@@ -33,6 +33,7 @@ export interface MatterAndCreationData {
   isNotificationEmail: boolean;
   siteOwner: string | ISiteUserInfo | number;
   Portals_x0020_Created?: string;
+  invalidSiteOwner: boolean;
 }
 
 export const createDate18MonthsFromNow = (): Date => {
@@ -97,6 +98,7 @@ export const getMatterNumbersForClientSite = async (
       isNotificationEmail: false,
       siteOwner: "",
       Portals_x0020_Created: item.Portals_x0020_Created,
+      invalidSiteOwner: false
     });
   });
 

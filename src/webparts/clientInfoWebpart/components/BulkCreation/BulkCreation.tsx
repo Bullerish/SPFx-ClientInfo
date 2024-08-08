@@ -56,6 +56,7 @@ const BulkCreation = ({
   const [supplementals, setSupplementals] = useState<any[]>([]);
   const [templateTypes, setTemplateTypes] = useState<any[]>([]);
   const [isTeamAndPortalDisabled, setIsTeamAndPortalDisabled] = useState<boolean>(false);
+  const [invalidSiteOwner, setInvalidSiteOwner] = useState<boolean>(false);
   const clientSiteAbsoluteUrl = spContext._pageContext._web.absoluteUrl;
   const clientSiteServerRelativeUrl = spContext._pageContext._web.serverRelativeUrl;
   const relativeUrlArr = clientSiteServerRelativeUrl.split("/");
@@ -79,6 +80,7 @@ const BulkCreation = ({
     setSupplementals([]);
     setTemplateTypes([]);
     setIsTeamAndPortalDisabled(false);
+    setInvalidSiteOwner(false);
   };
 
   const viewFields: IViewField[] = [
@@ -235,30 +237,49 @@ const BulkCreation = ({
     setItemsStaged(updatedItemsStaged);
   };
 
-  const getPeoplePickerItems = (itemsArr: any[], itemRow: MatterAndCreationData) => {
+  const getPeoplePickerItems = (
+    itemsArr: any[],
+    itemRow: MatterAndCreationData
+  ) => {
     const currSite = Web(GlobalValues.HubSiteURL);
+    let getSelectedUsers = [];
+    let getusersEmails = [];
+    console.log("logging itemsArr::", itemsArr);
+
+    for (let item in itemsArr) {
+      getSelectedUsers.push(itemsArr[item].text);
+      getusersEmails.push(itemsArr[item].secondaryText);
+    }
     itemsArr.forEach((e) => {
-      currSite.siteUsers.getByLoginName(e.loginName).get().then((user) => {
-        const updatedItemsStaged = itemsStaged.map((item) => {
-          if (item.ID === itemRow.ID) {
-            return {
-              ...item,
-              siteOwner: user,
-            };
-          }
-          return item;
+      currSite.siteUsers
+        .getByLoginName(e.loginName)
+        .get()
+        .then((user) => {
+          console.log("logging user info:: ", user);
+          console.log("logging itemRow::", itemRow);          
+          const updatedItemsStaged = itemsStaged.map((item) => {
+            if (item.ID === itemRow.ID) {
+              return {
+                ...item,
+                siteOwner: user,
+                invalidSiteOwner: user.Email.indexOf("cohnreznick.com") == -1 &&
+                user.Email.indexOf("cohnreznickdev") == -1 ? true : false
+              };
+            }
+            return item;
+          });
+
+          setItemsStaged(updatedItemsStaged);
         });
-        setItemsStaged(updatedItemsStaged);
-      });
     });
   };
 
   const validateSiteOwner = (itemsSiteOwner: any[], rowItemToUpdate) => {
-    if (itemsSiteOwner.length > 0) {
-      let userEmail = itemsSiteOwner[0].secondaryText.toLowerCase();
-      if (userEmail.includes("cohnreznick.com") || userEmail.includes("cohnreznickdev")) {
+    console.log("logging itemsSiteOwner::", itemsSiteOwner);
+    console.log("logging rowItemToUpdate::", rowItemToUpdate);    
+    // show error message if this is a guest user
+    if (itemsSiteOwner.length > 0) {      
         getPeoplePickerItems(itemsSiteOwner, rowItemToUpdate);
-      }
     } else {
       const updatedItemsStaged = itemsStaged.map((item) => {
         if (item.ID === rowItemToUpdate.ID) {
@@ -269,6 +290,7 @@ const BulkCreation = ({
         }
         return item;
       });
+
       setItemsStaged(updatedItemsStaged);
     }
   };
@@ -315,9 +337,16 @@ const BulkCreation = ({
     }
   };
 
-  const checkItemsStagedForSiteOwner = () => {
-    return itemsStaged.every((item) => item.siteOwner && item.siteOwner !== "");
-  };
+    // function to check if all items in the itemsStaged array contain a site owner
+    const checkItemsStagedForSiteOwner = () => {
+      let allItemsHaveSiteOwner = true;
+      itemsStaged.forEach((item) => {
+        if (item.siteOwner === "" || item.siteOwner === null || item.invalidSiteOwner === true) {
+          allItemsHaveSiteOwner = false;
+        }
+      });
+      return allItemsHaveSiteOwner;
+    };
 
   const submitPortalCreationData = () => {
     let mattersToUpdatePC = [];
@@ -402,7 +431,9 @@ const BulkCreation = ({
       setIsTeamAndPortalDisabled(false);
     }
   }, [itemsStaged]);
-
+  useEffect(() => {
+    console.log("invalidSiteOwner::", invalidSiteOwner);
+  }, [invalidSiteOwner]);
   useEffect(() => {
     setEnableNextButton(checkItemsStagedForSiteOwner());
   }, [itemsStaged]);
@@ -686,18 +717,25 @@ const BulkCreation = ({
       maxWidth: 250,
       isResizable: true,
       render: (rowItem, index, column) => (
-        <PeoplePicker
-          context={spContext}
-          showtooltip={false}
-          required={true}
-          onChange={(item) => validateSiteOwner(item, rowItem)}
-          showHiddenInUI={false}
-          principalTypes={[PrincipalType.User]}
-          ensureUser={true}
-          personSelectionLimit={1}
-          placeholder="Enter name or email"
-          defaultSelectedUsers={rowItem["siteOwner.Email"] ? [rowItem["siteOwner.Email"]] : []}
-        />
+        <div>
+          <PeoplePicker
+            context={spContext}
+            showtooltip={false}
+            required={true}
+            onChange={(item) => validateSiteOwner(item, rowItem)}
+            showHiddenInUI={false}
+            principalTypes={[PrincipalType.User]}
+            ensureUser={true}
+            personSelectionLimit={1}
+            placeholder="Enter name or email"
+            defaultSelectedUsers={rowItem["siteOwner.Email"] ? [rowItem["siteOwner.Email"]] : []}
+          />
+          {rowItem.invalidSiteOwner && (
+            <div className={styles.reqval}>
+              Site Owner must be a CohnReznick employee.
+            </div>
+          )}
+        </div>
       ),
     },
     {
@@ -773,7 +811,7 @@ const BulkCreation = ({
           <>
 
             <span className={styles.guidanceText}>
-             Choose the type of portal
+              Choose the type of portal
             </span>
             <div className={styles.choiceGroupContainer}>
               <ChoiceGroup
