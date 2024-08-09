@@ -900,7 +900,7 @@ const BulkCreation = ({
         {isConfirmationScreen && (
           <>
             <span className={styles.guidanceText}>
-              Selected engagements will be created over from previous year. No Permissions will be created over to the new portals.
+              Selected engagements will be created.
             </span>
             <div className={styles.listViewPortsForCreation}>
               <ListView
